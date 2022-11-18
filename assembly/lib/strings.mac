@@ -1,0 +1,36 @@
+
+%ifndef STRINGS_MAC
+	%define STRINGS_MAC
+	
+	%include "lib/strings.asm"
+							
+%macro strlen 3
+	stkopen 5
+	mov byte [bp], %1
+	mov word [bp+1], %2
+	mov word [bp+3], %3
+	call proc_strlen
+	push sp
+	pop bp
+	mov byte %1, [bp]
+	stkclose 5
+%endmacro	
+
+%macro strld 3
+	section .data
+		%%str: db %3,0
+	section .text
+		strcp %1, %2, cs, %%str		
+%endmacro
+
+%macro strcp 4
+	stkopen 8
+	mov word [bp], %1
+	mov word [bp+2], %2
+	mov word [bp+4], %3
+	mov word [bp+6], %4
+	call proc_strcp
+	stkclose 8
+%endmacro		
+						
+%endif

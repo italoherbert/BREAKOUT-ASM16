@@ -1,0 +1,8 @@
+
+	2(KB) + 768(B)  -->  0x0500..0x0FFF 	DIF=0xB00
+
+init_memmap	enderinit	enderfinish
+
+currentender
+
+

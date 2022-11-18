@@ -1,0 +1,335 @@
+
+- NASM Map file ---------------------------------------------------------------
+
+Source file:  src/graphprog.asm
+Output file:  bin/graphprog.bin
+
+-- Program origin -------------------------------------------------------------
+
+00000000
+
+-- Sections (summary) ---------------------------------------------------------
+
+Vstart            Start             Stop              Length    Class     Name
+               0                 0                8D  0000008D  progbits  .text
+              90                90              21C7  00002137  progbits  .data
+
+-- Sections (detailed) --------------------------------------------------------
+
+---- Section .text ------------------------------------------------------------
+
+class:     progbits
+length:                  8D
+start:                    0
+align:     not defined
+follows:   not defined
+vstart:                   0
+valign:    not defined
+vfollows:  not defined
+
+---- Section .data ------------------------------------------------------------
+
+class:     progbits
+length:                2137
+start:                   90
+align:                    4
+follows:   not defined
+vstart:                  90
+valign:    not defined
+vfollows:  not defined
+
+-- Symbols --------------------------------------------------------------------
+
+---- Section .text ------------------------------------------------------------
+
+Real              Virtual           Name
+               0                 0  _start
+
+---- Section .data ------------------------------------------------------------
+
+Real              Virtual           Name
+              90                90  proc_prtIEEE754
+             221               221  proc_prtsubbin8
+             236               236  proc_prtsubbin8.l1
+             257               257  proc_prtsubbin8.l2
+             259               259  proc_prtbin16
+             268               268  proc_prtbin16.l1
+             281               281  proc_prtbin16.first
+             291               291  proc_prtbin16.nfirst
+             29D               29D  proc_prtbin16.endfirst
+             2B3               2B3  proc_prtbin16.spaceprted
+             2B3               2B3  proc_prtbin16.prted
+             2B8               2B8  proc_prtbin16.l2
+             2CC               2CC  proc_prtbin16.end
+             2CD               2CD  proc_prtbin8
+             361               361  proc_prtbin8.nzero
+             36D               36D  proc_prtbin8.l1
+             376               376  proc_prtbin8.l1.1
+             380               380  proc_prtbin8.l1.2
+             395               395  proc_prtbin8.zero
+             39D               39D  proc_prtbin8.notzero
+             3A1               3A1  proc_prtbin8.endzero
+             3B6               3B6  proc_prtbin8.inc
+             3BA               3BA  proc_prtbin8.l2
+             3BB               3BB  proc_prtbin8.end
+             3BC               3BC  proc_prthex16
+             3CB               3CB  proc_prthex16.l1
+             3E4               3E4  proc_prthex16.first
+             3F4               3F4  proc_prthex16.nfirst
+             400               400  proc_prthex16.endfirst
+             402               402  proc_prthex16.prted
+             407               407  proc_prthex16.l2
+             41B               41B  proc_prthex16.end
+             41C               41C  proc_prthex8
+             452               452  proc_prthex8.nzero
+             45E               45E  proc_prthex8.l1
+             469               469  proc_prthex8.l1.1
+             474               474  proc_prthex8.l1.2
+             489               489  proc_prthex8.zero
+             491               491  proc_prthex8.notzero
+             495               495  proc_prthex8.endzero
+             49D               49D  proc_prthex8.endsumseven
+             4B2               4B2  proc_prthex8.dec
+             4B6               4B6  proc_prthex8.l2
+             4B7               4B7  proc_prthex8.end
+             4B8               4B8  proc_prtstr
+             4C4               4C4  proc_prtstr.loop
+             4DD               4DD  proc_prtstr.done
+             4DE               4DE  proc_prtch
+             4EC               4EC  proc_prtln
+             4FB               4FB  proc_int16to32
+             50E               50E  proc_int16to32.zero
+             516               516  proc_int16to32.one
+             51C               51C  proc_int16to32.endcmp
+             523               523  proc_int32to16
+             53B               53B  proc_int32to16.zero
+             53F               53F  proc_int32to16.one
+             544               544  proc_int32to16.endcmp
+             548               548  proc_setsig
+             557               557  proc_clrsig
+             561               561  proc_idiv32
+             5CA               5CA  proc_idiv32.signal1
+             5CD               5CD  proc_idiv32.endsignal1
+             5D9               5D9  proc_idiv32.signal2
+             5DC               5DC  proc_idiv32.endsignal2
+             5DD               5DD  proc_imul32
+             626               626  proc_imul32.signal1
+             639               639  proc_imul32.endsignal1
+             63A               63A  proc_div32
+             672               672  proc_div32.div2
+             688               688  proc_div32.div
+             6D5               6D5  proc_div32.l1
+             749               749  proc_div32.l11
+             798               798  proc_div32.l2
+             79B               79B  proc_div32.qzero
+             7B1               7B1  proc_div32.enddiv
+             7B7               7B7  proc_div32.divbyzero
+             7BB               7BB  proc_div32.end
+             7BC               7BC  proc_mul32
+             7E5               7E5  proc_add32
+             800               800  proc_sub32
+             81B               81B  proc_cmp32
+             82B               82B  proc_cmp32.above
+             831               831  proc_cmp32.below
+             837               837  proc_cmp32.equal
+             845               845  proc_cmp32.endcmp
+             846               846  proc_shl32
+             85B               85B  proc_shl32.zero
+             871               871  proc_shl32.one
+             882               882  proc_shl32.above
+             88C               88C  proc_shl32.endzo
+             88D               88D  proc_shr32
+             8A2               8A2  proc_shr32.zero
+             8B8               8B8  proc_shr32.one
+             8C9               8C9  proc_shr32.above
+             8D3               8D3  proc_shr32.endzo
+             8D4               8D4  proc__lzcount16
+             90E               90E  proc__lzcount16.end
+             912               912  proc__lzbitcount16
+             91B               91B  proc__lzbitcount16.l1
+             930               930  proc__lzbitcount16.l2
+             934               934  proc__lzbitcount8
+             93D               93D  proc__lzbitcount8.l1
+             952               952  proc__lzbitcount8.l2
+             956               956  proc_calc_dividendo1
+             992               992  proc_calc_dividendo1.end
+             A19               A19  proc_calc_dividendo1.l1
+             A27               A27  proc_calc_prox_dividendo
+             A3A               A3A  proc_calc_prox_dividendo.zero
+             A3F               A3F  proc_calc_prox_dividendo.one
+             A42               A42  proc_calc_prox_dividendo.endcmp
+             A81               A81  proc_fltoint32
+             A95               A95  proc_fltoint32.zero
+             AA5               AA5  proc_fltoint32.continue
+             ABA               ABA  proc_fltoint32.endexp
+             AF5               AF5  proc_fltoint32.done
+             AF6               AF6  proc_int32tofl
+             B1E               B1E  proc_int32tofl.continue
+             B58               B58  proc_int32tofl.end
+             B8F               B8F  proc_int32tofl.endmantissa
+             BAF               BAF  proc_int32tofl.done
+             BB0               BB0  proc_flcmp
+             C05               C05  proc_flcmp.above
+             C09               C09  proc_flcmp.below
+             C0D               C0D  proc_flcmp.equal
+             C0F               C0F  proc_flcmp.endcmp
+             C13               C13  proc_fldiv
+             C69               C69  proc_fldiv.continue
+             CAD               CAD  proc_fldiv.continue2
+             D31               D31  proc_fldiv.done
+             D32               D32  proc_flmul
+             D88               D88  proc_flmul.continue
+             DC0               DC0  proc_flmul.continue2
+             E73               E73  proc_flmul.end
+             E81               E81  proc_flmul.equal
+             E87               E87  proc_flmul.great
+             EA3               EA3  proc_flmul.endcmp
+             EDD               EDD  proc_flmul.done
+             EDE               EDE  proc_fladdorsub
+             F32               F32  proc_fladdorsub.continue
+             F86               F86  proc_fladdorsub.continue2
+             F9F               F9F  proc_fladdorsub.expzero
+             FBD               FBD  proc_fladdorsub.expnzero
+             FC7               FC7  proc_fladdorsub.exp1great
+            100D              100D  proc_fladdorsub.exp1less
+            1057              1057  proc_fladdorsub.endexp1cmp
+            1057              1057  proc_fladdorsub.endexpcmp
+            1083              1083  proc_fladdorsub.sub
+            10A7              10A7  proc_fladdorsub.endop
+            10CE              10CE  proc_fladdorsub.done
+            10CF              10CF  proc__normalize
+            111C              111C  proc__normalize.end
+            1129              1129  proc__normalize.shr
+            114F              114F  proc__normalize.shl
+            1173              1173  proc__normalize.endshrl
+            1188              1188  proc__iaddorsub32
+            11BC              11BC  proc__iaddorsub32.endv1neg
+            11E3              11E3  proc__iaddorsub32.endv2neg
+            11F0              11F0  proc__iaddorsub32.sub
+            11F4              11F4  proc__iaddorsub32.endop
+            1214              1214  proc__iaddorsub32.endresneg
+            121F              121F  proc__mul32_64
+            126A              126A  proc__fldiv32
+            1280              1280  proc__fldiv32.l1
+            130E              130E  proc__fldiv32.endsub
+            1333              1333  proc__fldiv32.l2
+            1334              1334  proc_flsetsig
+            1345              1345  proc__validate
+            135E              135E  proc__validate.isnumber1
+            1373              1373  proc__validate.isnumber2
+            1389              1389  proc__validate.infinity
+            1395              1395  proc__validate.NaN
+            13A1              13A1  proc__validate.ok
+            13A7              13A7  proc__validate.done
+            13AB              13AB  proc__validate.end
+            13AC              13AC  proc__div_validate
+            13D7              13D7  proc__div_validate.infinity
+            13E3              13E3  proc__div_validate.NaN
+            13EF              13EF  proc__div_validate.zero
+            13FB              13FB  proc__div_validate.ok
+            1401              1401  proc__div_validate.done
+            1405              1405  proc__div_validate.end
+            1406              1406  proc__mul_validate
+            1420              1420  proc__mul_validate.zero
+            142C              142C  proc__mul_validate.ok
+            1432              1432  proc__mul_validate.done
+            1436              1436  proc__mul_validate.end
+            1437              1437  proc__addorsub_validate
+            1462              1462  proc__addorsub_validate.zero
+            146E              146E  proc__addorsub_validate.value1
+            147C              147C  proc__addorsub_validate.value2
+            148A              148A  proc__addorsub_validate.ok
+            1490              1490  proc__addorsub_validate.done
+            1494              1494  proc__addorsub_validate.end
+            1495              1495  PI
+            1499              1499  __180dg
+            149D              149D  proc_toradians
+            14FC              14FC  proc_todegrees
+            155B              155B  proc_sinorcos
+            1589              1589  proc_sinorcos.normcos
+            15A5              15A5  proc_sinorcos.endnorm
+            15E9              15E9  proc_sinorcos.one
+            15EC              15EC  proc_sinorcos.endcmp
+            15ED              15ED  proc_sinorcos0x90
+            1604              1604  proc_sinorcos0x90.l1
+            1619              1619  proc_sinorcos0x90.neg
+            161C              161C  proc_sinorcos0x90.endneg
+            1635              1635  proc_sinorcos0x90.incremented
+            16E6              16E6  proc_sinorcos0x90.incremented2
+            16EE              16EE  proc_sinorcos0x90.l1.1
+            171F              171F  proc_sinorcos0x90.l1.2
+            177E              177E  proc_sinorcos0x90.l2
+            177F              177F  proc__fat16
+            178B              178B  proc__fat16.l1
+            179D              179D  proc__fat16.l2
+            179E              179E  proc__pow16
+            17AA              17AA  proc__pow16.l1
+            17BD              17BD  proc__pow16.l2
+            17BE              17BE  proc__sinnorm
+            183A              183A  proc__sinnorm.l1
+            184C              184C  proc__sinnorm.l2
+            185A              185A  proc__sinnorm.l3
+            1864              1864  proc__cosnorm
+            18E1              18E1  proc__cosnorm.l1
+            1900              1900  proc__cosnorm.fimpar
+            1908              1908  proc__cosnorm.endf
+            190C              190C  proc__norm_factors
+            1A03              1A03  proc_initgraph
+            1A0E              1A0E  proc_closegraph
+            1A15              1A15  proc_width
+            1A1F              1A1F  proc_height
+            1A29              1A29  proc_repaint
+            1A3C              1A3C  proc_repaint.l1
+            1A49              1A49  proc_repaint.l2
+            1A4A              1A4A  proc_setpx
+            1A70              1A70  proc_drawlineh
+            1A80              1A80  proc_drawlineh.l1
+            1AA3              1AA3  proc_drawlineh.l2
+            1AA4              1AA4  proc_drawlinev
+            1AB4              1AB4  proc_drawlinev.l1
+            1AD7              1AD7  proc_drawlinev.l2
+            1AD8              1AD8  proc_drawrect
+            1B75              1B75  proc_fillrect
+            1B85              1B85  proc_fillrect.l1
+            1BB0              1BB0  proc_fillrect.l2
+            1BB1              1BB1  proc_drawarc
+            1C0A              1C0A  proc_drawarc.l1
+            1DB9              1DB9  proc_drawarc.fill1
+            1DDC              1DDC  proc_drawarc.endfill1
+            1E1F              1E1F  proc_drawarc.fill2
+            1E42              1E42  proc_drawarc.endfill2
+            1E7A              1E7A  proc_drawarc.l2
+            1E7F              1E7F  proc__arc_quadcoords
+            1EB0              1EB0  proc__x2dcoord
+            1F0B              1F0B  proc__y2dcoord
+            1F66              1F66  proc__arc_inc
+            1FEC              1FEC  rectx1
+            1FEE              1FEE  recty1
+            1FF0              1FF0  rectx2
+            1FF2              1FF2  recty2
+            1FF4              1FF4  color5
+            1FF5              1FF5  color6
+            1FF6              1FF6  xc
+            1FF8              1FF8  yc
+            1FFA              1FFA  r1
+            1FFC              1FFC  r2
+            1FFE              1FFE  color1
+            1FFF              1FFF  color2
+            2000              2000  x
+            2002              2002  y
+            2004              2004  x2
+            2006              2006  y2
+            2008              2008  w
+            200A              200A  h
+            200C              200C  color3
+            200D              200D  color4
+            200E              200E  i
+            2010              2010  j
+            2012              2012  angle
+            2016              2016  rinc
+            201A              201A  painttray
+            209F              209F  painttray.l1
+            20B7              20B7  painttray.l1.1
+            21BF              21BF  painttray.l1.2
+            21C6              21C6  painttray.l2
+

@@ -1,0 +1,24 @@
+%ifndef CRT_MAC	
+	%define CRT_MAC
+	
+	%include "lib/sys.mac"
+
+%macro writechar 1
+	mov al,%1
+	mov ah,0Eh
+	mov bh,00h
+	int 10h	
+%endmacro
+
+%macro newline 0
+	mov ah,03h
+	mov bh,00h
+	int 10h
+	
+	mov ah,02h
+	inc dh
+	mov dl,00h
+	int 10h	
+%endmacro
+
+%endif

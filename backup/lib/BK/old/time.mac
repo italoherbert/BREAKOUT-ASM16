@@ -1,0 +1,37 @@
+%ifndef TIME_MAC
+	%define TIME_MAC
+	
+	%include "lib/sys.mac"	
+	%include "lib/stdio.mac"
+	%include "lib/integer.mac"
+
+%macro ptimercount 0
+	mov ah,00h
+	int 1Ah
+	
+	jc %%fail
+		
+	cmp al,00
+	jnz %%overflow
+	jmp %%print 				
+	
+	%%fail:
+		printf "Falha...."
+		jmp %%endprint
+	%%overflow:
+		printf "Overflow..."
+	
+	%%print:	
+		
+	mov byte [n+3], ch
+	mov byte [n+2], cl
+	mov byte [n+1], dh	
+	mov byte [n+0], dl
+	printhex n, 6
+	printf " ---> "
+	printint n, 6	
+	%%endprint:
+%endmacro	
+
+	
+%endif

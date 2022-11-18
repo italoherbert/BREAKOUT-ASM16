@@ -1,0 +1,15 @@
+
+DEV=$1
+FILE=$2
+
+echo "Limpando MBR..."
+dd if=/dev/zero of=$DEV bs=512 seek=0 count=1
+
+echo ""
+echo "Gravando $FILE na MBR do dispositivo $DEV"
+dd if=$FILE of=$DEV bs=512 seek=0 count=1
+
+echo ""
+echo "Preparando MBR..."
+echo -ne "\x55\xaa" | dd seek=510 bs=1 of=$DEV
+

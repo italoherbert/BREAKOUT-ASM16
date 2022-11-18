@@ -1,0 +1,99 @@
+%ifndef GAME_MAC
+	%define GAME_MAC
+			
+	%include "lib/system.mac"
+	%include "lib/math.mac"
+	%include "lib/float.mac"
+	%include "lib/trigon.mac"
+
+	%include "src/lib/constants.asm"
+	%include "src/lib/tray.mac"
+	%include "src/lib/ball.mac"
+	%include "src/lib/racket.mac"
+
+section .data	
+	__LOSE: dw 0
+	
+	__lose: dw 0			
+
+%macro game_initialize 0		
+	tray_initialize
+	ball_initialize			
+	racket_initialize		
+			
+	mov16 __lose, __LOSE	
+	
+	game_hide_win_message
+	game_hide_lose_message
+	game_hide_pause_message
+%endmacro
+
+%macro game_status 1
+	cmp16 __lose, __ONE, cl
+	cmp cl,0
+	jz %%lose
+	
+	cmp16 __square_count, __ZERO, cl
+	cmp cl,0
+	jz %%win
+	
+	%%playering:
+		mov byte %1, 0
+		jmp %%end
+	%%win:
+		mov byte %1, 1
+		jmp %%end
+	%%lose:
+		mov byte %1, 2
+	%%end:
+%endmacro
+
+%macro game_frontmoveracket 0
+	racket_frontmove
+%endmacro
+
+%macro game_backmoveracket 0
+	racket_backmove
+%endmacro
+
+%macro game_moveball 0
+	tray_throw_colision
+	tray_throw_square_colision
+	racket_throw_colision	
+		
+	ball_move	
+%endmacro
+
+%macro game_show_init_message 0
+	mov16 __show_init_message, __ONE
+%endmacro
+
+%macro game_hide_init_message 0
+	mov16 __show_init_message, __ZERO
+%endmacro
+
+%macro game_show_win_message 0
+	mov16 __show_win_message, __ONE
+%endmacro
+
+%macro game_hide_win_message 0
+	mov16 __show_win_message, __ZERO
+%endmacro
+
+%macro game_show_lose_message 0
+	mov16 __show_lose_message, __ONE
+%endmacro
+
+%macro game_hide_lose_message 0
+	mov16 __show_lose_message, __ZERO
+%endmacro
+
+%macro game_show_pause_message 0
+	mov16 __show_pause_message, __ONE
+%endmacro
+
+%macro game_hide_pause_message 0
+	mov16 __show_pause_message, __ZERO
+%endmacro				
+	
+%endif

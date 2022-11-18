@@ -1,0 +1,28 @@
+     1                                  section .text
+     2                                  	global _start
+     3                                  	
+     4                                  _start:								
+     5                                  	; Carrega programa na memória
+     6 00000000 B402                    	mov ah,02h						; Função de leitura do disco
+     7 00000002 B280                    	mov dl,80h						; Numero do driver do dispositivo
+     8                                  
+     9 00000004 B500                    	mov ch,0						; Cilindro
+    10 00000006 B601                    	mov dh,1						; Cabeça
+    11 00000008 B101                    	mov cl,1						; Setor	
+    12 0000000A B01E                    	mov al,30						; Quantidade de setores
+    13                                  
+    14 0000000C BB0010                  	mov bx,0x1000					; Segmento de memoria onde o programa sera carregado 
+    15 0000000F 8EC3                    	mov es,bx
+    16 00000011 BB0000                  	mov bx,0x0000					; Offset no segmento onde o programa sera carregado
+    17 00000014 CD13                    	int 13h
+    18                                  		
+    19 00000016 720F                    	jc error			
+    20 00000018 B80010                  		mov ax,1000h
+    21 0000001B 8ED8                    		mov ds,ax
+    22                                  		
+    23 0000001D 8ED0                    		mov ss,ax
+    24 0000001F BCFEFF                  		mov sp,0xFFFE	
+    25 00000022 EA00000010              		jmp 0x1000:0x0000	
+    26                                  	error:
+    27                                  				 
+    28 00000027 EBFE                    	jmp $			

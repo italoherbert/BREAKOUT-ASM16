@@ -1,0 +1,1031 @@
+%ifndef BITS_MAC
+	%define BITS_MAC
+	
+	%include "lib/sys.mac"
+	%include "lib/stdio.mac"
+	%include "lib/trigon.csts"
+
+%macro cmpbs 3
+	xor ch,ch	
+	mov cl, %3
+	%%l1:
+		cmp cl,0
+		jz %%l2
+				
+		mov si,%1
+		mov di,%2
+		
+		add si,cx
+		add di,cx
+		dec si
+		dec di
+		
+		mov byte al,[si]
+		cmp byte al, [di]
+		ja %%above
+		jb %%below	
+		
+		dec cl
+		jmp %%l1
+	%%l2:
+	
+	jmp %%equal
+	%%above:
+		mov byte [BITS_CMP], 00000001b
+		jmp %%endcmp
+	%%below:
+		mov byte [BITS_CMP], 10000001b
+		jmp %%endcmp
+	%%equal:
+		mov byte [BITS_CMP], 0
+	%%endcmp:
+	
+%endmacro
+
+%macro cmpbsb 3
+	mov si, %1
+	
+	mov byte al, [si]
+	mov byte bl, %3	
+	
+	cmp al, bl
+	jb %%below
+	ja %%above
+	jmp %%equal
+	%%below:
+		mov byte al, [si+1]
+		cmp al, 0
+		jz %%bbelow
+		jmp %%above		
+		%%bbelow:
+			mov byte [BITS_CMP], 10000001b
+			jmp %%endcmp
+		%%babove:					
+			mov byte [BITS_CMP], 00000001b
+		jmp %%endcmp	
+	%%equal:
+		cmp bl, 0xFF 
+		jne %%endmax			
+			mov byte al, [si+1]
+			cmp al, 0
+			jz %%endneq
+				mov byte [BITS_CMP], 00000001b
+				jmp %%endcmp				
+			%%endneq:
+		
+			mov byte [BITS_CMP], 00000000b
+			jmp %%endcmp				
+		%%endmax:
+		
+		mov byte [BITS_CMP], 00000000b				
+		jmp %%endcmp
+	%%above:
+		mov byte [BITS_CMP], 00000001b
+		jmp %%endcmp		
+	%%endcmp:
+%endmacro
+
+%macro cmpbsw 3
+	mov si, %1
+	
+	mov byte ah, [si+1]
+	mov byte al, [si]			
+	mov word bx, %3
+				
+	cmp ax, bx
+	jb %%below
+	ja %%above
+	jmp %%equal
+	%%below:
+		mov byte al, [si+1]
+		cmp al, 0
+		jz %%bbelow
+		jmp %%above		
+		%%bbelow:
+			mov byte [BITS_CMP], 10000001b
+			jmp %%endcmp
+		%%babove:					
+			mov byte [BITS_CMP], 00000001b
+		jmp %%endcmp	
+	%%equal:
+		cmp word bx, 0xFFFF 
+		jne %%endmax			
+			mov byte al, [si+2]
+			cmp al, 0
+			jz %%endneq
+				mov byte [BITS_CMP], 00000001b
+				jmp %%endcmp								
+			%%endneq:
+		
+			mov byte [BITS_CMP], 00000000b
+			jmp %%endcmp				
+		%%endmax:
+		
+		mov byte [BITS_CMP], 00000000b				
+		jmp %%endcmp
+	%%above:
+		mov byte [BITS_CMP], 00000001b
+	%%endcmp:
+%endmacro
+
+%macro incbs 2
+	mov di,%1
+
+	xor ch,ch
+	mov cl,0
+	%%l1:
+		cmp cl,%2
+		jae %%l2
+		
+		push di
+		
+		add di,cx
+		
+		cmp byte [di], 0xFF
+		jb %%inc
+		jmp %%carry
+		
+		%%inc:
+		inc byte [di]
+		pop di			
+		jmp %%l2			
+		
+		%%carry:
+		mov byte [di],0	
+		pop di		
+		inc cl
+		jmp %%l1
+	%%l2:
+
+	cmp cl,%2
+	jne %%overflow
+	jmp %%notoverflow 		
+	%%overflow:		
+		mov byte [BITS_OF], TRUE
+		jmp %%endoverflow
+	%%notoverflow:		
+		mov byte [BITS_OF], FALSE
+	%%endoverflow:	
+%endmacro
+
+%macro decbs 2
+	mov di,%1
+
+	xor ch,ch
+	mov cl,0
+	%%l1:
+		cmp cl,%2
+		jae %%l2
+		
+		push di
+		
+		add di,cx
+		
+		cmp byte [di],0
+		ja %%dec
+		jmp %%carry
+		
+		%%dec:
+		dec byte [di]
+		pop di			
+		jmp %%l2			
+		
+		%%carry:	
+		mov byte [di], 0xFF
+		pop di		
+		inc cl
+		jmp %%l1
+	%%l2:
+
+	cmp cl,%2
+	jne %%overflow
+	jmp %%notoverflow 		
+	%%overflow:		
+		mov byte [BITS_OF], TRUE
+		jmp %%endoverflow
+	%%notoverflow:		
+		mov byte [BITS_OF], FALSE
+	%%endoverflow:			
+
+%endmacro
+
+%macro addbs 3
+	mov di,%1
+	mov si,%2
+
+	mov cx,0
+	mov bl,0
+	%%l1:
+		cmp cx,%3
+		jae %%l2
+		
+		add si,cx
+		add di,cx
+		
+		mov byte al, [si]				
+		add byte al, bl
+		add byte [di], al
+				
+		jc %%carry
+		jmp %%notcarry 		
+		%%carry:										
+			mov bl,1
+			jmp %%endcarry
+		%%notcarry:
+			mov bl,0
+		%%endcarry:
+		
+		sub di,cx
+		sub si,cx
+		
+		inc cx
+		jmp %%l1
+	%%l2:
+
+	cmp bl,0
+	jnz %%overflow
+	jmp %%notoverflow 		
+	%%overflow:		
+		mov byte [BITS_OF], TRUE
+		jmp %%endoverflow
+	%%notoverflow:		
+		mov byte [BITS_OF], FALSE
+	%%endoverflow:				
+
+%endmacro
+
+%macro subbs 3
+	mov di,%1
+	mov si,%2
+
+	mov cx,0
+	mov bl,0
+	%%l1:
+		cmp cx,%3
+		jae %%l2
+		
+		add si,cx
+		add di,cx
+		
+		mov byte al, [si]
+		add al,bl
+		sub byte [di], al
+		
+		jc %%carry
+		jmp %%notcarry 		
+		%%carry:			
+			mov bl,1
+			jmp %%endcarry
+		%%notcarry:
+			mov bl,0
+		%%endcarry:
+				
+		sub di,cx
+		sub si,cx
+		
+		inc cx
+		jmp %%l1
+	%%l2:
+
+	cmp bl,0
+	jne %%overflow
+	jmp %%notoverflow 		
+	%%overflow:		
+		mov byte [BITS_OF], TRUE
+		jmp %%endoverflow
+	%%notoverflow:		
+		mov byte [BITS_OF], FALSE
+	%%endoverflow:			
+
+%endmacro
+
+%macro mulbs 4
+	section .bss
+		%%aux: resb %4
+		%%desloc: resb 1
+		%%of: resb 1
+	section .text
+		cmpbs %2, %3, %4
+		cmp byte [BITS_CMP], 0
+		jle %%invert
+		jmp %%notinvert
+		%%invert:
+			mov si,%3
+			mov di,%2						
+			jmp %%endinvert
+		%%notinvert:
+			mov si,%2
+			mov di,%3						
+		%%endinvert:	
+	
+		mov byte [%%of], FALSE
+			
+		xor bh,bh
+		xor ch,ch
+		
+		push si
+		push di
+		
+		setbs %1, %4, 0	
+			
+		mov cl,0
+		%%l1:
+			cmp cl,%4
+			jae %%l2
+			
+			xor ah,ah
+					
+			mov bl,0
+			%%l1.1:
+				cmp bl,%4
+				jae %%l1.2
+		
+				pop di
+				pop si
+				push si
+				push di
+							
+				add si,bx
+				add di,cx
+							
+				mov dl,ah									
+				mov byte al, [di]
+				mul byte [si]
+				add al,dl
+															
+				mov di, %%aux
+				add di, bx
+				mov byte [di], al
+						
+				inc bl
+				jmp %%l1.1
+			%%l1.2:
+			
+			cmp ah,0
+			jz %%endof
+				mov byte [%%of], TRUE
+			%%endof:
+			
+			xor ah,ah
+			mov al,cl
+			mov dl,8
+			mul dl
+			mov byte [%%desloc], al			
+			
+			push bx
+			push cx
+			shlbs %%aux, %4, [%%desloc]
+			addbs %1, %%aux, %4
+			
+			cmp byte [BITS_OF], FALSE
+			je %%endof2
+				mov byte [%%of], TRUE
+			%%endof2:			
+			
+			pop cx
+			pop bx						
+		
+			inc cl
+			jmp %%l1
+		%%l2:
+		
+		pop di
+		pop si
+			
+		mov byte al, [%%of]
+		mov byte [BITS_OF], al
+%endmacro
+
+%macro divbs 5
+	section .bss
+		%%aux: resb 1
+	section .text
+		mov byte [BITS_ERROR], 0
+		setbs %1, %5, 0
+		movbs %2, %3, %5		
+		
+		cmpbs %4, %1, %5 				; verifica divisão por zero
+		cmp byte [BITS_CMP], 0
+		jg %%enddivzero
+			mov byte [BITS_ERROR], 1
+			jmp %%end
+		%%enddivzero:
+		
+		cmpbs %3, %4, %5				; verifica dividendo menor ou igual o divisor
+		cmp byte [BITS_CMP],0
+		jl %%divless
+		je %%divequals
+		jmp %%enddivcmp
+		%%divless:						; dividendo menor que divisor
+			movbsb %1, %5, 0			; 		quociente = 0
+			movbs %2, %3, %5			; 		resto = dividendo
+			jmp %%end
+		%%divequals:					; dividendo igual divisor
+			movbsb %1, %5, 1			; 		quociente = 1
+			movbsb %2, %5, 0			; 		resto = 0
+			jmp %%end
+		%%enddivcmp:
+				
+		mov al, %5
+		mov bl,8
+		mul bl
+		
+		push ax		
+		lzeroscountbs %%aux, %3, %5
+		pop ax
+		mov byte cl, [%%aux]								
+		mov byte bl, al
+		sub byte bl, cl
+						
+		push ax
+		push bx
+		push cx
+		lzeroscountbs %%aux, %4, %5
+		pop cx
+		pop bx
+		pop ax
+		mov byte dl, al		
+		sub byte dl, [%%aux]
+		sub bl, dl					
+													
+		mov byte [%%aux], bl
+		add byte cl, dl						
+
+		push cx
+		shrbs %2, %5, [%%aux]
+		pop cx
+											
+		mov byte bl, TRUE														
+		xor ch,ch										
+		%%l1:																				
+			push cx
+			push bx			
+			cmpbs %2, %4, %5
+			pop bx
+						
+			cmp byte [BITS_CMP],0
+			jl %%less
+				shlbs %1, %5, 1				
+				incbs %1, %5
+				subbs %2, %4, %5
+				mov byte bl, FALSE				
+				jmp %%endcmp
+			%%less:
+				cmp byte bl, TRUE
+				je %%endcmp
+				
+				push bx
+				shlbs %1, %5, 1
+				pop bx									
+			%%endcmp:					
+							
+			pop cx
+			
+			mov al, %5
+			mov dl,8
+			mul dl						
+			cmp byte cl, al
+			jae %%end
+										
+			push bx		
+			push cx				
+			mov byte [%%aux],cl
+			loadbitbs %%aux, %3, %5, [%%aux]
+			shlbs %2, %5, 1
+			pop cx
+			pop bx
+									
+			cmp byte [%%aux],0
+			jz %%endindexinc			
+				push bx		
+				push cx							
+				incbs %2, %5
+				pop cx
+				pop bx			
+			%%endindexinc:
+			
+			inc cl										
+			
+			jmp %%l1		
+		%%end:		
+						
+%endmacro
+
+%macro powbs 3
+	section .bss
+		%%aux: resb %2
+		%%aux2: resb %2
+	section .text		
+		movbs %%aux, %1, %2
+		
+		mov byte cl, %3
+		dec cl
+		%%l1:
+			cmp cl, 0
+			jz %%l2						
+		
+			push cx
+		
+			movbs %%aux2, %1, %2
+			mulbs %1, %%aux, %%aux2, %2
+		
+			pop cx
+		
+			dec cl
+			jmp %%l1
+		%%l2:
+%endmacro
+
+%macro loadbitbs 4
+	xor ah,ah
+	mov byte al, %4
+	mov bl,8
+	div bl
+	
+	xor bh,bh
+	mov byte bl, %3
+	dec bl
+	sub bl, al		
+	
+	mov si, %2
+	add si, bx
+	mov byte bl, [si]				
+		
+	%%l1:
+		cmp ah,0
+		jz %%l2
+	
+		shl bl,1
+		
+		dec ah
+		jmp %%l1
+	%%l2:
+	shr bl,7
+	
+	mov byte [%1], bl
+%endmacro
+
+%macro movbs 3
+	mov si,%2
+	mov di,%1	
+	
+	mov cl,%3
+	%%l1:
+		cmp cl,0
+		jz %%l2
+		
+		mov byte al,[si]
+		mov byte [di], al
+		inc si
+		inc di
+		
+		dec cl
+		jmp %%l1
+	%%l2:		
+%endmacro
+
+%macro movbsb 3
+	setbs %1, %2, 0
+	mov byte [%1], %3	
+%endmacro
+
+%macro movbsw 3
+	setbs %1, %2, 0
+	mov word ax, %3
+	mov byte [%1], al
+	mov byte [%1+1], ah
+%endmacro
+
+%macro shrbs 3		
+	mov si,%1
+	
+	xor dx,dx
+	xor ah,ah
+	mov byte al,%3
+	mov bx,8
+	div bx
+	
+	push dx
+	push ax
+
+	cmp ax,0
+	jbe %%l2
+	
+	xor dh,dh
+	mov byte dl,%2	
+	sub dx,ax		
+
+	mov cx,0		
+						
+	%%l1:			
+		cmp cx,dx
+		jae %%l2
+		
+		add si,cx		
+		mov di,si
+		add si,ax
+		
+		mov byte bl,[si]
+		mov byte [di], bl
+		
+		sub si,cx
+		sub si,ax
+				
+		inc cx
+		jmp %%l1
+	%%l2:
+	
+	pop ax
+	pop dx
+	
+	mov cx,%2
+	sub cx,ax
+	%%l3:
+		cmp cx,%2
+		jae %%l4	
+		
+		add si,cx				
+		mov byte [si], 00h		
+		sub si,cx
+		
+		inc cx
+		jmp %%l3
+	%%l4:
+	
+	mov cx,%2
+	sub cx,ax
+	xor al,al
+	%%l5:
+		cmp cx,0
+		jz %%l6
+	
+		add si,cx
+		sub si,1
+		push cx
+		mov cx,dx
+		mov byte bl, [si]
+		%%l5.1:
+			cmp cx,0
+			jz %%l5.2
+			
+			shr byte [si], 1
+			
+			dec cx
+			jmp %%l5.1
+		%%l5.2:
+		add byte [si], al
+		mov al, bl
+		
+		mov cx,8
+		sub cx,dx
+		%%l5.3:
+			cmp cx,0
+			jz %%l5.4
+			
+			shl al, 1
+			
+			dec cx
+			jmp %%l5.3
+		%%l5.4:				
+		
+		pop cx
+		add si,1
+		sub si,cx
+	
+		dec cx
+		jmp %%l5
+	%%l6:
+				
+%endmacro
+
+%macro shlbs 3		
+	mov si,%1
+	
+	xor dx,dx
+	xor ah,ah
+	mov byte al,%3
+	mov bx,8
+	div bx
+	
+	push dx
+	push ax
+
+	cmp ax,0
+	jbe %%l2
+	
+	mov cx,%2	
+	%%l1:			
+		cmp cx,ax
+		jbe %%l2
+		
+		push si
+		
+		add si,cx
+		sub si,1		
+		mov di,si
+		sub si,ax		
+			
+		mov byte bl,[si]
+		mov byte [di], bl
+		
+		pop si
+				
+		dec cx
+		jmp %%l1
+	%%l2:
+	
+	pop ax
+	pop dx
+		
+	mov cx,0
+	%%l3:
+		cmp cx,ax
+		jae %%l4	
+		
+		add si,cx				
+		mov byte [si], 00h		
+		sub si,cx
+		
+		inc cx
+		jmp %%l3
+	%%l4:
+
+	mov cx,ax
+	mov al,0
+	%%l5:
+		cmp cx,%2
+		jae %%l6
+	
+		add si,cx
+		
+		push cx
+		mov cx,dx
+		mov byte bl, [si]
+		%%l5.1:
+			cmp cx,0
+			jz %%l5.2
+			
+			shl byte [si], 1
+			
+			dec cx
+			jmp %%l5.1
+		%%l5.2:
+		add byte [si], al
+		mov al, bl
+		
+		mov cx,8
+		sub cx,dx
+		%%l5.3:
+			cmp cx,0
+			jz %%l5.4
+			
+			shr al, 1
+			
+			dec cx
+			jmp %%l5.3
+		%%l5.4:				
+		
+		pop cx
+		sub si,cx
+	
+		inc cx
+		jmp %%l5
+	%%l6:
+					
+%endmacro
+
+%macro oneshrbs 2
+	shrbs %1, %2, 1
+	mov di, %1
+	add di, %2
+	sub di,1
+	
+	add byte [di], 10000000b
+%endmacro
+
+%macro oneshlbs 2
+	shlbs %1, %2, 1
+	mov di, %1
+	
+	add byte [di], 00000001b
+%endmacro
+
+%macro setbs 3
+	mov di,%1
+	
+	xor ch,ch
+	mov byte cl,0
+	%%l1:
+		cmp cl,%2
+		jae %%l2
+		
+		mov byte [di], %3 
+				
+		inc di
+		inc cl
+		jmp %%l1
+	%%l2:
+%endmacro
+
+%macro lzeroscountbs 3
+	lcountbs %1, %2, %3, 0
+%endmacro
+
+%macro lonescountbs 3
+	lcountbs %1, %2, %3, 1
+%endmacro
+
+%macro lcountbs 4
+	mov si,%2
+	
+	xor ah,ah
+	mov byte al, %3
+	add si,ax
+	sub si,1
+	
+	mov bx,0
+	push bx
+	
+	xor ch,ch
+	mov cl,0
+	%%l1:
+		mov byte al, %3
+		cmp cl,al
+		jae %%l2
+			
+		push cx
+		
+		xor ch,ch
+		mov cl,0
+		%%l1.1:
+			mov byte al,8
+			cmp cl,al
+			jae %%l1.2
+			
+			mov byte bl, [si]
+			mov dl,cl
+			%%l1.1.1:
+				cmp dl,0
+				jz %%l1.1.2
+			
+				shl bl,1
+				
+				dec dl
+				jmp %%l1.1.1
+			%%l1.1.2:
+			
+			shr bl,7
+			
+			cmp bl,%4
+			jnz %%l1.3	
+			
+			inc cl										
+			jmp %%l1.1
+		%%l1.2:
+			pop cx
+			pop bx
+			add bl,8
+			push bx
+			jmp %%l1.4
+		%%l1.3:
+			mov dl,cl
+			mov al,bl
+			pop cx
+			
+			pop bx
+			add bl,dl
+			push bx
+										
+			cmp al,0
+			jnz %%l2	
+		%%l1.4:						
+				
+		dec si
+		inc cl				
+		jmp %%l1
+	%%l2:
+	
+	pop bx
+	mov byte [%1], bl	
+%endmacro
+
+
+%macro mergebs 3
+	section .bss
+		%%s1: resb 1
+		%%s2: resb 1
+	section .text
+		countbs %%s1, %1, %3
+		countbs %%s2, %2, %3
+		
+		mov byte al, %3
+		mov bl,2
+		mul bl
+				
+		mov byte dl,[%%s1]
+		add byte dl,[%%s2]
+		cmp dl,al				
+		ja %%overflow
+								
+		xor ch,ch		
+		mov byte cl,[%%s2]
+		%%desloc:
+			cmp cl,0
+			jz %%enddesloc
+			
+			push cx				
+			shlbs %1, %3, 4
+			pop cx
+					
+			dec cl
+			jmp %%desloc
+		%%enddesloc: 				
+		
+		addbs %1, %2, %3
+				
+		jmp %%notoverflow
+		%%overflow:		
+			mov byte [BITS_OF], TRUE
+			jmp %%end_overflow
+		%%notoverflow:
+			mov byte [BITS_OF], FALSE
+		%%end_overflow:			
+%endmacro
+
+%macro countbs 3
+	mov word si, %2	
+		
+	xor bh,bh	
+	xor ch,ch
+		
+	mov cl,%3
+	%%l1:
+		cmp cl,0
+		jz %%l2	
+		
+		push si
+		add si,cx
+		dec si		
+		
+		mov byte al, [si]
+		
+		mov bl,2
+		%%l1.1:
+			cmp bl,0		
+			jz %%l1.2
+			
+			mov dl,al
+			shr dl,4
+			cmp dl,0
+			jz %%zero
+			cmp bl,2
+			jb %%l1.2			
+			jmp %%l1.3
+			%%zero:
+					
+			shl al,4		
+			dec bl		
+			jmp %%l1.1
+		%%l1.2:
+			pop si		
+			jmp %%l1.4	
+		%%l1.3:
+			pop si
+			jmp %%l2
+		%%l1.4:	
+						
+		dec cl
+		cmp dl,0
+		jnz %%l2
+		jmp %%l1
+	%%l2:
+	
+	cmp cl,0
+	jz %%zero2
+	jmp %%nzero2
+	%%zero2:
+		mov byte [%1], 1
+		jmp %%endzero2
+	%%nzero2:
+		mov al,cl
+		mov dl,2
+		mul dl
+		
+		mov dl,2
+		sub dl,bl
+		
+		add al,dl
+				
+		mov byte [%1], al
+	%%endzero2:
+		
+%endmacro
+
+section .bss
+	BITS_OF: resb 1	
+	BITS_CMP: resb 1
+	BITS_ERROR: resb 1
+	
+	BITS_AUX: resw 2	
+			
+%endif

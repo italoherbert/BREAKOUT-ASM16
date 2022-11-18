@@ -1,0 +1,134 @@
+
+%ifndef INTEGER_MAC
+	%define INTEGER_MAC
+	
+	%include "lib/sys.mac"
+	%include "lib/bits.mac"
+	%include "lib/stdio.mac"
+	
+%macro printint 2-3 FALSE		; toint( E0FC ) = 								
+	section .bss				; p1 = toint( E0FC / A^3 )	= toint(39) = 57
+		%%q: resb %2			; p2 = toint( E0FC % A^3 ) 	= toint(254) = 596
+		%%r: resb %2			; p1 e p2 = 57596
+		%%factor: resb %2
+		%%index: resw 1		
+	section .text	
+		initstkint %2
+		movbsb %%factor, %2, 0Ah		
+		
+		mov word bx, %1
+		push bx		
+		call %%toint
+		pop bx
+			
+		printhex %%q, %2, %3				
+								
+		jmp %%end
+							
+		%%toint:																											
+			mov ax,sp
+			mov bp,ax										
+						
+			divbs %%q, %%r, word [bp+2], %%factor, %2																																					
+						
+			cmpbsb %%q, %2, 9			
+			cmp byte [BITS_CMP], 0
+			jg %%parseq
+			jmp %%endparseq			
+			%%parseq:
+				intpush %%r																			
+				intpush %%index, %%q
+				mov word ax, [%%index]			
+				push ax				
+								
+				call %%toint
+				pop ax
+					
+				intpop
+				intpop %%r								
+			%%endparseq:
+												
+			cmpbsb %%r, %2, 9
+			cmp byte [BITS_CMP], 0
+			jg %%parser
+			jmp %%endparser			
+			%%parser:
+				intpush %%q																							
+				intpush %%index, %%r
+				mov word ax, [%%index]							
+				push ax					
+												
+				call %%toint
+				pop ax												
+								
+				movbs %%r, %%q, %2	
+				
+				intpop
+				intpop %%q																
+			%%endparser:										
+									
+			mergebs %%q, %%r, %2
+																								
+			ret	
+		
+		%%end:
+%endmacro
+
+%macro initstkint 1
+	xor bh,bh
+	mov bl,%1
+
+	mov ax, INT_STK
+	add word ax, CST_INT_STK_SIZE
+	sub ax,bx
+	
+	mov word [INT_STK_INDEX], ax
+	mov byte [INT_STK_DATA_SIZE], %1				
+%endmacro
+
+%macro intpush 1			
+	movbs word [INT_STK_INDEX], %1, byte [INT_STK_DATA_SIZE]	
+	mov word ax, [INT_STK_INDEX]
+	mov byte bl, [INT_STK_DATA_SIZE]
+	xor bh, bh 								
+	sub ax, bx 
+	mov word [INT_STK_INDEX], ax		 		 	 	 
+%endmacro 
+
+%macro intpush 2
+	mov word ax, [INT_STK_INDEX]		
+	mov word [%1], ax
+	movbs [INT_STK_INDEX], %2, [INT_STK_DATA_SIZE]
+	mov word ax, [INT_STK_INDEX]
+	mov byte bl, [INT_STK_DATA_SIZE]
+	xor bh, bh 								
+	sub ax, bx 
+	mov word [INT_STK_INDEX], ax		 	 	 	
+%endmacro 	 	 
+ 	 	 	
+%macro intpop 1
+	mov word ax, [INT_STK_INDEX]
+	mov byte bl, [INT_STK_DATA_SIZE]
+	xor bh, bh 								
+	add ax, bx 
+	mov word [INT_STK_INDEX], ax	
+	movbs %1, [INT_STK_INDEX], [INT_STK_DATA_SIZE]												 	 	
+%endmacro 	 	 	
+ 	 	 
+%macro intpop 0
+	mov word ax, [INT_STK_INDEX]
+	mov byte bl, [INT_STK_DATA_SIZE]
+	xor bh, bh 								
+	add ax, bx 
+	mov word [INT_STK_INDEX], ax	
+%endmacro
+
+section .data
+	CST_INT_STK_SIZE: equ 255
+
+section .bss
+	INT_STK: resb CST_INT_STK_SIZE
+	INT_STK_INDEX: resw 1
+	INT_STK_DATA_SIZE: resb 1
+	
+%endif

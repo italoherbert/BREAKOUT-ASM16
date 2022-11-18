@@ -1,0 +1,148 @@
+%ifndef GUI_MAC
+	%define GUI_MAC
+			
+	%include "lib/system.mac"
+	%include "lib/math.mac"
+	%include "lib/graph.mac"
+
+	%include "src/lib/constants.asm"
+
+%macro game_paint 0
+	paintbg
+	painttray
+	paintball
+	paintracket
+	repaint
+	
+	cmp16 __show_init_message, __ZERO, cl
+	cmp cl,0
+	je %%init_message_painted
+		show_message 'Pressione alguma tecla..', 8, 13, 07h		
+	%%init_message_painted:
+		
+	cmp16 __show_pause_message, __ZERO, cl
+	cmp cl,0
+	je %%pause_message_painted		
+		show_message 'Pausa...', 16, 14, 07h
+	%%pause_message_painted:	
+		
+	cmp16 __show_win_message, __ZERO, cl
+	cmp cl,0
+	je %%win_message_painted
+		show_message 'Ganhou...', 12, 13, 01h
+		show_message 'Parabens !!!', 12, 14, 09h
+	%%win_message_painted:
+						
+	cmp16 __show_lose_message, __ZERO, cl
+	cmp cl,0
+	je %%lose_message_painted	
+		show_message 'Perdeu...', 11, 13, 04h
+		show_message 'Tente novamente !', 11, 14, 09h
+	%%lose_message_painted:	
+%endmacro
+
+%macro paintbg 0
+	mov ax, 0
+	mov bx, 0
+	mov cx, 320
+	mov dx, 200
+	__fillrect ax, bx, cx, dx, 0 	
+%endmacro
+
+%macro show_message 4
+	section .data
+	%%str: db %1,0
+section .text
+	__drawstring %%str, %2, %3, %4
+%endmacro
+	
+%macro painttray 0
+section .data
+	%%color: dw 1
+section .text
+	mov ax,20
+	regtoint16 ax, %%color
+
+	fillrect __tray_x1, __tray_y1, __tray_x2, __tray_y2, __tray_color
+	drawlineh __tray_x1, __tray_y1, __tray_x2, __tray_bordercolor			
+	drawlinev __tray_x1, __tray_y1, __tray_y2, __tray_bordercolor			
+	drawlinev __tray_x2, __tray_y1, __tray_y2, __tray_bordercolor			
+	
+	mov16 __square_y, __tray_y1
+	mov16 __square_y2, __square_y	
+	add16 __square_y2, __square_h
+	mov cl,0
+	%%l1:
+		push cx
+		int16toreg __square_ycount, dx
+		pop cx
+		cmp cl,dl
+		jae %%l2
+		push cx
+		
+		mov16 __square_x, __tray_x1		
+		mov16 __square_x2, __square_x
+		add16 __square_x2, __square_w
+		
+		mov cl,0 
+		%%l1.1:
+			push cx
+			int16toreg __square_xcount, dx
+			pop cx
+			cmp cl,dl
+			jae %%l1.2									
+			push cx
+						
+			int16toreg __square_xcount, ax
+			pop cx
+			pop bx
+			push bx
+			push cx
+						
+			mul bx
+			add ax,cx
+												
+			vlodsb __squaremap, ax, cl
+			cmp cl,0
+			jz %%painted 														
+				fillrect __square_x, __square_y, __square_x2, __square_y2, %%color
+				drawrect __square_x, __square_y, __square_x2, __square_y2, __square_bordercolor
+			%%painted:													
+
+			add16 __square_x, __square_w
+			add16 __square_x2, __square_w				
+			inc16 %%color
+			
+			pop cx
+			inc cl
+			jmp %%l1.1
+		%%l1.2:	
+		
+		add16 __square_y, __square_h		
+		add16 __square_y2, __square_h		
+								
+		pop cx
+		inc cl
+		jmp %%l1	
+	%%l2:
+%endmacro		
+
+%macro paintball 0
+	fillarc __ball_x, __ball_y, __ball_radial, __ball_radial, __ball_color
+	drawarc __ball_x, __ball_y, __ball_radial, __ball_radial, __ball_bordercolor
+%endmacro
+
+%macro paintracket 0
+section .data
+	%%x2: dw 0
+	%%y2: dw 0
+section .text
+	mov16 %%x2, __racket_x
+	mov16 %%y2, __racket_y
+	add16 %%x2, __racket_w
+	add16 %%y2, __racket_h
+	fillrect __racket_x, __racket_y, %%x2, %%y2, __racket_color
+	drawrect __racket_x, __racket_y, %%x2, %%y2, __racket_bordercolor
+%endmacro				
+	
+%endif

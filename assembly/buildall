@@ -1,0 +1,9 @@
+
+cd assembly
+
+./compile $1
+./compile $2
+./compile $3
+./compile $4
+
+cd ..

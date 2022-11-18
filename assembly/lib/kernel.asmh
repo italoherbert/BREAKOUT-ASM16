@@ -1,0 +1,13 @@
+%ifndef KERNEL_ASMH
+	%define KERNEL_ASMH
+
+section .data
+
+	kernel_segment: equ 0x50
+
+	mformat: equ 0x144
+	malloc: equ 0x175
+	laddr: equ 0x1EB
+	faddr: equ 0x201
+
+%endif

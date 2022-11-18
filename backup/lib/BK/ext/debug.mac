@@ -1,0 +1,86 @@
+
+%ifndef DEBUC_MAC
+	%define DEBUG_MAC
+	
+	%include "lib/crt.mac"
+	
+%macro printflags 1-*	; todos os flags acessiveis - o,s,z,a,p,c
+	%rep %0
+		printflag %1
+		%rotate 1
+	%endrep
+%endmacro
+
+%macro printflag 1
+	push ax
+	push bx
+	push cx
+	push dx
+
+	j%1 %%on
+	jmp %%off
+	%%on:
+		writechar 31h
+		jmp %%end
+	%%off:
+		writechar 30h	
+	%%end:
+	
+	pop dx
+	pop cx
+	pop bx
+	pop ax
+%endmacro
+
+%macro printregs 0	
+	call %%l1
+	%%l1:
+	pop word [DEBUG_IP]
+	sub word [DEBUG_IP],3
+
+	multDEBUG_IPush ax,bx,cx,dx,ds,es,ss,si,di,bp,sp
+	printreg "AX", ax	
+	printreg "BX", bx
+	printreg "CX", cx
+	printreg "DX", dx
+	newline
+	printreg "ES:DI", es, di
+	printreg "DS:SI", ds, si
+	mov ax,cs
+	mov word bx, [DEBUG_IP] 
+	printreg "CS:DEBUG_IP", ax, bx
+	printreg "SS:SP", ss, sp	
+	printreg "BP", bp
+	newline
+	multDEBUG_IPop ax,bx,cx,dx,ds,es,ss,si,di,bp,sp
+%endmacro
+
+%macro printreg 2
+	multDEBUG_IPush ax,bx,cx,dx,ds,es,ss,si,di,bp,sp
+	mov word [DEBUG_REG1], %2
+	printf %1
+	printf "="
+	printhex16 [DEBUG_REG1]
+	printf " "
+	multDEBUG_IPop ax,bx,cx,dx,ds,es,ss,si,di,bp,sp
+%endmacro
+
+%macro printreg 3
+	multDEBUG_IPush ax,bx,cx,dx,ds,es,ss,si,di,bp,sp
+	mov word [DEBUG_REG1], %2
+	mov word [DEBUG_REG2], %3
+	printf %1
+	printf "="
+	printhex16 [DEBUG_REG1]
+	printf ":"
+	printhex16 [DEBUG_REG2]
+	printf " "
+	multDEBUG_IPop ax,bx,cx,dx,ds,es,ss,si,di,bp,sp
+%endmacro
+
+section .bss
+	DEBUG_REG1: resw 1
+	DEBUG_REG2: resw 1
+	DEBUG_IP: resw 1
+	
+%endif

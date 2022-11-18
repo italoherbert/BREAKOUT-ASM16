@@ -1,0 +1,183 @@
+%ifndef TRAY_MAC
+	%define TRAY_MAC
+			
+	%include "lib/system.mac"
+	%include "lib/math.mac"
+
+	%include "src/lib/constants.asm"
+
+section .data
+	__SQUARE_COUNT: dw 50
+	__SQUARE_XCOUNT: dw 10
+	__SQUARE_YCOUNT: dw 5	
+
+	__tray_x1: dw 10
+	__tray_y1: dw 10
+	__tray_x2: dw 310
+	__tray_y2: dw 190
+	__tray_color: db 00h
+	__tray_bordercolor: db 07h	
+
+	__square_x: dw 0
+	__square_y: dw 0		
+	__square_x2: dw 0
+	__square_y2: dw 0
+	__square_w: dw 30
+	__square_h: dw 10	
+	__square_color: db 01h
+	__square_bordercolor: db 07h
+					
+	__square_count: dw 0	
+	__square_xcount: dw 0
+	__square_ycount: dw 0
+	__squaremap: times 50 db 0
+	
+%macro tray_throw_colision 0
+section .data
+	%%aux: dw 0
+section .text
+	mov16 %%aux, __ball_x
+	sub16 %%aux, __ball_radial
+	cmp16 %%aux, __tray_x1, cl
+	cmp cl,0
+	jg %%endsidex1
+		ball_xinvdirection		
+	%%endsidex1:
+	
+	mov16 %%aux, __ball_x
+	add16 %%aux, __ball_radial
+	cmp16 %%aux, __tray_x2, cl
+	cmp cl,0
+	jl %%endsidex2
+		ball_xinvdirection	
+	%%endsidex2:
+		
+	mov16 %%aux, __ball_y
+	sub16 %%aux, __ball_radial
+	cmp16 %%aux, __tray_y1, cl
+	cmp cl,0
+	jg %%endsidey1
+		ball_yinvdirection	
+	%%endsidey1:
+	
+	mov16 %%aux, __ball_y
+	add16 %%aux, __ball_radial
+	cmp16 %%aux, __tray_y2, cl
+	cmp cl,0
+	jl %%endsidey2
+		;mov16 __lose, __ONE
+		ball_yinvdirection
+	%%endsidey2:	
+		
+%endmacro	
+	
+%macro tray_throw_square_colision 0
+section .data
+	%%x: dw 0
+	%%y: dw 0
+section .text
+	mov16 %%x, __ball_x
+	mov16 %%y, __ball_y
+	sub16 %%x, __tray_x1
+	sub16 %%y, __tray_y1
+	
+	int16toreg __ball_xinc, ax	
+	cmp ax,0
+	jg %%xpos
+	jmp %%xneg
+	%%xpos:
+		add16 %%x, __ball_radial		
+		jmp %%xpos_or_neg
+	%%xneg:
+		sub16 %%x, __ball_radial				
+	%%xpos_or_neg:		
+		__tray_has_square_colision %%x, %%y, cl
+		cmp cl,0
+		jz %%endx
+			squaremap_set %%x, %%y, 0
+			ball_xinvdirection
+	%%endx:	
+	
+	mov16 %%x, __ball_x
+	mov16 %%y, __ball_y
+	sub16 %%x, __tray_x1
+	sub16 %%y, __tray_y1
+		
+	int16toreg __ball_yinc, ax	
+	cmp ax,0
+	jg %%ypos
+	jmp %%yneg
+	%%ypos:
+		add16 %%y, __ball_radial		
+		jmp %%ypos_or_neg
+	%%yneg:
+		sub16 %%y, __ball_radial				
+	%%ypos_or_neg:		
+		__tray_has_square_colision %%x, %%y, cl
+		cmp cl,0
+		jz %%endy
+			squaremap_set %%x, %%y, 0
+			ball_yinvdirection			
+	%%endy:
+			
+%endmacro
+
+%macro __tray_has_square_colision 3	
+	div16 %1, __square_w		
+	cmp16 %1, __square_xcount, cl
+	cmp cl,0
+	jg %%ncol
+	jl %%xbound
+		dec16 %1
+	%%xbound:
+
+	div16 %2, __square_h			
+	cmp16 %2, __square_ycount, cl
+	cmp cl,0
+	jge %%ncol
+	jl %%ybound
+		dec16 %2
+	%%ybound:	
+		
+	squaremap_get %1, %2, cl
+	cmp cl,0
+	jz %%ncol
+		
+		mov byte %3,1		
+		jmp %%end
+	%%ncol:		
+		mov byte %3,0
+	%%end:
+%endmacro	
+	
+%macro squaremap_get 3
+section .data
+	%%aux: dd 0
+section .text
+	mov16 %%aux, %2
+	mul16 %%aux, __square_xcount
+	add16 %%aux, %1
+	
+	int16toreg %%aux, ax		
+	
+	vlodsb __squaremap, ax, %3		
+%endmacro
+
+%macro squaremap_set 3
+section .data
+	%%aux: dd 0
+section .text
+	mov16 %%aux, %2
+	mul16 %%aux, __square_xcount
+	add16 %%aux, %1
+	
+	int16toreg %%aux, ax			
+	vstosb __squaremap, ax, %3		
+%endmacro
+
+%macro squaremap_remove 2
+	squaremap_set %1, %2, 0
+	dec16 __square_count
+%endmacro
+
+%endif

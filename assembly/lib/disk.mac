@@ -1,0 +1,59 @@
+
+%ifndef DISK_MAC
+	%define DISK_MAC
+
+	%include "lib/stdio.mac"
+	
+%macro showdiskparams 1
+	printf "Parametros do disco"
+	prtln
+	prtln
+
+	mov ah,08h
+	mov dl,%1
+	int 13h
+	
+	push dx
+	push cx
+	push ax
+	printf "Status do disco: "
+	pop ax
+	prthex8 ah
+	
+	prtln	
+	printf "Numero de trilha maximo: "
+	
+	pop cx
+	push cx
+	and cl,11000000b
+	shr cl,6
+	mov ah,cl
+	mov al,ch	
+	prthex16 ax
+	
+	prtln
+	printf "Numero de setor maximo: "
+	
+	pop cx
+	and cl,00111111b
+	prthex8 cl
+	
+	prtln
+	printf "Numero de cabeca maximo: "
+	
+	pop dx
+	push dx
+	prthex8 dh
+	
+	prtln
+	printf "Numero de drivers instalados: "
+	
+	pop dx
+	prthex8 dl
+
+%endmacro
+
+;read ( disp, seek, count, buffer )
+
+	
+%endif

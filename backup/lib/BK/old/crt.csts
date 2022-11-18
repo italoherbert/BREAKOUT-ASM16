@@ -1,0 +1,23 @@
+section .data
+
+	; Constantes CRT globais
+
+	CRT_MODE:		equ 03h
+	CRT_X1:			equ 00h
+	CRT_Y1:			equ 00h
+	CRT_X2: 		equ 4Fh
+	CRT_Y2:			equ 19h
+	CRT_TEXTBG:		equ 00h
+	CRT_TEXTCOLOR: 	equ 07h
+	
+	; Variaveis CRT globais
+
+section .bss	
+	_CRT_Y1: 		resb 1
+	_CRT_X1: 		resb 1
+	_CRT_Y2:		resb 1
+	_CRT_X2: 		resb 1
+	 
+	_CRT_TEXTCOLOR: resb 1
+	_CRT_TEXTBG: 	resb 1
+	

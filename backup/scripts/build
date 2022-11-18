@@ -1,0 +1,10 @@
+
+PROG=main
+SEEK=63
+COUNT=63
+
+./compile $PROG
+#./saveprog /dev/sdb $PROG.bin $SEEK $COUNT
+
+echo "Pronto!"
+echo ""

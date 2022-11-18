@@ -1,0 +1,1623 @@
+     1                                  
+     2                                  %include "lib/system.mac"
+     3                              <1>  
+     4                              <1> %ifndef SYSTEM_MAC
+     5                              <1>  	%define SYSTEM_MAC
+     6                              <1>  	
+     7                              <1> 	%ifndef TRUE
+     8                              <1> 		%define TRUE 01h
+     9                              <1> 	%endif
+    10                              <1> 	%ifndef FALSE
+    11                              <1> 		%define FALSE 00h
+    12                              <1> 	%endif 	
+    13                              <1>  	
+    14                              <1>  	%include "lib/kernel.asmh"
+    15                              <2> %ifndef KERNEL_ASMH
+    16                              <2> 	%define KERNEL_ASMH
+    17                              <2> 
+    18                              <2> section .data
+    19                              <2> 
+    20                              <2> 	kernel_segment: equ 0x50
+    21                              <2> 
+    22                              <2> 	mformat: equ 0x144
+    23                              <2> 	malloc: equ 0x175
+    24                              <2> 	laddr: equ 0x1EB
+    25                              <2> 	faddr: equ 0x201
+    26                              <2> 	proc_prtstr: equ 0x221
+    27                              <2> 	proc_prthex16: equ 0x23A
+    28                              <2> 	proc_prthex8: equ 0x253
+    29                              <2> 	proc_prtln: equ 0x283
+    30                              <2> 
+    31                              <2> %endif
+    32                              <1>  	 	
+    33                              <1> %macro mformat 4
+    34                              <1> 	openstack 8
+    35                              <1> 	mov word [ bp + 0 ], %1
+    36                              <1> 	mov word [ bp + 2 ], %2
+    37                              <1> 	mov word [ bp + 4 ], %3
+    38                              <1> 	mov word [ bp + 6 ], %4
+    39                              <1> 	call kernel_segment:mformat
+    40                              <1> 	closestack 8
+    41                              <1> %endmacro
+    42                              <1> 
+    43                              <1> %macro malloc 6
+    44                              <1> 	openstack 0Bh
+    45                              <1> 	mov word [ bp + 4 ], %3
+    46                              <1> 	mov word [ bp + 6 ], %4
+    47                              <1> 	mov word [ bp + 8 ], %5	
+    48                              <1> 	call kernel_segment:malloc
+    49                              <1> 	push sp
+    50                              <1> 	pop bp
+    51                              <1> 	mov word %1, [ bp ]
+    52                              <1> 	mov word %2, [ bp + 2 ]
+    53                              <1> 	mov byte %6, [ bp + 0x0A ]
+    54                              <1> 	closestack 0Bh
+    55                              <1> %endmacro 	
+    56                              <1> 
+    57                              <1> %macro laddr 2
+    58                              <1> 	laddr %1, %2, %1, %2
+    59                              <1> %endmacro
+    60                              <1> 
+    61                              <1> %macro faddr 2
+    62                              <1> 	faddr %1, %2, %1, %2
+    63                              <1> %endmacro
+    64                              <1>  	
+    65                              <1> %macro laddr 4
+    66                              <1> 	openstack 8
+    67                              <1> 	mov word [ bp + 4 ], %3
+    68                              <1> 	mov word [ bp + 6 ], %4	
+    69                              <1> 	call kernel_segment:laddr
+    70                              <1> 	push sp
+    71                              <1> 	pop bp
+    72                              <1> 	mov word %1, [ bp + 0 ]
+    73                              <1> 	mov word %2, [ bp + 2 ]	
+    74                              <1> 	closestack 8
+    75                              <1> %endmacro
+    76                              <1> 
+    77                              <1> %macro faddr 4
+    78                              <1> 	openstack 8
+    79                              <1> 	mov word [ bp + 4 ], %3
+    80                              <1> 	mov word [ bp + 6 ], %4	
+    81                              <1> 	call kernel_segment:faddr
+    82                              <1> 	push sp
+    83                              <1> 	pop bp
+    84                              <1> 	mov word %1, [ bp + 0 ]
+    85                              <1> 	mov word %2, [ bp + 2 ]	
+    86                              <1> 	closestack 8
+    87                              <1> %endmacro	
+    88                              <1>  
+    89                              <1> 
+    90                              <1> %macro openstack 1		
+    91                              <1> 	sub word sp, %1
+    92                              <1> 	push sp
+    93                              <1> 	pop bp
+    94                              <1> %endmacro
+    95                              <1> 
+    96                              <1> %macro closestack 1
+    97                              <1> 	add word sp, %1
+    98                              <1> %endmacro
+    99                              <1> 
+   100                              <1> %macro multipush 1-* 	
+   101                              <1>  	%rep %0
+   102                              <1>  		push %1
+   103                              <1>  		%rotate 1
+   104                              <1>  	%endrep 	
+   105                              <1> %endmacro
+   106                              <1>  
+   107                              <1> %macro multipop 1-*
+   108                              <1>  	%rep %0
+   109                              <1>  	 	%rotate -1
+   110                              <1>  		pop %1
+   111                              <1>  	%endrep 	 	
+   112                              <1> %endmacro  	 
+   113                              <1>  	
+   114                              <1> %endif 
+   115                                  %include "lib/stdio.mac"
+   116                              <1> 
+   117                              <1> %ifndef STDIO_MAC
+   118                              <1> 	%define STDIO_MAC
+   119                              <1> 	
+   120                              <1> 	%include "lib/stdio.asm"
+   121                              <2> 
+   122                              <2> %ifndef STDIO_ASM
+   123                              <2> 	%define STDIO_ASM
+   124                              <2> 	
+   125                              <2> 	%include "lib/crt.mac"
+   126                              <3> %ifndef CRT_MAC	
+   127                              <3> 	%define CRT_MAC
+   128                              <3> 	
+   129                              <3> 	%include "lib/crt.asm"
+   130                              <4> %ifndef CRT_ASM	
+   131                              <4> 	%define CRT_ASM
+   132                              <4> 	
+   133                              <4> section .data	
+   134                              <4> 	
+   135                              <4> proc_writechar:
+   136 00000000 89E0                <4> 	mov ax,sp
+   137 00000002 89C5                <4> 	mov bp,ax
+   138                              <4> 
+   139 00000004 8A4602              <4> 	mov al,[bp+2]
+   140 00000007 B40E                <4> 	mov ah,0Eh
+   141 00000009 B700                <4> 	mov bh,00h
+   142 0000000B CD10                <4> 	int 10h	
+   143                              <4> 	
+   144 0000000D C3                  <4> 	ret
+   145                              <4> 
+   146                              <4> proc_newline:
+   147 0000000E B403                <4> 	mov ah,03h
+   148 00000010 B700                <4> 	mov bh,00h
+   149 00000012 CD10                <4> 	int 10h
+   150                              <4> 	
+   151 00000014 B402                <4> 	mov ah,02h
+   152 00000016 FEC6                <4> 	inc dh
+   153 00000018 B200                <4> 	mov dl,00h
+   154 0000001A CD10                <4> 	int 10h	
+   155                              <4> 	
+   156 0000001C C3                  <4> 	ret
+   157                              <4> 
+   158                              <4> %endif
+   159                              <3> 	%include "lib/system.mac"
+   160                              <4>  
+   161                              <4> %ifndef SYSTEM_MAC
+   162                              <4>  	%define SYSTEM_MAC
+   163                              <4>  	
+   164                              <4> 	%ifndef TRUE
+   165                              <4> 		%define TRUE 01h
+   166                              <4> 	%endif
+   167                              <4> 	%ifndef FALSE
+   168                              <4> 		%define FALSE 00h
+   169                              <4> 	%endif 	
+   170                              <4>  	
+   171                              <4>  	%include "lib/kernel.asmh"
+   172                              <4>  	 	
+   173                              <4> %macro mformat 4
+   174                              <4> 	openstack 8
+   175                              <4> 	mov word [ bp + 0 ], %1
+   176                              <4> 	mov word [ bp + 2 ], %2
+   177                              <4> 	mov word [ bp + 4 ], %3
+   178                              <4> 	mov word [ bp + 6 ], %4
+   179                              <4> 	call kernel_segment:mformat
+   180                              <4> 	closestack 8
+   181                              <4> %endmacro
+   182                              <4> 
+   183                              <4> %macro malloc 6
+   184                              <4> 	openstack 0Bh
+   185                              <4> 	mov word [ bp + 4 ], %3
+   186                              <4> 	mov word [ bp + 6 ], %4
+   187                              <4> 	mov word [ bp + 8 ], %5	
+   188                              <4> 	call kernel_segment:malloc
+   189                              <4> 	push sp
+   190                              <4> 	pop bp
+   191                              <4> 	mov word %1, [ bp ]
+   192                              <4> 	mov word %2, [ bp + 2 ]
+   193                              <4> 	mov byte %6, [ bp + 0x0A ]
+   194                              <4> 	closestack 0Bh
+   195                              <4> %endmacro 	
+   196                              <4> 
+   197                              <4> %macro laddr 2
+   198                              <4> 	laddr %1, %2, %1, %2
+   199                              <4> %endmacro
+   200                              <4> 
+   201                              <4> %macro faddr 2
+   202                              <4> 	faddr %1, %2, %1, %2
+   203                              <4> %endmacro
+   204                              <4>  	
+   205                              <4> %macro laddr 4
+   206                              <4> 	openstack 8
+   207                              <4> 	mov word [ bp + 4 ], %3
+   208                              <4> 	mov word [ bp + 6 ], %4	
+   209                              <4> 	call kernel_segment:laddr
+   210                              <4> 	push sp
+   211                              <4> 	pop bp
+   212                              <4> 	mov word %1, [ bp + 0 ]
+   213                              <4> 	mov word %2, [ bp + 2 ]	
+   214                              <4> 	closestack 8
+   215                              <4> %endmacro
+   216                              <4> 
+   217                              <4> %macro faddr 4
+   218                              <4> 	openstack 8
+   219                              <4> 	mov word [ bp + 4 ], %3
+   220                              <4> 	mov word [ bp + 6 ], %4	
+   221                              <4> 	call kernel_segment:faddr
+   222                              <4> 	push sp
+   223                              <4> 	pop bp
+   224                              <4> 	mov word %1, [ bp + 0 ]
+   225                              <4> 	mov word %2, [ bp + 2 ]	
+   226                              <4> 	closestack 8
+   227                              <4> %endmacro	
+   228                              <4>  
+   229                              <4> 
+   230                              <4> %macro openstack 1		
+   231                              <4> 	sub word sp, %1
+   232                              <4> 	push sp
+   233                              <4> 	pop bp
+   234                              <4> %endmacro
+   235                              <4> 
+   236                              <4> %macro closestack 1
+   237                              <4> 	add word sp, %1
+   238                              <4> %endmacro
+   239                              <4> 
+   240                              <4> %macro multipush 1-* 	
+   241                              <4>  	%rep %0
+   242                              <4>  		push %1
+   243                              <4>  		%rotate 1
+   244                              <4>  	%endrep 	
+   245                              <4> %endmacro
+   246                              <4>  
+   247                              <4> %macro multipop 1-*
+   248                              <4>  	%rep %0
+   249                              <4>  	 	%rotate -1
+   250                              <4>  		pop %1
+   251                              <4>  	%endrep 	 	
+   252                              <4> %endmacro  	 
+   253                              <4>  	
+   254                              <4> %endif 
+   255                              <3> 	
+   256                              <3> %macro writechar 1
+   257                              <3> 	openstack 1	
+   258                              <3> 	mov byte [ bp ], %1
+   259                              <3> 	call proc_writechar
+   260                              <3> 	closestack 1
+   261                              <3> %endmacro
+   262                              <3> 
+   263                              <3> %macro newline 0
+   264                              <3> 	call proc_newline
+   265                              <3> %endmacro
+   266                              <3> 
+   267                              <3> %endif
+   268                              <2> 
+   269                              <2> section .data
+   270                              <2> 
+   271                              <2> proc_printbin:		
+   272 0000001D 89E0                <2> 	mov ax,sp
+   273 0000001F 89C5                <2> 	mov bp,ax
+   274                              <2> 	
+   275 00000021 8A4E06              <2> 	mov byte cl, [bp+6]
+   276 00000024 8A7E07              <2> 	mov byte bh, [bp+7]	
+   277                              <2> 	
+   278 00000027 B300                <2> 	mov bl,0
+   279 00000029 B201                <2> 	mov dl,TRUE
+   280 0000002B 30ED                <2> 	xor ch,ch
+   281                              <2> 	.l1:			
+   282 0000002D 80F900              <2> 		cmp cl,0
+   283 00000030 7452                <2> 		jz .l2
+   284                              <2> 							
+   285 00000032 55                  <2> 		push bp
+   286 00000033 8B4602              <2> 		mov word ax, [bp+2]
+   287 00000036 8ED8                <2> 		mov ds, ax
+   288 00000038 8B7604              <2> 		mov si, [bp+4]		
+   289 0000003B 01CE                <2> 		add si,cx
+   290 0000003D 83EE01              <2> 		sub si,1		
+   291                              <2> 		
+   292 00000040 0A1C                <2> 		or byte bl, [si]
+   293 00000042 08FB                <2> 		or byte bl, bh
+   294 00000044 7439                <2> 		jz .printed											
+   295 00000046 53                  <2> 			push bx
+   296 00000047 51                  <2> 			push cx	
+   297 00000048 80FA01              <2> 			cmp dl, TRUE
+   298 0000004B 7402                <2> 			je .first
+   299 0000004D EB0F                <2> 			jmp .nfirst
+   300                              <2> 			.first:
+   301 0000004F B200                <2> 				mov dl, FALSE
+   302 00000051 52                  <2> 				push dx
+   303                              <2> 				
+   304 00000052 88FC                <2> 				mov ah, bh
+   305 00000054 8A04                <2> 				mov byte al, [si]
+   306 00000056 50                  <2> 				push ax
+   307 00000057 E8B300              <2> 				call proc_printbin8
+   308 0000005A 58                  <2> 				pop ax
+   309                              <2> 							
+   310 0000005B 5A                  <2> 				pop dx
+   311 0000005C EB0B                <2> 				jmp .endfirst
+   312                              <2> 			.nfirst:
+   313 0000005E 52                  <2> 				push dx
+   314                              <2> 				
+   315 0000005F B401                <2> 				mov ah, TRUE
+   316 00000061 8A04                <2> 				mov byte al, [si]
+   317 00000063 50                  <2> 				push ax
+   318 00000064 E8A600              <2> 				call proc_printbin8
+   319 00000067 58                  <2> 				pop ax
+   320                              <2> 								
+   321 00000068 5A                  <2> 				pop dx
+   322                              <2> 			.endfirst:	
+   323 00000069 59                  <2> 			pop cx
+   324 0000006A 5B                  <2> 			pop bx		
+   325                              <2> 			
+   326 0000006B 80F901              <2> 			cmp cl,1
+   327 0000006E 760F                <2> 			jbe .spaceprinted
+   328                              <2> 				writechar 20h
+   329                              <3>  openstack 1
+   330 00000070 83EC01              <4>  sub word sp, %1
+   331 00000073 54                  <4>  push sp
+   332 00000074 5D                  <4>  pop bp
+   333 00000075 C6460020            <3>  mov byte [ bp ], %1
+   334 00000079 E884FF              <3>  call proc_writechar
+   335                              <3>  closestack 1
+   336 0000007C 83C401              <4>  add word sp, %1
+   337                              <2> 			.spaceprinted:
+   338                              <2> 		.printed:
+   339                              <2> 		
+   340 0000007F 5D                  <2> 		pop bp
+   341                              <2> 	
+   342 00000080 FEC9                <2> 		dec cl
+   343 00000082 EBA9                <2> 		jmp .l1		
+   344                              <2> 	.l2:
+   345                              <2> 	
+   346 00000084 80FB00              <2> 	cmp bl,0
+   347 00000087 750F                <2> 	jnz .end
+   348                              <2> 		writechar 30h
+   349                              <3>  openstack 1
+   350 00000089 83EC01              <4>  sub word sp, %1
+   351 0000008C 54                  <4>  push sp
+   352 0000008D 5D                  <4>  pop bp
+   353 0000008E C6460030            <3>  mov byte [ bp ], %1
+   354 00000092 E86BFF              <3>  call proc_writechar
+   355                              <3>  closestack 1
+   356 00000095 83C401              <4>  add word sp, %1
+   357                              <2> 	.end:	
+   358                              <2> 
+   359 00000098 C3                  <2> 	ret
+   360                              <2> 	
+   361                              <2> proc_printbin16:
+   362 00000099 89E0                <2> 	mov ax,sp
+   363 0000009B 89C5                <2> 	mov bp,ax
+   364                              <2> 		
+   365 0000009D 8A7E04              <2> 	mov bh, [bp+4]
+   366 000000A0 B300                <2> 	mov bl,0
+   367 000000A2 B201                <2> 	mov dl,TRUE
+   368 000000A4 30ED                <2> 	xor ch,ch
+   369 000000A6 B102                <2> 	mov cl,2
+   370                              <2> 	.l1:
+   371 000000A8 80F900              <2> 		cmp cl,0
+   372 000000AB 744B                <2> 		jz .l2		
+   373                              <2> 		
+   374 000000AD 55                  <2> 		push bp
+   375 000000AE 01CD                <2> 		add bp,cx
+   376 000000B0 45                  <2> 		inc bp
+   377                              <2> 		
+   378 000000B1 0A5E00              <2> 		or byte bl, [bp]
+   379 000000B4 08FB                <2> 		or byte bl, bh
+   380 000000B6 743B                <2> 		jz .printed											
+   381 000000B8 53                  <2> 			push bx
+   382 000000B9 51                  <2> 			push cx	
+   383 000000BA 80FA01              <2> 			cmp dl, TRUE
+   384 000000BD 7402                <2> 			je .first
+   385 000000BF EB10                <2> 			jmp .nfirst
+   386                              <2> 			.first:
+   387 000000C1 B200                <2> 				mov dl, FALSE
+   388 000000C3 52                  <2> 				push dx
+   389                              <2> 				
+   390 000000C4 88FC                <2> 				mov ah, bh
+   391 000000C6 8A4600              <2> 				mov byte al, [bp]
+   392 000000C9 50                  <2> 				push ax
+   393 000000CA E84000              <2> 				call proc_printbin8
+   394 000000CD 58                  <2> 				pop ax
+   395                              <2> 							
+   396 000000CE 5A                  <2> 				pop dx
+   397 000000CF EB0C                <2> 				jmp .endfirst
+   398                              <2> 			.nfirst:
+   399 000000D1 52                  <2> 				push dx
+   400                              <2> 				
+   401 000000D2 B401                <2> 				mov ah, TRUE
+   402 000000D4 8A4600              <2> 				mov byte al, [bp]
+   403 000000D7 50                  <2> 				push ax
+   404 000000D8 E83200              <2> 				call proc_printbin8
+   405 000000DB 58                  <2> 				pop ax
+   406                              <2> 								
+   407 000000DC 5A                  <2> 				pop dx
+   408                              <2> 			.endfirst:	
+   409 000000DD 59                  <2> 			pop cx
+   410 000000DE 5B                  <2> 			pop bx		
+   411                              <2> 			
+   412 000000DF 80F901              <2> 			cmp cl,1
+   413 000000E2 760F                <2> 			jbe .spaceprinted
+   414                              <2> 				writechar 20h
+   415                              <3>  openstack 1
+   416 000000E4 83EC01              <4>  sub word sp, %1
+   417 000000E7 54                  <4>  push sp
+   418 000000E8 5D                  <4>  pop bp
+   419 000000E9 C6460020            <3>  mov byte [ bp ], %1
+   420 000000ED E810FF              <3>  call proc_writechar
+   421                              <3>  closestack 1
+   422 000000F0 83C401              <4>  add word sp, %1
+   423                              <2> 			.spaceprinted:
+   424                              <2> 		.printed:
+   425                              <2> 		
+   426 000000F3 5D                  <2> 		pop bp
+   427                              <2> 		
+   428 000000F4 FEC9                <2> 		dec cl
+   429 000000F6 EBB0                <2> 		jmp .l1
+   430                              <2> 	.l2:
+   431                              <2> 	
+   432 000000F8 80FB00              <2> 	cmp bl,0
+   433 000000FB 750F                <2> 	jnz .end
+   434                              <2> 		writechar 30h
+   435                              <3>  openstack 1
+   436 000000FD 83EC01              <4>  sub word sp, %1
+   437 00000100 54                  <4>  push sp
+   438 00000101 5D                  <4>  pop bp
+   439 00000102 C6460030            <3>  mov byte [ bp ], %1
+   440 00000106 E8F7FE              <3>  call proc_writechar
+   441                              <3>  closestack 1
+   442 00000109 83C401              <4>  add word sp, %1
+   443                              <2> 	.end:
+   444                              <2> 	
+   445 0000010C C3                  <2> 	ret	
+   446                              <2> 	
+   447                              <2> proc_printbin8:
+   448 0000010D 89E0                <2> 	mov ax,sp
+   449 0000010F 89C5                <2> 	mov bp,ax
+   450 00000111 8A4602              <2> 	mov byte al, [bp+2]
+   451 00000114 3C00                <2> 	cmp al, 0
+   452 00000116 0F858700            <2> 	jnz .nzero
+   453                              <2> 		writechar 30h
+   454                              <3>  openstack 1
+   455 0000011A 83EC01              <4>  sub word sp, %1
+   456 0000011D 54                  <4>  push sp
+   457 0000011E 5D                  <4>  pop bp
+   458 0000011F C6460030            <3>  mov byte [ bp ], %1
+   459 00000123 E8DAFE              <3>  call proc_writechar
+   460                              <3>  closestack 1
+   461 00000126 83C401              <4>  add word sp, %1
+   462                              <2> 		
+   463 00000129 89E0                <2> 		mov ax,sp
+   464 0000012B 89C5                <2> 		mov bp,ax
+   465 0000012D 8A4603              <2> 		mov byte al, [bp+3]		
+   466 00000130 3C00                <2> 		cmp al, FALSE
+   467 00000132 0F84C500            <2> 		je .end
+   468                              <2> 			writechar 30h
+   469                              <3>  openstack 1
+   470 00000136 83EC01              <4>  sub word sp, %1
+   471 00000139 54                  <4>  push sp
+   472 0000013A 5D                  <4>  pop bp
+   473 0000013B C6460030            <3>  mov byte [ bp ], %1
+   474 0000013F E8BEFE              <3>  call proc_writechar
+   475                              <3>  closestack 1
+   476 00000142 83C401              <4>  add word sp, %1
+   477                              <2> 			writechar 30h
+   478                              <3>  openstack 1
+   479 00000145 83EC01              <4>  sub word sp, %1
+   480 00000148 54                  <4>  push sp
+   481 00000149 5D                  <4>  pop bp
+   482 0000014A C6460030            <3>  mov byte [ bp ], %1
+   483 0000014E E8AFFE              <3>  call proc_writechar
+   484                              <3>  closestack 1
+   485 00000151 83C401              <4>  add word sp, %1
+   486                              <2> 			writechar 30h
+   487                              <3>  openstack 1
+   488 00000154 83EC01              <4>  sub word sp, %1
+   489 00000157 54                  <4>  push sp
+   490 00000158 5D                  <4>  pop bp
+   491 00000159 C6460030            <3>  mov byte [ bp ], %1
+   492 0000015D E8A0FE              <3>  call proc_writechar
+   493                              <3>  closestack 1
+   494 00000160 83C401              <4>  add word sp, %1
+   495                              <2> 			writechar 30h
+   496                              <3>  openstack 1
+   497 00000163 83EC01              <4>  sub word sp, %1
+   498 00000166 54                  <4>  push sp
+   499 00000167 5D                  <4>  pop bp
+   500 00000168 C6460030            <3>  mov byte [ bp ], %1
+   501 0000016C E891FE              <3>  call proc_writechar
+   502                              <3>  closestack 1
+   503 0000016F 83C401              <4>  add word sp, %1
+   504                              <2> 			writechar 30h
+   505                              <3>  openstack 1
+   506 00000172 83EC01              <4>  sub word sp, %1
+   507 00000175 54                  <4>  push sp
+   508 00000176 5D                  <4>  pop bp
+   509 00000177 C6460030            <3>  mov byte [ bp ], %1
+   510 0000017B E882FE              <3>  call proc_writechar
+   511                              <3>  closestack 1
+   512 0000017E 83C401              <4>  add word sp, %1
+   513                              <2> 			writechar 30h
+   514                              <3>  openstack 1
+   515 00000181 83EC01              <4>  sub word sp, %1
+   516 00000184 54                  <4>  push sp
+   517 00000185 5D                  <4>  pop bp
+   518 00000186 C6460030            <3>  mov byte [ bp ], %1
+   519 0000018A E873FE              <3>  call proc_writechar
+   520                              <3>  closestack 1
+   521 0000018D 83C401              <4>  add word sp, %1
+   522                              <2> 			writechar 30h
+   523                              <3>  openstack 1
+   524 00000190 83EC01              <4>  sub word sp, %1
+   525 00000193 54                  <4>  push sp
+   526 00000194 5D                  <4>  pop bp
+   527 00000195 C6460030            <3>  mov byte [ bp ], %1
+   528 00000199 E864FE              <3>  call proc_writechar
+   529                              <3>  closestack 1
+   530 0000019C 83C401              <4>  add word sp, %1
+   531 0000019F EB5A                <2> 			jmp .end		
+   532                              <2> 	.nzero:
+   533                              <2> 
+   534 000001A1 B000                <2> 	mov byte al, FALSE
+   535 000001A3 50                  <2> 	push ax
+   536                              <2> 
+   537 000001A4 89E0                <2> 	mov ax,sp
+   538 000001A6 89C5                <2> 	mov bp,ax
+   539 000001A8 8A5E04              <2> 	mov byte bl, [bp+4]
+   540 000001AB B100                <2> 	mov cl,0
+   541                              <2> 	.l1:
+   542 000001AD 80F908              <2> 		cmp cl,8
+   543 000001B0 7348                <2> 		jae .l2
+   544                              <2> 		
+   545 000001B2 88C8                <2> 		mov al,cl
+   546                              <2> 		
+   547 000001B4 88DA                <2> 		mov dl, bl		
+   548                              <2> 		
+   549                              <2> 		.l1.1:
+   550 000001B6 3C00                <2> 			cmp al,0
+   551 000001B8 7406                <2> 			jz .l1.2
+   552                              <2> 							
+   553 000001BA D0E2                <2> 			shl dl,1
+   554                              <2> 			
+   555 000001BC FEC8                <2> 			dec al
+   556 000001BE EBF6                <2> 			jmp .l1.1
+   557                              <2> 		.l1.2:
+   558                              <2> 						
+   559 000001C0 C0EA07              <2> 		shr dl,7
+   560                              <2> 		
+   561 000001C3 89E0                <2> 		mov ax,sp
+   562 000001C5 89C5                <2> 		mov bp,ax			
+   563 000001C7 8A4605              <2> 		mov byte al, [bp+5]
+   564 000001CA 3C01                <2> 		cmp al, TRUE
+   565 000001CC 7413                <2> 		je .endzero		
+   566 000001CE 80FA00              <2> 			cmp dl,0
+   567 000001D1 7402                <2> 			jz .zero
+   568 000001D3 EB08                <2> 			jmp .notzero
+   569                              <2> 			.zero:
+   570 000001D5 58                  <2> 				pop ax
+   571 000001D6 50                  <2> 				push ax
+   572 000001D7 3C01                <2> 				cmp al, TRUE				
+   573 000001D9 7406                <2> 				je .endzero
+   574 000001DB EB19                <2> 				jmp .inc
+   575                              <2> 			.notzero:
+   576 000001DD 58                  <2> 				pop ax
+   577 000001DE B001                <2> 				mov al, TRUE	
+   578 000001E0 50                  <2> 				push ax				
+   579                              <2> 		.endzero:
+   580                              <2> 									
+   581 000001E1 80C230              <2> 		add dl,30h
+   582                              <2> 
+   583 000001E4 51                  <2> 		push cx
+   584 000001E5 52                  <2> 		push dx
+   585                              <2> 		writechar dl
+   586                              <3>  openstack 1
+   587 000001E6 83EC01              <4>  sub word sp, %1
+   588 000001E9 54                  <4>  push sp
+   589 000001EA 5D                  <4>  pop bp
+   590 000001EB 885600              <3>  mov byte [ bp ], %1
+   591 000001EE E80FFE              <3>  call proc_writechar
+   592                              <3>  closestack 1
+   593 000001F1 83C401              <4>  add word sp, %1
+   594 000001F4 5A                  <2> 		pop dx
+   595 000001F5 59                  <2> 		pop cx	
+   596                              <2> 
+   597                              <2> 		.inc:
+   598                              <2> 	
+   599 000001F6 FEC1                <2> 		inc cl
+   600 000001F8 EBB3                <2> 		jmp .l1	
+   601                              <2> 	.l2:
+   602                              <2> 	
+   603 000001FA 58                  <2> 	pop ax
+   604                              <2> 	
+   605                              <2> 	.end:
+   606                              <2> 	
+   607 000001FB C3                  <2> 	ret	
+   608                              <2> 
+   609                              <2> proc_printhex:
+   610 000001FC 89E0                <2> 	mov ax,sp
+   611 000001FE 89C5                <2> 	mov bp,ax
+   612                              <2> 
+   613 00000200 8A4E06              <2> 	mov byte cl, [bp+6]
+   614 00000203 8A7E07              <2> 	mov byte bh, [bp+7]	
+   615                              <2> 	
+   616 00000206 B300                <2> 	mov bl,0	
+   617 00000208 B201                <2> 	mov dl,TRUE
+   618 0000020A 30ED                <2> 	xor ch,ch
+   619                              <2> 	.l1:			
+   620 0000020C 80F900              <2> 		cmp cl,0
+   621 0000020F 743E                <2> 		jz .l2
+   622                              <2> 							
+   623 00000211 55                  <2> 		push bp
+   624                              <2> 		
+   625 00000212 8B4602              <2> 		mov ax, [bp+2]
+   626 00000215 8ED8                <2> 		mov ds, ax
+   627 00000217 8B7604              <2> 		mov si, [bp+4]
+   628 0000021A 01CE                <2> 		add si,cx
+   629 0000021C 83EE01              <2> 		sub si,1		
+   630                              <2> 		
+   631 0000021F 0A1C                <2> 		or byte bl, [si]
+   632 00000221 08FB                <2> 		or byte bl, bh
+   633 00000223 7425                <2> 		jz .printed							
+   634 00000225 53                  <2> 			push bx
+   635 00000226 51                  <2> 			push cx	
+   636 00000227 80FA01              <2> 			cmp dl, TRUE
+   637 0000022A 7402                <2> 			je .first
+   638 0000022C EB0F                <2> 			jmp .nfirst
+   639                              <2> 			.first:
+   640 0000022E B200                <2> 				mov dl, FALSE
+   641 00000230 52                  <2> 				push dx
+   642                              <2> 				
+   643 00000231 88FC                <2> 				mov ah, bh
+   644 00000233 8A04                <2> 				mov byte al, [si]
+   645 00000235 50                  <2> 				push ax
+   646 00000236 E88B00              <2> 				call proc_printhex8
+   647 00000239 58                  <2> 				pop ax
+   648                              <2> 							
+   649 0000023A 5A                  <2> 				pop dx
+   650 0000023B EB0B                <2> 				jmp .endfirst
+   651                              <2> 			.nfirst:
+   652 0000023D 52                  <2> 				push dx
+   653                              <2> 				
+   654 0000023E B401                <2> 				mov ah, TRUE
+   655 00000240 8A04                <2> 				mov byte al, [si]
+   656 00000242 50                  <2> 				push ax
+   657 00000243 E87E00              <2> 				call proc_printhex8
+   658 00000246 58                  <2> 				pop ax
+   659                              <2> 								
+   660 00000247 5A                  <2> 				pop dx
+   661                              <2> 			.endfirst:	
+   662 00000248 59                  <2> 			pop cx
+   663 00000249 5B                  <2> 			pop bx		
+   664                              <2> 		.printed:
+   665                              <2> 		
+   666 0000024A 5D                  <2> 		pop bp
+   667                              <2> 	
+   668 0000024B FEC9                <2> 		dec cl
+   669 0000024D EBBD                <2> 		jmp .l1		
+   670                              <2> 	.l2:
+   671                              <2> 	
+   672 0000024F 80FB00              <2> 	cmp bl,0
+   673 00000252 750F                <2> 	jnz .end
+   674                              <2> 		writechar 30h
+   675                              <3>  openstack 1
+   676 00000254 83EC01              <4>  sub word sp, %1
+   677 00000257 54                  <4>  push sp
+   678 00000258 5D                  <4>  pop bp
+   679 00000259 C6460030            <3>  mov byte [ bp ], %1
+   680 0000025D E8A0FD              <3>  call proc_writechar
+   681                              <3>  closestack 1
+   682 00000260 83C401              <4>  add word sp, %1
+   683                              <2> 	.end:
+   684                              <2> 		
+   685 00000263 C3                  <2> 	ret
+   686                              <2> 
+   687                              <2> proc_printhex16:
+   688 00000264 89E0                <2> 	mov ax,sp
+   689 00000266 89C5                <2> 	mov bp,ax
+   690                              <2> 
+   691 00000268 8A7E04              <2> 	mov byte bh, [bp+4]		
+   692 0000026B B300                <2> 	mov bl,0	
+   693 0000026D B201                <2> 	mov dl,TRUE
+   694 0000026F 30ED                <2> 	xor ch,ch
+   695 00000271 B102                <2> 	mov cl, 2	
+   696                              <2> 	.l1:			
+   697 00000273 80F900              <2> 		cmp cl,0
+   698 00000276 7437                <2> 		jz .l2
+   699                              <2> 							
+   700 00000278 55                  <2> 		push bp		
+   701 00000279 01CD                <2> 		add bp,cx
+   702 0000027B 45                  <2> 		inc bp		
+   703                              <2> 		
+   704 0000027C 0A5E00              <2> 		or byte bl, [bp]
+   705 0000027F 08FB                <2> 		or byte bl, bh
+   706 00000281 7427                <2> 		jz .printed							
+   707 00000283 53                  <2> 			push bx
+   708 00000284 51                  <2> 			push cx	
+   709 00000285 80FA01              <2> 			cmp dl, TRUE
+   710 00000288 7402                <2> 			je .first
+   711 0000028A EB10                <2> 			jmp .nfirst
+   712                              <2> 			.first:
+   713 0000028C B200                <2> 				mov dl, FALSE
+   714 0000028E 52                  <2> 				push dx
+   715                              <2> 				
+   716 0000028F 88FC                <2> 				mov ah, bh
+   717 00000291 8A4600              <2> 				mov byte al, [bp]
+   718 00000294 50                  <2> 				push ax
+   719 00000295 E82C00              <2> 				call proc_printhex8
+   720 00000298 58                  <2> 				pop ax
+   721                              <2> 							
+   722 00000299 5A                  <2> 				pop dx
+   723 0000029A EB0C                <2> 				jmp .endfirst
+   724                              <2> 			.nfirst:
+   725 0000029C 52                  <2> 				push dx
+   726                              <2> 				
+   727 0000029D B401                <2> 				mov ah, TRUE
+   728 0000029F 8A4600              <2> 				mov byte al, [bp]
+   729 000002A2 50                  <2> 				push ax
+   730 000002A3 E81E00              <2> 				call proc_printhex8
+   731 000002A6 58                  <2> 				pop ax
+   732                              <2> 								
+   733 000002A7 5A                  <2> 				pop dx
+   734                              <2> 			.endfirst:	
+   735 000002A8 59                  <2> 			pop cx
+   736 000002A9 5B                  <2> 			pop bx		
+   737                              <2> 		.printed:
+   738                              <2> 		
+   739 000002AA 5D                  <2> 		pop bp
+   740                              <2> 	
+   741 000002AB FEC9                <2> 		dec cl
+   742 000002AD EBC4                <2> 		jmp .l1		
+   743                              <2> 	.l2:
+   744                              <2> 	
+   745 000002AF 80FB00              <2> 	cmp bl,0
+   746 000002B2 750F                <2> 	jnz .end
+   747                              <2> 		writechar 30h
+   748                              <3>  openstack 1
+   749 000002B4 83EC01              <4>  sub word sp, %1
+   750 000002B7 54                  <4>  push sp
+   751 000002B8 5D                  <4>  pop bp
+   752 000002B9 C6460030            <3>  mov byte [ bp ], %1
+   753 000002BD E840FD              <3>  call proc_writechar
+   754                              <3>  closestack 1
+   755 000002C0 83C401              <4>  add word sp, %1
+   756                              <2> 	.end:
+   757                              <2> 	
+   758 000002C3 C3                  <2> 	ret
+   759                              <2> 	
+   760                              <2> proc_printhex8:
+   761 000002C4 89E0                <2> 	mov ax,sp
+   762 000002C6 89C5                <2> 	mov bp,ax
+   763 000002C8 8A4602              <2> 	mov byte al, [bp+2]
+   764 000002CB 3C00                <2> 	cmp al, 0
+   765 000002CD 752B                <2> 	jnz .nzero
+   766                              <2> 		writechar 30h
+   767                              <3>  openstack 1
+   768 000002CF 83EC01              <4>  sub word sp, %1
+   769 000002D2 54                  <4>  push sp
+   770 000002D3 5D                  <4>  pop bp
+   771 000002D4 C6460030            <3>  mov byte [ bp ], %1
+   772 000002D8 E825FD              <3>  call proc_writechar
+   773                              <3>  closestack 1
+   774 000002DB 83C401              <4>  add word sp, %1
+   775                              <2> 		
+   776 000002DE 89E0                <2> 		mov ax,sp
+   777 000002E0 89C5                <2> 		mov bp,ax
+   778 000002E2 8A4603              <2> 		mov byte al, [bp+3]		
+   779 000002E5 3C00                <2> 		cmp al, FALSE
+   780 000002E7 7476                <2> 		je .end
+   781                              <2> 			writechar 30h
+   782                              <3>  openstack 1
+   783 000002E9 83EC01              <4>  sub word sp, %1
+   784 000002EC 54                  <4>  push sp
+   785 000002ED 5D                  <4>  pop bp
+   786 000002EE C6460030            <3>  mov byte [ bp ], %1
+   787 000002F2 E80BFD              <3>  call proc_writechar
+   788                              <3>  closestack 1
+   789 000002F5 83C401              <4>  add word sp, %1
+   790 000002F8 EB65                <2> 			jmp .end		
+   791                              <2> 	.nzero:
+   792                              <2> 
+   793 000002FA B000                <2> 	mov byte al, FALSE
+   794 000002FC 50                  <2> 	push ax
+   795                              <2> 
+   796 000002FD 89E0                <2> 	mov ax,sp
+   797 000002FF 89C5                <2> 	mov bp,ax
+   798 00000301 8A5E04              <2> 	mov byte bl, [bp+4]
+   799 00000304 B102                <2> 	mov cl,2
+   800                              <2> 	.l1:
+   801 00000306 80F900              <2> 		cmp cl,0
+   802 00000309 7453                <2> 		jz .l2
+   803                              <2> 		
+   804 0000030B B002                <2> 		mov al,2
+   805 0000030D 28C8                <2> 		sub al,cl
+   806                              <2> 		
+   807 0000030F 88DA                <2> 		mov dl, bl	
+   808                              <2> 		
+   809                              <2> 		.l1.1:
+   810 00000311 3C00                <2> 			cmp al,0
+   811 00000313 7407                <2> 			jz .l1.2
+   812                              <2> 							
+   813 00000315 C0E204              <2> 			shl dl,4
+   814                              <2> 			
+   815 00000318 FEC8                <2> 			dec al
+   816 0000031A EBF5                <2> 			jmp .l1.1
+   817                              <2> 		.l1.2:
+   818                              <2> 						
+   819 0000031C C0EA04              <2> 		shr dl,4
+   820                              <2> 
+   821 0000031F 89E0                <2> 		mov ax,sp
+   822 00000321 89C5                <2> 		mov bp,ax			
+   823 00000323 8A4605              <2> 		mov byte al, [bp+5]
+   824 00000326 3C01                <2> 		cmp al, TRUE
+   825 00000328 7413                <2> 		je .endzero		
+   826 0000032A 80FA00              <2> 			cmp dl,0
+   827 0000032D 7402                <2> 			jz .zero
+   828 0000032F EB08                <2> 			jmp .notzero
+   829                              <2> 			.zero:
+   830 00000331 58                  <2> 				pop ax
+   831 00000332 50                  <2> 				push ax
+   832 00000333 3C01                <2> 				cmp al, TRUE				
+   833 00000335 7406                <2> 				je .endzero
+   834 00000337 EB21                <2> 				jmp .dec
+   835                              <2> 			.notzero:
+   836 00000339 58                  <2> 				pop ax
+   837 0000033A B001                <2> 				mov al, TRUE	
+   838 0000033C 50                  <2> 				push ax				
+   839                              <2> 		.endzero:
+   840                              <2> 						
+   841 0000033D 80FA09              <2> 		cmp dl,9
+   842 00000340 7603                <2> 		jbe .endsumseven  		
+   843 00000342 80C207              <2> 		add dl,7
+   844                              <2> 		.endsumseven:
+   845                              <2> 						
+   846 00000345 80C230              <2> 		add dl,30h
+   847                              <2> 
+   848 00000348 51                  <2> 		push cx
+   849 00000349 52                  <2> 		push dx
+   850                              <2> 		writechar dl
+   851                              <3>  openstack 1
+   852 0000034A 83EC01              <4>  sub word sp, %1
+   853 0000034D 54                  <4>  push sp
+   854 0000034E 5D                  <4>  pop bp
+   855 0000034F 885600              <3>  mov byte [ bp ], %1
+   856 00000352 E8ABFC              <3>  call proc_writechar
+   857                              <3>  closestack 1
+   858 00000355 83C401              <4>  add word sp, %1
+   859 00000358 5A                  <2> 		pop dx
+   860 00000359 59                  <2> 		pop cx	
+   861                              <2> 
+   862                              <2> 		.dec:
+   863                              <2> 	
+   864 0000035A FEC9                <2> 		dec cl
+   865 0000035C EBA8                <2> 		jmp .l1	
+   866                              <2> 	.l2:
+   867                              <2> 	
+   868 0000035E 58                  <2> 	pop ax
+   869                              <2> 	
+   870                              <2> 	.end:
+   871                              <2> 	
+   872 0000035F C3                  <2> 	ret
+   873                              <2> 
+   874                              <2> proc_printstr:
+   875 00000360 89E0                <2> 	mov ax,sp
+   876 00000362 89C5                <2> 	mov bp,ax
+   877                              <2> 	
+   878 00000364 8E5E02              <2> 	mov ds, [bp+2]
+   879 00000367 8B7604              <2> 	mov si, [bp+4]						
+   880                              <2> 	.loop:
+   881 0000036A AC                  <2> 		lodsb
+   882 0000036B 3C00                <2> 		cmp al,0h
+   883 0000036D 7414                <2> 		jz .done
+   884                              <2> 		
+   885 0000036F 1E                  <2> 		push ds
+   886 00000370 56                  <2> 		push si
+   887                              <2> 					
+   888                              <2> 		writechar al										
+   889                              <3>  openstack 1
+   890 00000371 83EC01              <4>  sub word sp, %1
+   891 00000374 54                  <4>  push sp
+   892 00000375 5D                  <4>  pop bp
+   893 00000376 884600              <3>  mov byte [ bp ], %1
+   894 00000379 E884FC              <3>  call proc_writechar
+   895                              <3>  closestack 1
+   896 0000037C 83C401              <4>  add word sp, %1
+   897                              <2> 									
+   898 0000037F 5E                  <2> 		pop si
+   899 00000380 1F                  <2> 		pop ds
+   900                              <2> 											
+   901 00000381 EBE7                <2> 		jmp .loop 
+   902                              <2> 	.done:
+   903                              <2> 	
+   904 00000383 C3                  <2> 	ret	
+   905                              <2> 	
+   906                              <2> %endif
+   907                              <1>  	%include "lib/system.mac"
+   908                              <2>  
+   909                              <2> %ifndef SYSTEM_MAC
+   910                              <2>  	%define SYSTEM_MAC
+   911                              <2>  	
+   912                              <2> 	%ifndef TRUE
+   913                              <2> 		%define TRUE 01h
+   914                              <2> 	%endif
+   915                              <2> 	%ifndef FALSE
+   916                              <2> 		%define FALSE 00h
+   917                              <2> 	%endif 	
+   918                              <2>  	
+   919                              <2>  	%include "lib/kernel.asmh"
+   920                              <2>  	 	
+   921                              <2> %macro mformat 4
+   922                              <2> 	openstack 8
+   923                              <2> 	mov word [ bp + 0 ], %1
+   924                              <2> 	mov word [ bp + 2 ], %2
+   925                              <2> 	mov word [ bp + 4 ], %3
+   926                              <2> 	mov word [ bp + 6 ], %4
+   927                              <2> 	call kernel_segment:mformat
+   928                              <2> 	closestack 8
+   929                              <2> %endmacro
+   930                              <2> 
+   931                              <2> %macro malloc 6
+   932                              <2> 	openstack 0Bh
+   933                              <2> 	mov word [ bp + 4 ], %3
+   934                              <2> 	mov word [ bp + 6 ], %4
+   935                              <2> 	mov word [ bp + 8 ], %5	
+   936                              <2> 	call kernel_segment:malloc
+   937                              <2> 	push sp
+   938                              <2> 	pop bp
+   939                              <2> 	mov word %1, [ bp ]
+   940                              <2> 	mov word %2, [ bp + 2 ]
+   941                              <2> 	mov byte %6, [ bp + 0x0A ]
+   942                              <2> 	closestack 0Bh
+   943                              <2> %endmacro 	
+   944                              <2> 
+   945                              <2> %macro laddr 2
+   946                              <2> 	laddr %1, %2, %1, %2
+   947                              <2> %endmacro
+   948                              <2> 
+   949                              <2> %macro faddr 2
+   950                              <2> 	faddr %1, %2, %1, %2
+   951                              <2> %endmacro
+   952                              <2>  	
+   953                              <2> %macro laddr 4
+   954                              <2> 	openstack 8
+   955                              <2> 	mov word [ bp + 4 ], %3
+   956                              <2> 	mov word [ bp + 6 ], %4	
+   957                              <2> 	call kernel_segment:laddr
+   958                              <2> 	push sp
+   959                              <2> 	pop bp
+   960                              <2> 	mov word %1, [ bp + 0 ]
+   961                              <2> 	mov word %2, [ bp + 2 ]	
+   962                              <2> 	closestack 8
+   963                              <2> %endmacro
+   964                              <2> 
+   965                              <2> %macro faddr 4
+   966                              <2> 	openstack 8
+   967                              <2> 	mov word [ bp + 4 ], %3
+   968                              <2> 	mov word [ bp + 6 ], %4	
+   969                              <2> 	call kernel_segment:faddr
+   970                              <2> 	push sp
+   971                              <2> 	pop bp
+   972                              <2> 	mov word %1, [ bp + 0 ]
+   973                              <2> 	mov word %2, [ bp + 2 ]	
+   974                              <2> 	closestack 8
+   975                              <2> %endmacro	
+   976                              <2>  
+   977                              <2> 
+   978                              <2> %macro openstack 1		
+   979                              <2> 	sub word sp, %1
+   980                              <2> 	push sp
+   981                              <2> 	pop bp
+   982                              <2> %endmacro
+   983                              <2> 
+   984                              <2> %macro closestack 1
+   985                              <2> 	add word sp, %1
+   986                              <2> %endmacro
+   987                              <2> 
+   988                              <2> %macro multipush 1-* 	
+   989                              <2>  	%rep %0
+   990                              <2>  		push %1
+   991                              <2>  		%rotate 1
+   992                              <2>  	%endrep 	
+   993                              <2> %endmacro
+   994                              <2>  
+   995                              <2> %macro multipop 1-*
+   996                              <2>  	%rep %0
+   997                              <2>  	 	%rotate -1
+   998                              <2>  		pop %1
+   999                              <2>  	%endrep 	 	
+  1000                              <2> %endmacro  	 
+  1001                              <2>  	
+  1002                              <2> %endif 
+  1003                              <1> 
+  1004                              <1> ; OBS: Esta macro não deve ser utilizada em procedimentos dinâmicos		
+  1005                              <1> %macro printf 1-*	
+  1006                              <1> 	%rep %0					
+  1007                              <1> 		__print %1
+  1008                              <1> 		%rotate 1		
+  1009                              <1> 	%endrep
+  1010                              <1> %endmacro	
+  1011                              <1> 
+  1012                              <1> ; OBS: Esta macro não deve ser utilizada em procedimentos dinâmicos		
+  1013                              <1> %macro __print 1
+  1014                              <1> 	section .data
+  1015                              <1> 		%%str: db %1,0
+  1016                              <1> 	section .text
+  1017                              <1> 		printstr cs, %%str				
+  1018                              <1> %endmacro
+  1019                              <1> 
+  1020                              <1> %macro printstr 2
+  1021                              <1> 	openstack 4
+  1022                              <1> 	mov word [bp], %1
+  1023                              <1> 	mov word [bp+2], %2
+  1024                              <1> 	call proc_printstr
+  1025                              <1> 	closestack 4
+  1026                              <1> %endmacro
+  1027                              <1> 
+  1028                              <1> %macro printbool 1	
+  1029                              <1> 	cmp byte %1, TRUE
+  1030                              <1> 	je .true
+  1031                              <1> 	jmp .false
+  1032                              <1> 	.true:
+  1033                              <1> 		printf "true"
+  1034                              <1> 		jmp .endcmp
+  1035                              <1> 	.false:
+  1036                              <1> 		printf "false"
+  1037                              <1> 	.endcmp:	
+  1038                              <1> %endmacro
+  1039                              <1> 
+  1040                              <1> %macro printptr 2-3 TRUE
+  1041                              <1> 	openstack 3
+  1042                              <1> 	mov word [ bp + 0 ], %2
+  1043                              <1> 	mov byte [ bp + 2 ], %3
+  1044                              <1> 	printhex16 %1, %3
+  1045                              <1> 	writechar ':'
+  1046                              <1> 	push sp
+  1047                              <1> 	pop bp
+  1048                              <1> 	mov word ax, [ bp + 0 ]
+  1049                              <1> 	mov byte bl, [ bp + 2 ]
+  1050                              <1> 	printhex16 ax, bl
+  1051                              <1> 	closestack 3
+  1052                              <1> %endmacro
+  1053                              <1> 
+  1054                              <1> %macro printfptr 2-3 TRUE
+  1055                              <1> 	openstack 3
+  1056                              <1> 	mov word [ bp + 0 ], %1
+  1057                              <1> 	mov byte [ bp + 2 ], %3
+  1058                              <1> 	printhex16 %2, %3
+  1059                              <1> 	push sp
+  1060                              <1> 	pop bp
+  1061                              <1> 	mov word ax, [ bp + 0 ]
+  1062                              <1> 	mov byte bl, [ bp + 2 ]
+  1063                              <1> 	printhex16 ax, bl
+  1064                              <1> 	closestack 3
+  1065                              <1> %endmacro
+  1066                              <1> 
+  1067                              <1> %macro printbin 3-4 FALSE
+  1068                              <1> 	openstack 6
+  1069                              <1> 	mov word [bp], %1
+  1070                              <1> 	mov word [bp+2], %2
+  1071                              <1> 	mov byte [bp+4], %3
+  1072                              <1> 	mov byte [bp+5], %4	
+  1073                              <1> 	call proc_printbin
+  1074                              <1> 	closestack 6	
+  1075                              <1> %endmacro
+  1076                              <1> 
+  1077                              <1> %macro printhex 3-4 FALSE		
+  1078                              <1> 	openstack 6
+  1079                              <1> 	mov word [bp], %1
+  1080                              <1> 	mov word [bp+2], %2
+  1081                              <1> 	mov byte [bp+4], %3
+  1082                              <1> 	mov byte [bp+5], %4
+  1083                              <1> 	call proc_printhex
+  1084                              <1> 	closestack 6	
+  1085                              <1> %endmacro
+  1086                              <1> 
+  1087                              <1> %macro printbin16 1-2 FALSE
+  1088                              <1> 	openstack 3
+  1089                              <1> 	mov word [bp], %1
+  1090                              <1> 	mov byte [bp+2], %2	
+  1091                              <1> 	call proc_printbin16
+  1092                              <1> 	closestack 3
+  1093                              <1> %endmacro
+  1094                              <1> 
+  1095                              <1> %macro printbin8 1-2 FALSE
+  1096                              <1> 	openstack 2
+  1097                              <1> 	mov byte [bp], %1
+  1098                              <1> 	mov byte [bp+1], %2
+  1099                              <1> 	call proc_printbin8
+  1100                              <1> 	closestack 2
+  1101                              <1> %endmacro
+  1102                              <1> 
+  1103                              <1> %macro printhex16 1-2 FALSE
+  1104                              <1> 	openstack 3
+  1105                              <1> 	mov word [bp], %1
+  1106                              <1> 	mov byte [bp+2], %2	
+  1107                              <1> 	call proc_printhex16
+  1108                              <1> 	closestack 3
+  1109                              <1> %endmacro
+  1110                              <1> 
+  1111                              <1> %macro printhex8 1-2 FALSE
+  1112                              <1> 	openstack 2
+  1113                              <1> 	mov byte [bp], %1
+  1114                              <1> 	mov byte [bp+1], %2
+  1115                              <1> 	call proc_printhex8
+  1116                              <1> 	closestack 2
+  1117                              <1> %endmacro
+  1118                              <1> 
+  1119                              <1> %endif
+  1120                                  	
+  1121                                  section .text
+  1122                                  	global _start
+  1123                                  	
+  1124                                  _start:		
+  1125                                  	printf "stack ---> "
+  1126                              <1>  %rep %0
+  1127                              <1>  __print %1
+  1128                              <1>  %rotate 1
+  1129                              <1>  %endrep
+  1130                              <2>  __print %1
+  1131                              <3>  section .data
+  1132 00000384 737461636B202D2D2D- <3>  %%str: db %1,0
+  1133 0000038D 3E2000              <3>
+  1134                              <3>  section .text
+  1135                              <3>  printstr cs, %%str
+  1136                              <4>  openstack 4
+  1137 00000000 83EC04              <5>  sub word sp, %1
+  1138 00000003 54                  <5>  push sp
+  1139 00000004 5D                  <5>  pop bp
+  1140 00000005 8C4E00              <4>  mov word [bp], %1
+  1141 00000008 C74602[8403]        <4>  mov word [bp+2], %2
+  1142 0000000D E8(6003)            <4>  call proc_printstr
+  1143                              <4>  closestack 4
+  1144 00000010 83C404              <5>  add word sp, %1
+  1145                              <2>  %rotate 1
+  1146 00000013 89E0                    	mov ax,sp
+  1147                                  	printhex16 ax
+  1148                              <1>  openstack 3
+  1149 00000015 83EC03              <2>  sub word sp, %1
+  1150 00000018 54                  <2>  push sp
+  1151 00000019 5D                  <2>  pop bp
+  1152 0000001A 894600              <1>  mov word [bp], %1
+  1153 0000001D C6460200            <1>  mov byte [bp+2], %2
+  1154 00000021 E8(6402)            <1>  call proc_printhex16
+  1155                              <1>  closestack 3
+  1156 00000024 83C403              <2>  add word sp, %1
+  1157                                  	newline	 	
+  1158 00000027 E8(0E00)            <1>  call proc_newline
+  1159                                  	newline
+  1160 0000002A E8(0E00)            <1>  call proc_newline
+  1161                                  	
+  1162                                  	openstack 0Fh
+  1163 0000002D 83EC0F              <1>  sub word sp, %1
+  1164 00000030 54                  <1>  push sp
+  1165 00000031 5D                  <1>  pop bp
+  1166 00000032 C746005101              	mov word [ bp + 0 ], 0x0151
+  1167 00000037 C746020200              	mov word [ bp + 2 ], 0x0002
+  1168 0000003C C746040000              	mov word [ bp + 4 ], 0x0000
+  1169 00000041 C746060500              	mov word [ bp + 6 ], 0x0005
+  1170                                  		
+  1171 00000046 8B5602                  	mov word dx, [bp+2]
+  1172 00000049 8B4600                  	mov word ax, [bp+0]
+  1173 0000004C 55                      	push bp	
+  1174                                  	laddr ax, dx
+  1175                              <1>  laddr %1, %2, %1, %2
+  1176                              <2>  openstack 8
+  1177 0000004D 83EC08              <3>  sub word sp, %1
+  1178 00000050 54                  <3>  push sp
+  1179 00000051 5D                  <3>  pop bp
+  1180 00000052 894604              <2>  mov word [ bp + 4 ], %3
+  1181 00000055 895606              <2>  mov word [ bp + 6 ], %4
+  1182 00000058 9AEB015000          <2>  call kernel_segment:laddr
+  1183 0000005D 54                  <2>  push sp
+  1184 0000005E 5D                  <2>  pop bp
+  1185 0000005F 8B4600              <2>  mov word %1, [ bp + 0 ]
+  1186 00000062 8B5602              <2>  mov word %2, [ bp + 2 ]
+  1187                              <2>  closestack 8
+  1188 00000065 83C408              <3>  add word sp, %1
+  1189 00000068 5D                      	pop bp	
+  1190 00000069 894608                  	mov word [ bp + 0x08 ], ax
+  1191 0000006C 89560A                  	mov word [ bp + 0x0A ], dx
+  1192                                  	
+  1193 0000006F 8B5608                  	mov word dx, [bp+0x08]
+  1194 00000072 8B460A                  	mov word ax, [bp+0x0A]
+  1195 00000075 55                      	push bp	
+  1196                                  	faddr dx, ax
+  1197                              <1>  faddr %1, %2, %1, %2
+  1198                              <2>  openstack 8
+  1199 00000076 83EC08              <3>  sub word sp, %1
+  1200 00000079 54                  <3>  push sp
+  1201 0000007A 5D                  <3>  pop bp
+  1202 0000007B 895604              <2>  mov word [ bp + 4 ], %3
+  1203 0000007E 894606              <2>  mov word [ bp + 6 ], %4
+  1204 00000081 9A01025000          <2>  call kernel_segment:faddr
+  1205 00000086 54                  <2>  push sp
+  1206 00000087 5D                  <2>  pop bp
+  1207 00000088 8B5600              <2>  mov word %1, [ bp + 0 ]
+  1208 0000008B 8B4602              <2>  mov word %2, [ bp + 2 ]
+  1209                              <2>  closestack 8
+  1210 0000008E 83C408              <3>  add word sp, %1
+  1211 00000091 5D                      	pop bp	
+  1212 00000092 89560C                  	mov word [ bp + 0x0C ], dx
+  1213 00000095 89460E                  	mov word [ bp + 0x0E ], ax
+  1214                                  	
+  1215                                  	
+  1216 00000098 54                      	push sp
+  1217 00000099 5D                      	pop bp	
+  1218 0000009A 8B4600                  	mov ax, [bp+0]
+  1219 0000009D 8B5602                  	mov dx, [bp+2]
+  1220                                  	printfptr ax, dx
+  1221                              <1>  openstack 3
+  1222 000000A0 83EC03              <2>  sub word sp, %1
+  1223 000000A3 54                  <2>  push sp
+  1224 000000A4 5D                  <2>  pop bp
+  1225 000000A5 894600              <1>  mov word [ bp + 0 ], %1
+  1226 000000A8 C6460201            <1>  mov byte [ bp + 2 ], %3
+  1227                              <1>  printhex16 %2, %3
+  1228                              <2>  openstack 3
+  1229 000000AC 83EC03              <3>  sub word sp, %1
+  1230 000000AF 54                  <3>  push sp
+  1231 000000B0 5D                  <3>  pop bp
+  1232 000000B1 895600              <2>  mov word [bp], %1
+  1233 000000B4 C6460201            <2>  mov byte [bp+2], %2
+  1234 000000B8 E8(6402)            <2>  call proc_printhex16
+  1235                              <2>  closestack 3
+  1236 000000BB 83C403              <3>  add word sp, %1
+  1237 000000BE 54                  <1>  push sp
+  1238 000000BF 5D                  <1>  pop bp
+  1239 000000C0 8B4600              <1>  mov word ax, [ bp + 0 ]
+  1240 000000C3 8A5E02              <1>  mov byte bl, [ bp + 2 ]
+  1241                              <1>  printhex16 ax, bl
+  1242                              <2>  openstack 3
+  1243 000000C6 83EC03              <3>  sub word sp, %1
+  1244 000000C9 54                  <3>  push sp
+  1245 000000CA 5D                  <3>  pop bp
+  1246 000000CB 894600              <2>  mov word [bp], %1
+  1247 000000CE 885E02              <2>  mov byte [bp+2], %2
+  1248 000000D1 E8(6402)            <2>  call proc_printhex16
+  1249                              <2>  closestack 3
+  1250 000000D4 83C403              <3>  add word sp, %1
+  1251                              <1>  closestack 3
+  1252 000000D7 83C403              <2>  add word sp, %1
+  1253                                  	newline
+  1254 000000DA E8(0E00)            <1>  call proc_newline
+  1255                                  	
+  1256 000000DD 54                      	push sp
+  1257 000000DE 5D                      	pop bp	
+  1258 000000DF 8B460A                  	mov ax, [bp+0x0A]
+  1259 000000E2 8B5608                  	mov dx, [bp+0x08]
+  1260                                  	printptr dx, ax
+  1261                              <1>  openstack 3
+  1262 000000E5 83EC03              <2>  sub word sp, %1
+  1263 000000E8 54                  <2>  push sp
+  1264 000000E9 5D                  <2>  pop bp
+  1265 000000EA 894600              <1>  mov word [ bp + 0 ], %2
+  1266 000000ED C6460201            <1>  mov byte [ bp + 2 ], %3
+  1267                              <1>  printhex16 %1, %3
+  1268                              <2>  openstack 3
+  1269 000000F1 83EC03              <3>  sub word sp, %1
+  1270 000000F4 54                  <3>  push sp
+  1271 000000F5 5D                  <3>  pop bp
+  1272 000000F6 895600              <2>  mov word [bp], %1
+  1273 000000F9 C6460201            <2>  mov byte [bp+2], %2
+  1274 000000FD E8(6402)            <2>  call proc_printhex16
+  1275                              <2>  closestack 3
+  1276 00000100 83C403              <3>  add word sp, %1
+  1277                              <1>  writechar ':'
+  1278                              <2>  openstack 1
+  1279 00000103 83EC01              <3>  sub word sp, %1
+  1280 00000106 54                  <3>  push sp
+  1281 00000107 5D                  <3>  pop bp
+  1282 00000108 C646003A            <2>  mov byte [ bp ], %1
+  1283 0000010C E8(0000)            <2>  call proc_writechar
+  1284                              <2>  closestack 1
+  1285 0000010F 83C401              <3>  add word sp, %1
+  1286 00000112 54                  <1>  push sp
+  1287 00000113 5D                  <1>  pop bp
+  1288 00000114 8B4600              <1>  mov word ax, [ bp + 0 ]
+  1289 00000117 8A5E02              <1>  mov byte bl, [ bp + 2 ]
+  1290                              <1>  printhex16 ax, bl
+  1291                              <2>  openstack 3
+  1292 0000011A 83EC03              <3>  sub word sp, %1
+  1293 0000011D 54                  <3>  push sp
+  1294 0000011E 5D                  <3>  pop bp
+  1295 0000011F 894600              <2>  mov word [bp], %1
+  1296 00000122 885E02              <2>  mov byte [bp+2], %2
+  1297 00000125 E8(6402)            <2>  call proc_printhex16
+  1298                              <2>  closestack 3
+  1299 00000128 83C403              <3>  add word sp, %1
+  1300                              <1>  closestack 3
+  1301 0000012B 83C403              <2>  add word sp, %1
+  1302                                  	newline
+  1303 0000012E E8(0E00)            <1>  call proc_newline
+  1304                                  	
+  1305 00000131 54                      	push sp
+  1306 00000132 5D                      	pop bp	
+  1307 00000133 8B460C                  	mov ax, [bp+0x0C]
+  1308 00000136 8B560E                  	mov dx, [bp+0x0E]
+  1309                                  	printfptr ax, dx
+  1310                              <1>  openstack 3
+  1311 00000139 83EC03              <2>  sub word sp, %1
+  1312 0000013C 54                  <2>  push sp
+  1313 0000013D 5D                  <2>  pop bp
+  1314 0000013E 894600              <1>  mov word [ bp + 0 ], %1
+  1315 00000141 C6460201            <1>  mov byte [ bp + 2 ], %3
+  1316                              <1>  printhex16 %2, %3
+  1317                              <2>  openstack 3
+  1318 00000145 83EC03              <3>  sub word sp, %1
+  1319 00000148 54                  <3>  push sp
+  1320 00000149 5D                  <3>  pop bp
+  1321 0000014A 895600              <2>  mov word [bp], %1
+  1322 0000014D C6460201            <2>  mov byte [bp+2], %2
+  1323 00000151 E8(6402)            <2>  call proc_printhex16
+  1324                              <2>  closestack 3
+  1325 00000154 83C403              <3>  add word sp, %1
+  1326 00000157 54                  <1>  push sp
+  1327 00000158 5D                  <1>  pop bp
+  1328 00000159 8B4600              <1>  mov word ax, [ bp + 0 ]
+  1329 0000015C 8A5E02              <1>  mov byte bl, [ bp + 2 ]
+  1330                              <1>  printhex16 ax, bl
+  1331                              <2>  openstack 3
+  1332 0000015F 83EC03              <3>  sub word sp, %1
+  1333 00000162 54                  <3>  push sp
+  1334 00000163 5D                  <3>  pop bp
+  1335 00000164 894600              <2>  mov word [bp], %1
+  1336 00000167 885E02              <2>  mov byte [bp+2], %2
+  1337 0000016A E8(6402)            <2>  call proc_printhex16
+  1338                              <2>  closestack 3
+  1339 0000016D 83C403              <3>  add word sp, %1
+  1340                              <1>  closestack 3
+  1341 00000170 83C403              <2>  add word sp, %1
+  1342                                  	newline
+  1343 00000173 E8(0E00)            <1>  call proc_newline
+  1344                                  	newline		
+  1345 00000176 E8(0E00)            <1>  call proc_newline
+  1346                                  	
+  1347 00000179 54                      	push sp
+  1348 0000017A 5D                      	pop bp
+  1349 0000017B 8B4600                  	mov word ax, [ bp + 0 ]
+  1350 0000017E 8B5E02                  	mov word bx, [ bp + 2 ]
+  1351 00000181 8B4E04                  	mov word cx, [ bp + 4 ]
+  1352 00000184 8B5606                  	mov word dx, [ bp + 6 ]
+  1353                                  	mformat ax, bx, cx, dx
+  1354                              <1>  openstack 8
+  1355 00000187 83EC08              <2>  sub word sp, %1
+  1356 0000018A 54                  <2>  push sp
+  1357 0000018B 5D                  <2>  pop bp
+  1358 0000018C 894600              <1>  mov word [ bp + 0 ], %1
+  1359 0000018F 895E02              <1>  mov word [ bp + 2 ], %2
+  1360 00000192 894E04              <1>  mov word [ bp + 4 ], %3
+  1361 00000195 895606              <1>  mov word [ bp + 6 ], %4
+  1362 00000198 9A44015000          <1>  call kernel_segment:mformat
+  1363                              <1>  closestack 8
+  1364 0000019D 83C408              <2>  add word sp, %1
+  1365                                  							
+  1366 000001A0 54                      	push sp
+  1367 000001A1 5D                      	pop bp
+  1368 000001A2 8B4600                  	mov word ax, [ bp + 0 ]
+  1369 000001A5 8B5E02                  	mov word bx, [ bp + 2 ]	
+  1370                                  	malloc ax, bx, ax, bx, 0xFFFF, dl	
+  1371                              <1>  openstack 0Bh
+  1372 000001A8 83EC0B              <2>  sub word sp, %1
+  1373 000001AB 54                  <2>  push sp
+  1374 000001AC 5D                  <2>  pop bp
+  1375 000001AD 894604              <1>  mov word [ bp + 4 ], %3
+  1376 000001B0 895E06              <1>  mov word [ bp + 6 ], %4
+  1377 000001B3 C74608FFFF          <1>  mov word [ bp + 8 ], %5
+  1378 000001B8 9A75015000          <1>  call kernel_segment:malloc
+  1379 000001BD 54                  <1>  push sp
+  1380 000001BE 5D                  <1>  pop bp
+  1381 000001BF 8B4600              <1>  mov word %1, [ bp ]
+  1382 000001C2 8B5E02              <1>  mov word %2, [ bp + 2 ]
+  1383 000001C5 8A560A              <1>  mov byte %6, [ bp + 0x0A ]
+  1384                              <1>  closestack 0Bh
+  1385 000001C8 83C40B              <2>  add word sp, %1
+  1386                                  	
+  1387 000001CB 54                      	push sp
+  1388 000001CC 5D                      	pop bp
+  1389 000001CD 894608                  	mov word [ bp + 8 ], ax
+  1390 000001D0 895E0A                  	mov word [ bp + 0x0A ], bx
+  1391                                  	
+  1392                                  
+  1393 000001D3 80FA00                  	cmp dl,0
+  1394 000001D6 742B                    	jz enderror
+  1395                                  		printf "Overflow... ERRO: "
+  1396                              <1>  %rep %0
+  1397                              <1>  __print %1
+  1398                              <1>  %rotate 1
+  1399                              <1>  %endrep
+  1400                              <2>  __print %1
+  1401                              <3>  section .data
+  1402 00000390 4F766572666C6F772E- <3>  %%str: db %1,0
+  1403 00000399 2E2E204552524F3A20- <3>
+  1404 000003A2 00                  <3>
+  1405                              <3>  section .text
+  1406                              <3>  printstr cs, %%str
+  1407                              <4>  openstack 4
+  1408 000001D8 83EC04              <5>  sub word sp, %1
+  1409 000001DB 54                  <5>  push sp
+  1410 000001DC 5D                  <5>  pop bp
+  1411 000001DD 8C4E00              <4>  mov word [bp], %1
+  1412 000001E0 C74602[9003]        <4>  mov word [bp+2], %2
+  1413 000001E5 E8(6003)            <4>  call proc_printstr
+  1414                              <4>  closestack 4
+  1415 000001E8 83C404              <5>  add word sp, %1
+  1416                              <2>  %rotate 1
+  1417                                  		printhex8 dl
+  1418                              <1>  openstack 2
+  1419 000001EB 83EC02              <2>  sub word sp, %1
+  1420 000001EE 54                  <2>  push sp
+  1421 000001EF 5D                  <2>  pop bp
+  1422 000001F0 885600              <1>  mov byte [bp], %1
+  1423 000001F3 C6460100            <1>  mov byte [bp+1], %2
+  1424 000001F7 E8(C402)            <1>  call proc_printhex8
+  1425                              <1>  closestack 2
+  1426 000001FA 83C402              <2>  add word sp, %1
+  1427                                  		newline
+  1428 000001FD E8(0E00)            <1>  call proc_newline
+  1429                                  		newline
+  1430 00000200 E8(0E00)            <1>  call proc_newline
+  1431                                  	enderror:
+  1432                                  						
+  1433 00000203 54                      	push sp
+  1434 00000204 5D                      	pop bp
+  1435 00000205 8B4608                  	mov word ax, [ bp + 8 ]
+  1436 00000208 8B560A                  	mov word dx, [ bp + 0x0A ]	
+  1437                                  	printptr ax, dx
+  1438                              <1>  openstack 3
+  1439 0000020B 83EC03              <2>  sub word sp, %1
+  1440 0000020E 54                  <2>  push sp
+  1441 0000020F 5D                  <2>  pop bp
+  1442 00000210 895600              <1>  mov word [ bp + 0 ], %2
+  1443 00000213 C6460201            <1>  mov byte [ bp + 2 ], %3
+  1444                              <1>  printhex16 %1, %3
+  1445                              <2>  openstack 3
+  1446 00000217 83EC03              <3>  sub word sp, %1
+  1447 0000021A 54                  <3>  push sp
+  1448 0000021B 5D                  <3>  pop bp
+  1449 0000021C 894600              <2>  mov word [bp], %1
+  1450 0000021F C6460201            <2>  mov byte [bp+2], %2
+  1451 00000223 E8(6402)            <2>  call proc_printhex16
+  1452                              <2>  closestack 3
+  1453 00000226 83C403              <3>  add word sp, %1
+  1454                              <1>  writechar ':'
+  1455                              <2>  openstack 1
+  1456 00000229 83EC01              <3>  sub word sp, %1
+  1457 0000022C 54                  <3>  push sp
+  1458 0000022D 5D                  <3>  pop bp
+  1459 0000022E C646003A            <2>  mov byte [ bp ], %1
+  1460 00000232 E8(0000)            <2>  call proc_writechar
+  1461                              <2>  closestack 1
+  1462 00000235 83C401              <3>  add word sp, %1
+  1463 00000238 54                  <1>  push sp
+  1464 00000239 5D                  <1>  pop bp
+  1465 0000023A 8B4600              <1>  mov word ax, [ bp + 0 ]
+  1466 0000023D 8A5E02              <1>  mov byte bl, [ bp + 2 ]
+  1467                              <1>  printhex16 ax, bl
+  1468                              <2>  openstack 3
+  1469 00000240 83EC03              <3>  sub word sp, %1
+  1470 00000243 54                  <3>  push sp
+  1471 00000244 5D                  <3>  pop bp
+  1472 00000245 894600              <2>  mov word [bp], %1
+  1473 00000248 885E02              <2>  mov byte [bp+2], %2
+  1474 0000024B E8(6402)            <2>  call proc_printhex16
+  1475                              <2>  closestack 3
+  1476 0000024E 83C403              <3>  add word sp, %1
+  1477                              <1>  closestack 3
+  1478 00000251 83C403              <2>  add word sp, %1
+  1479                                  	printf " ate "
+  1480                              <1>  %rep %0
+  1481                              <1>  __print %1
+  1482                              <1>  %rotate 1
+  1483                              <1>  %endrep
+  1484                              <2>  __print %1
+  1485                              <3>  section .data
+  1486 000003A3 206174652000        <3>  %%str: db %1,0
+  1487                              <3>  section .text
+  1488                              <3>  printstr cs, %%str
+  1489                              <4>  openstack 4
+  1490 00000254 83EC04              <5>  sub word sp, %1
+  1491 00000257 54                  <5>  push sp
+  1492 00000258 5D                  <5>  pop bp
+  1493 00000259 8C4E00              <4>  mov word [bp], %1
+  1494 0000025C C74602[A303]        <4>  mov word [bp+2], %2
+  1495 00000261 E8(6003)            <4>  call proc_printstr
+  1496                              <4>  closestack 4
+  1497 00000264 83C404              <5>  add word sp, %1
+  1498                              <2>  %rotate 1
+  1499                                  	
+  1500 00000267 54                      	push sp
+  1501 00000268 5D                      	pop bp
+  1502 00000269 8B4600                  	mov word ax, [ bp + 0 ]
+  1503 0000026C 8B5602                  	mov word dx, [ bp + 2 ]		
+  1504                                  	laddr ax,dx	
+  1505                              <1>  laddr %1, %2, %1, %2
+  1506                              <2>  openstack 8
+  1507 0000026F 83EC08              <3>  sub word sp, %1
+  1508 00000272 54                  <3>  push sp
+  1509 00000273 5D                  <3>  pop bp
+  1510 00000274 894604              <2>  mov word [ bp + 4 ], %3
+  1511 00000277 895606              <2>  mov word [ bp + 6 ], %4
+  1512 0000027A 9AEB015000          <2>  call kernel_segment:laddr
+  1513 0000027F 54                  <2>  push sp
+  1514 00000280 5D                  <2>  pop bp
+  1515 00000281 8B4600              <2>  mov word %1, [ bp + 0 ]
+  1516 00000284 8B5602              <2>  mov word %2, [ bp + 2 ]
+  1517                              <2>  closestack 8
+  1518 00000287 83C408              <3>  add word sp, %1
+  1519 0000028A 8ED8                    	mov ds,ax
+  1520 0000028C 89D6                    	mov si,dx
+  1521                                  			
+  1522 0000028E 8B04                    	mov ax, [si]
+  1523 00000290 8B5402                  	mov dx, [si+2]
+  1524                                  	laddr ax,dx
+  1525                              <1>  laddr %1, %2, %1, %2
+  1526                              <2>  openstack 8
+  1527 00000293 83EC08              <3>  sub word sp, %1
+  1528 00000296 54                  <3>  push sp
+  1529 00000297 5D                  <3>  pop bp
+  1530 00000298 894604              <2>  mov word [ bp + 4 ], %3
+  1531 0000029B 895606              <2>  mov word [ bp + 6 ], %4
+  1532 0000029E 9AEB015000          <2>  call kernel_segment:laddr
+  1533 000002A3 54                  <2>  push sp
+  1534 000002A4 5D                  <2>  pop bp
+  1535 000002A5 8B4600              <2>  mov word %1, [ bp + 0 ]
+  1536 000002A8 8B5602              <2>  mov word %2, [ bp + 2 ]
+  1537                              <2>  closestack 8
+  1538 000002AB 83C408              <3>  add word sp, %1
+  1539                                  	printptr ax, dx
+  1540                              <1>  openstack 3
+  1541 000002AE 83EC03              <2>  sub word sp, %1
+  1542 000002B1 54                  <2>  push sp
+  1543 000002B2 5D                  <2>  pop bp
+  1544 000002B3 895600              <1>  mov word [ bp + 0 ], %2
+  1545 000002B6 C6460201            <1>  mov byte [ bp + 2 ], %3
+  1546                              <1>  printhex16 %1, %3
+  1547                              <2>  openstack 3
+  1548 000002BA 83EC03              <3>  sub word sp, %1
+  1549 000002BD 54                  <3>  push sp
+  1550 000002BE 5D                  <3>  pop bp
+  1551 000002BF 894600              <2>  mov word [bp], %1
+  1552 000002C2 C6460201            <2>  mov byte [bp+2], %2
+  1553 000002C6 E8(6402)            <2>  call proc_printhex16
+  1554                              <2>  closestack 3
+  1555 000002C9 83C403              <3>  add word sp, %1
+  1556                              <1>  writechar ':'
+  1557                              <2>  openstack 1
+  1558 000002CC 83EC01              <3>  sub word sp, %1
+  1559 000002CF 54                  <3>  push sp
+  1560 000002D0 5D                  <3>  pop bp
+  1561 000002D1 C646003A            <2>  mov byte [ bp ], %1
+  1562 000002D5 E8(0000)            <2>  call proc_writechar
+  1563                              <2>  closestack 1
+  1564 000002D8 83C401              <3>  add word sp, %1
+  1565 000002DB 54                  <1>  push sp
+  1566 000002DC 5D                  <1>  pop bp
+  1567 000002DD 8B4600              <1>  mov word ax, [ bp + 0 ]
+  1568 000002E0 8A5E02              <1>  mov byte bl, [ bp + 2 ]
+  1569                              <1>  printhex16 ax, bl
+  1570                              <2>  openstack 3
+  1571 000002E3 83EC03              <3>  sub word sp, %1
+  1572 000002E6 54                  <3>  push sp
+  1573 000002E7 5D                  <3>  pop bp
+  1574 000002E8 894600              <2>  mov word [bp], %1
+  1575 000002EB 885E02              <2>  mov byte [bp+2], %2
+  1576 000002EE E8(6402)            <2>  call proc_printhex16
+  1577                              <2>  closestack 3
+  1578 000002F1 83C403              <3>  add word sp, %1
+  1579                              <1>  closestack 3
+  1580 000002F4 83C403              <2>  add word sp, %1
+  1581                                  				
+  1582                                  	closestack 0Fh
+  1583 000002F7 83C40F              <1>  add word sp, %1
+  1584                                  				
+  1585                                  	newline
+  1586 000002FA E8(0E00)            <1>  call proc_newline
+  1587                                  	newline
+  1588 000002FD E8(0E00)            <1>  call proc_newline
+  1589                                  	printf "stack ---> "
+  1590                              <1>  %rep %0
+  1591                              <1>  __print %1
+  1592                              <1>  %rotate 1
+  1593                              <1>  %endrep
+  1594                              <2>  __print %1
+  1595                              <3>  section .data
+  1596 000003A9 737461636B202D2D2D- <3>  %%str: db %1,0
+  1597 000003B2 3E2000              <3>
+  1598                              <3>  section .text
+  1599                              <3>  printstr cs, %%str
+  1600                              <4>  openstack 4
+  1601 00000300 83EC04              <5>  sub word sp, %1
+  1602 00000303 54                  <5>  push sp
+  1603 00000304 5D                  <5>  pop bp
+  1604 00000305 8C4E00              <4>  mov word [bp], %1
+  1605 00000308 C74602[A903]        <4>  mov word [bp+2], %2
+  1606 0000030D E8(6003)            <4>  call proc_printstr
+  1607                              <4>  closestack 4
+  1608 00000310 83C404              <5>  add word sp, %1
+  1609                              <2>  %rotate 1
+  1610 00000313 89E0                    	mov ax,sp
+  1611                                  	printhex16 ax
+  1612                              <1>  openstack 3
+  1613 00000315 83EC03              <2>  sub word sp, %1
+  1614 00000318 54                  <2>  push sp
+  1615 00000319 5D                  <2>  pop bp
+  1616 0000031A 894600              <1>  mov word [bp], %1
+  1617 0000031D C6460200            <1>  mov byte [bp+2], %2
+  1618 00000321 E8(6402)            <1>  call proc_printhex16
+  1619                              <1>  closestack 3
+  1620 00000324 83C403              <2>  add word sp, %1
+  1621                                  	
+  1622                                  
+  1623 00000327 EBFE                    	jmp $

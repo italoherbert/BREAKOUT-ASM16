@@ -1,0 +1,167 @@
+
+%ifndef FLOAT2_MAC
+	%define FLOAT2_MAC
+	
+	%include "lib/bits.mac"
+	%include "lib/math.mac"
+	%include "lib/stdio.mac"
+	%include "lib/integer.mac"
+	%include "lib/float.mac"
+
+%macro __printfloat 1-2 8
+	section .bss
+		%%s: resb 1
+		%%e: resb 1
+		%%int: resb 3
+		%%dec: resb 3
+		%%decint: resb 3
+		%%factor: resb 3
+		%%factor2: resb 3		
+		%%qfactor: resb 3
+		%%aux: resb 4
+		%%bit: resb 1
+		%%lzeros: resb 1			
+	section .text			
+		loadmant %%int, %1
+		add byte [%%int+2], 10000000b
+		movbs %%dec, %%int, 3
+				
+		loadsignal %%s, %1
+		loadexp %%e, %1
+						
+		xor ah,ah
+		cmp byte [%%e], 0x7F
+		ja %%above
+		jb %%below
+		jmp %%endcmp
+		%%above:
+			mov byte al, [%%e]
+			sub al, 0x7F
+			mov byte [%%e], al
+			inc al
+			
+			xor bh, bh
+			mov bl, 0x18
+			sub bl, al
+						
+			push bx
+			push ax		
+			mov ax, sp
+			mov bp, ax
+								
+			shrbs %%int, 3, [bp+2]
+			mov ax, sp
+			mov bp, ax
+										
+			shlbs %%dec, 3, [bp]
+			pop ax
+			pop bx
+									
+			jmp %%endcmp
+		%%below:
+			mov al, 0x7F
+			sub byte al, [%%e]			
+			
+			push ax	
+			
+			setbs %%int, 3, 0
+						
+			mov ax, sp
+			mov bp, ax
+						
+			shrbs %%dec, 3, [bp]
+			 
+			pop ax  	
+		%%endcmp:
+				
+		lzeroscountbs %%lzeros, %%dec, 3
+		xor ah,ah
+		mov byte al, [%%lzeros]
+		mov bl, 4
+		div bl	
+		mul bl
+		mov byte [%%lzeros], al		
+		shlbs %%dec, 3, byte [%%lzeros]
+		
+		xor ah,ah
+		mov byte al, [%%lzeros]
+		mov bl, 4
+		div bl
+		mov byte [%%lzeros], al
+				
+		setbs %%decint, 3, 0		
+		
+		movbsb %%factor, 3, 0Ah
+		mov byte cl, %2
+		push cx
+		mov ax,sp
+		mov bp,ax
+		powbs %%factor, 3, [bp] 
+		pop cx
+					
+		mov cl, 0
+		%%l1:
+			cmp cl, %2
+			jae %%l2
+		
+			push cx
+			mov ax,sp
+			mov bp,ax
+			loadbitbs %%bit, %%dec, 3, [bp]
+						
+			cmp byte [%%bit],0 	
+			jz %%endone
+				movbsb %%factor2, 3, 2
+							
+				pop cx
+				push cx
+								
+				mov bl,cl
+				inc bl
+				
+				push bx
+				mov ax,sp
+				mov bp,ax
+				powbs %%factor2, 3, [bp]
+						
+				pop bx	
+				
+				divbs %%qfactor, %%aux, %%factor, %%factor2, 3
+				addbs %%decint, %%qfactor, 3									
+			%%endone:
+		
+			pop cx
+			
+			inc cl
+			jmp %%l1
+		%%l2:
+								
+		cmp byte [%%s], 0
+		jz %%endneg
+			printf "-"
+		%%endneg:						
+		
+		setbs %%aux, 4, 0
+		movbs %%aux, %%int, 3				
+		printint %%aux, 4
+		printf ","
+		
+		mov byte cl, [%%lzeros]		
+		%%l3:
+			cmp cl,0
+			jz %%l4
+			
+			push ax
+			writechar 30h
+			pop ax
+			
+			dec cl
+			jmp %%l3
+		%%l4:
+		
+		setbs %%aux, 4, 0
+		movbs %%aux, %%decint, 3		
+		printint %%aux, 4							
+%endmacro
+
+%endif

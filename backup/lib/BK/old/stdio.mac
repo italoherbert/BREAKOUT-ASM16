@@ -1,0 +1,517 @@
+
+%ifndef STDIO_MAC
+	%define STDIO_MAC
+	
+	%include "lib/sys.mac"
+	%include "lib/crt.mac"
+	%include "lib/strings.mac"
+		
+%macro scanfint	1
+	scanf %1
+
+	mov si,%1	
+	mov cx,0
+	%%loop:
+		lodsb
+		
+		cmp al,0
+		jz %%done
+		
+		cmp al,30h
+		jb %%parseerror
+		cmp al,39h
+		ja %%parseerror
+	
+		inc cx
+		jmp %%loop
+	%%done:
+	
+	cmp cx,0
+	jz %%parseerror
+				
+	jmp %%notparseerror
+	%%parseerror:
+		mov byte [PARSE_ERROR],TRUE
+		jmp %%endparseerror
+	%%notparseerror:
+		mov byte [PARSE_ERROR],FALSE
+	%%endparseerror:	
+%endmacro
+	
+%macro scanf 1	
+	mov ax,ds
+	mov es,ax
+	mov di,%1
+
+	mov cx,0
+	%%loop:
+		mov ah,00h
+		int 16h
+		
+		cmp al,0Dh
+		je %%done
+		
+		mov ah,0Eh
+		mov bh,0
+		int 10h
+						
+		stosb
+				
+		inc cx
+		jmp %%loop
+	%%done:	
+	
+	mov al,0
+	stosb	
+		
+	mov ah,03h
+	mov bh,0
+	int 10h
+	
+	inc dh
+	xor dl,dl
+	
+	mov ah,02h
+	mov bh,0
+	int 10h		
+%endmacro	
+	
+%macro loadstr 2
+	section .data
+		%%str: db %2,0
+	section .text
+		push ds
+		push es		
+
+		mov ax,ds
+		mov es,ax
+		mov di,%1
+			
+		mov ax,cs
+		mov ds,ax		
+		mov si,%%str
+		
+		%%loop:
+			lodsb			
+			stosb
+			cmp al,0
+			jz %%done
+			jmp %%loop
+		%%done:
+		
+		pop es
+		pop ds
+%endmacro
+	
+%macro printf 1-*	
+	%rep %0					
+		__print %1
+		%rotate 1		
+	%endrep	
+%endmacro	
+
+%macro __print 1
+	section .data
+		%%str: db %1,0
+	section .text
+		push ds	
+		mov ax,cs
+		mov ds,ax
+		mov si,%%str						
+		%%loop:
+			lodsb
+			cmp al,0h
+			jz %%done
+			
+			push ds
+			push si
+						
+			writechar al										
+										
+			pop si
+			pop ds
+												
+			jmp %%loop 
+		%%done:
+		pop ds
+%endmacro
+
+%macro printstr 1	
+	mov si,%1						
+	%%loop:
+		lodsb
+		cmp al,0h
+		jz %%done
+		
+		push ds
+		push si
+					
+		writechar al										
+									
+		pop si
+		pop ds
+											
+		jmp %%loop 
+	%%done:
+%endmacro
+
+%macro printbin 2-3 FALSE					
+	mov ax, %2
+	mov bx,8
+	mul bx
+	mov cx,ax
+	
+	std
+	
+	mov si, %1
+	add si, %2
+	dec si
+	lodsb
+	xor ah,ah
+	mov dx,8
+	
+	mov byte bl,FALSE
+	push ax
+	push bx
+	push dx
+	%%loop1:
+		cmp cx,0
+		jz %%endloop1
+		
+		mov byte al,%3
+		cmp byte al, FALSE
+		je %%endspace
+		
+		mov ax,%2
+		mov bx,8
+		mul bx														
+		cmp cx,ax
+		je %%endspace
+							
+		xor dx,dx
+		mov ax,cx
+		mov bx,4
+		div bx				
+				
+		cmp dx,0
+		jnz %%endspace
+		push si
+		push cx
+		writechar 20h
+		pop cx
+		pop si
+		%%endspace:			
+		
+		pop dx
+		pop bx
+		pop ax
+						
+		cmp dx,0
+		jnz %%l1
+		lodsb
+		mov dx,8
+		%%l1:
+		
+		push ax
+		push bx
+		
+		mov bx,8
+		sub bx,dx
+		dec dx
+		
+		push dx
+											
+		%%loop11:
+			cmp bx,0
+			jz %%endloop11
+			
+			shl al,1
+			
+			dec bx	
+			jmp %%loop11
+		%%endloop11:
+		
+		shr al,7
+		
+		mov byte bl,%3
+		cmp byte bl, TRUE
+		je %%withzeros
+		jmp %%withoutzeros
+		%%withzeros:		
+			add al,30h			
+			push si
+			push cx
+			writechar al
+			pop cx
+			pop si
+			jmp %%printed
+		%%withoutzeros:		
+			pop dx
+			pop bx
+			push si
+			push cx
+			cmp al,0
+			jz %%zero
+			jmp %%one
+			%%zero:		
+				cmp byte bl, TRUE
+				jne %%zeroprinted
+					writechar 30h
+				%%zeroprinted:		
+				jmp %%endzero
+			%%one:
+				writechar 31h
+				mov byte bl, TRUE
+			%%endzero:
+			pop cx
+			pop si		
+			push bx
+			push dx		
+		%%printed:
+				
+		dec cx	
+		jmp %%loop1
+	%%endloop1:
+	pop dx
+	pop bx
+	pop ax
+	
+	cld		
+%endmacro
+
+%macro printhex 2-3 FALSE
+	mov word si, %1
+	
+	mov bl,0	
+	mov dl,TRUE
+	xor ch,ch
+	mov byte cl, %2
+	%%l1:			
+		cmp cl,0
+		jz %%l2
+							
+		push si
+		
+		add si,cx
+		sub si,1		
+		
+		or byte bl, [si]
+		or byte bl, %3
+		jz %%printed							
+			push bx
+			push cx	
+			cmp dl, TRUE
+			je %%first
+			jmp %%nfirst
+			%%first:
+				mov dl, FALSE
+				push dx
+				printhex8 [si], %3				
+				pop dx
+				jmp %%endfirst
+			%%nfirst:
+				push dx
+				printhex8 [si], TRUE				
+				pop dx
+			%%endfirst:	
+			pop cx
+			pop bx		
+		%%printed:
+		
+		pop si
+	
+		dec cl
+		jmp %%l1		
+	%%l2:
+	
+	cmp bl,0
+	jnz %%end
+		writechar 30h
+	%%end:	
+%endmacro
+
+%macro printhex16 1-2 FALSE
+	mov word ax, %1
+	cmp ax,0
+	jnz %%nzero
+		writechar 30h
+		jmp %%end
+	%%nzero:
+	
+	push ax
+	mov ax, sp
+	mov bp, ax
+	printhex8 [bp+1], %2	 
+	pop ax
+	push ax
+	mov ax, sp
+	mov bp, ax
+	printhex8 [bp], %2
+	pop ax
+	
+	%%end:
+%endmacro
+
+%macro printhex8 1-2 FALSE
+	%if 0
+	mov byte al, %1
+	cmp al, 0
+	jnz %%nzero
+		writechar 30h
+		mov byte al, %2		
+		cmp al, FALSE
+		je %%end
+			writechar 30h
+			jmp %%end		
+	%%nzero:
+
+	%endif
+	mov byte al, FALSE
+	push ax
+
+	mov bl,%1	
+	mov cl,2
+	%%l1:
+		cmp cl,0
+		jz %%l2
+		
+		mov al,2
+		sub al,cl
+		
+		mov dl, bl	
+		
+		%%l1.1:
+			cmp al,0
+			jz %%l1.2
+							
+			shl dl,4
+			
+			dec al
+			jmp %%l1.1
+		%%l1.2:
+						
+		shr dl,4
+		
+		mov byte al, %2
+		cmp al, TRUE
+		je %%endzero		
+			cmp dl,0
+			jz %%zero
+			jmp %%notzero
+			%%zero:
+				pop ax
+				push ax
+				cmp al, TRUE				
+				je %%endzero
+				jmp %%dec
+			%%notzero:
+				pop ax
+				mov al, TRUE	
+				push ax				
+		%%endzero:
+						
+		cmp dl,9
+		jbe %%endsumseven  		
+		add dl,7
+		%%endsumseven:
+						
+		add dl,30h
+
+		push cx
+		push dx
+		writechar dl
+		pop dx
+		pop cx	
+
+		%%dec:
+	
+		dec cl
+		jmp %%l1	
+	%%l2:
+	
+	pop ax
+	
+	%%end:
+	
+%endmacro
+
+%macro printflags 1-*	; todos os flags acessiveis - o,s,z,a,p,c
+	%rep %0
+		printflag %1
+		%rotate 1
+	%endrep
+%endmacro
+
+%macro printflag 1
+	push ax
+	push bx
+	push cx
+	push dx
+
+	j%1 %%on
+	jmp %%off
+	%%on:
+		writechar 31h
+		jmp %%end
+	%%off:
+		writechar 30h	
+	%%end:
+	
+	pop dx
+	pop cx
+	pop bx
+	pop ax
+%endmacro
+
+%macro printregs 0	
+	call %%l1
+	%%l1:
+	pop word [IP]
+	sub word [IP],3
+
+	multipush ax,bx,cx,dx,ds,es,ss,si,di,bp,sp
+	printreg "AX", ax	
+	printreg "BX", bx
+	printreg "CX", cx
+	printreg "DX", dx
+	newline
+	printreg "ES:DI", es, di
+	printreg "DS:SI", ds, si
+	mov ax,cs
+	mov word bx, [IP] 
+	printreg "CS:IP", ax, bx
+	printreg "SS:SP", ss, sp	
+	printreg "BP", bp
+	newline
+	multipop ax,bx,cx,dx,ds,es,ss,si,di,bp,sp
+%endmacro
+
+%macro printreg 2
+	multipush ax,bx,cx,dx,ds,es,ss,si,di,bp,sp
+	mov word [REG1], %2
+	printf %1
+	printf "="
+	printhex16 [REG1]
+	printf " "
+	multipop ax,bx,cx,dx,ds,es,ss,si,di,bp,sp
+%endmacro
+
+%macro printreg 3
+	multipush ax,bx,cx,dx,ds,es,ss,si,di,bp,sp
+	mov word [REG1], %2
+	mov word [REG2], %3
+	printf %1
+	printf "="
+	printhex16 [REG1]
+	printf ":"
+	printhex16 [REG2]
+	printf " "
+	multipop ax,bx,cx,dx,ds,es,ss,si,di,bp,sp
+%endmacro
+	
+section .bss
+	PARSE_ERROR: resb 1
+	REG1: resw 1
+	REG2: resw 1
+	IP: resw 1
+%endif

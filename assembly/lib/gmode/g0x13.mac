@@ -1,0 +1,43 @@
+
+%ifndef G0x13_MAC
+	%define G0x13_MAC	
+	
+	%include "lib/gmode/g0x13.asm"	
+		
+%macro initgraph 0		
+	call proc_initgraph
+%endmacro
+
+%macro closegraph 0
+	call proc_closegraph
+%endmacro
+
+%macro repaint 0
+	call proc_repaint
+%endmacro
+
+%macro width 2
+	stkopen 0x02
+	call proc_width
+	mov ax,sp
+	mov bp,ax
+	mov ax,%1
+	mov ds,ax
+	mov ax,[bp+2]
+	mov word [%2],ax	
+	stkclose 0x02
+%endmacro
+
+%macro height 2
+	stkopen 0x02
+	call proc_height
+	mov ax,sp
+	mov bp,ax
+	mov ax,%1
+	mov ds,ax
+	mov ax,[bp+2]
+	mov word [%2],ax	
+	stkclose 0x02
+%endmacro		
+		
+%endif

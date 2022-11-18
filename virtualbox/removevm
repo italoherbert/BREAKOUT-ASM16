@@ -1,0 +1,10 @@
+
+VM_NAME=$1
+VMDK_FILE=$2
+
+VBoxManage unregistervm $VM_NAME
+
+rm -r ~/VirtualBox\ VMs/$VM_NAME
+rm $VMDK_FILE
+
+echo "Maquina virtual removida."

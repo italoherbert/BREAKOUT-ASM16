@@ -1,0 +1,474 @@
+
+%ifndef MATH_MAC
+	%define MATH_MAC
+	
+	%include "lib/math.asm"
+	%include "lib/system.mac"
+
+%macro chgsig 1
+	chgsig cs, %1
+%endmacro
+
+%macro cmp16 3
+	cmp16 cs, %1, cs, %2, %3
+%endmacro
+
+%macro mul16 2
+	mul16 cs, %1, cs, %2
+%endmacro
+
+%macro div16 2
+	div16 cs, %1, cs, %2
+%endmacro
+
+%macro mod16 2
+	mod16 cs, %1, cs, %2
+%endmacro
+
+%macro inc16 1
+	inc16 cs, %1
+%endmacro
+
+%macro dec16 1
+	dec16 cs, %1
+%endmacro
+
+%macro add16 2
+	add16 cs, %1, cs, %2
+%endmacro
+
+%macro sub16 2
+	sub16 cs, %1, cs, %2
+%endmacro
+
+%macro int32to16 2
+	int32to16 cs, %1, %2
+%endmacro
+
+%macro int16to32 2
+	int16to32 %1, cs, %2
+%endmacro
+
+%macro idiv32 5
+	idiv32 cs, %1, cs, %2, cs, %3, cs, %4, cs, %5
+%endmacro
+
+%macro imul32 3
+	imul32 cs, %1, cs, %2, cs, %3
+%endmacro
+
+%macro div32 5
+	div32 cs, %1, cs, %2, cs, %3, cs, %4, cs, %5
+%endmacro
+
+%macro mul32 3
+	mul32 cs, %1, cs, %2, cs, %3
+%endmacro
+	
+%macro add32 3
+	add32 cs, %1, cs, %2, cs, %3
+%endmacro
+
+%macro sub32 3
+	sub32 cs, %1, cs, %2, cs, %3
+%endmacro
+
+%macro int32to16 3
+	stkopen 0x06
+	mov ax,%1
+	mov ds,ax
+	mov ax,[%2+2]
+	mov word [bp+0], ax
+	mov ax,[%2]	
+	mov word [bp+2], ax
+	call proc_int32to16
+	mov ax,sp
+	mov bp,ax
+	mov ax,[bp+4]
+	mov word %3, ax	
+	stkclose 0x06
+%endmacro
+
+%macro int16to32 3
+	stkopen 0x06
+	mov word [bp+0], %1	
+	call proc_int16to32
+	mov ax,sp
+	mov bp,ax
+	mov ax,%2
+	mov ds,ax
+	mov ax,[bp+2]
+	mov [%3+2],ax
+	mov ax,[bp+4]
+	mov [%3],ax	
+	stkclose 0x06
+%endmacro
+
+%macro div32 10
+	stkopen 0x11
+	mov ax,%1
+	mov ds,ax
+	mov ax,[%2+2]
+	mov word [bp+0], ax
+	mov ax,[%2]
+	mov word [bp+2], ax
+	mov ax,%3
+	mov ds,ax
+	mov ax,[%4+2]
+	mov word [bp+4], ax
+	mov ax,[%4]
+	mov word [bp+6], ax
+	call proc_div32
+	mov ax,sp
+	mov bp,ax
+	mov ax,%5
+	mov ds,ax
+	mov word ax, [bp+8]
+	mov word [%6+2], ax
+	mov word ax, [bp+0x0A]
+	mov word [%6], ax
+	mov ax,%7
+	mov ds,ax
+	mov word ax,[bp+0x0C]
+	mov word [%8+2],ax
+	mov word ax,[bp+0x0E]
+	mov word [%8],ax
+	mov ax,%9
+	mov ds,ax
+	mov byte al,[bp+0x10]
+	mov byte [%10],al
+	stkclose 0x11
+%endmacro
+	
+%macro mul32 6
+	stkopen 0x0C
+	mov ax,%1
+	mov ds,ax
+	mov ax,[%2+2]
+	mov word [bp+0], ax
+	mov ax,[%2]
+	mov word [bp+2], ax
+	mov ax,%3
+	mov ds,ax
+	mov ax,[%4+2]
+	mov word [bp+4], ax
+	mov ax,[%4]
+	mov word [bp+6], ax
+	call proc_mul32
+	mov ax,sp
+	mov bp,ax
+	mov ax,%5
+	mov ds,ax
+	mov word ax, [bp+8]
+	mov word [%6+2], ax
+	mov word ax, [bp+0x0A]
+	mov word [%6], ax
+	stkclose 0x0C
+%endmacro	
+	
+%macro add32 6
+	stkopen 0x0C
+	mov ax,%1
+	mov ds,ax
+	mov ax,[%2+2]
+	mov word [bp+0], ax
+	mov ax,[%2]
+	mov word [bp+2], ax
+	mov ax,%3
+	mov ds,ax
+	mov ax,[%4+2]
+	mov word [bp+4], ax
+	mov ax,[%4]
+	mov word [bp+6], ax
+	call proc_add32
+	mov ax,sp
+	mov bp,ax
+	mov ax,%5
+	mov ds,ax
+	mov word ax, [bp+8]
+	mov word [%6+2], ax
+	mov word ax, [bp+0x0A]
+	mov word [%6], ax
+	stkclose 0x0C
+%endmacro
+
+%macro sub32 6
+	stkopen 0x0C
+	mov ax,%1
+	mov ds,ax
+	mov ax,[%2+2]
+	mov word [bp+0], ax
+	mov ax,[%2]
+	mov word [bp+2], ax
+	mov ax,%3
+	mov ds,ax
+	mov ax,[%4+2]
+	mov word [bp+4], ax
+	mov ax,[%4]
+	mov word [bp+6], ax
+	call proc_sub32
+	mov ax,sp
+	mov bp,ax
+	mov ax,%5
+	mov ds,ax
+	mov word ax, [bp+8]
+	mov word [%6+2], ax
+	mov word ax, [bp+0x0A]
+	mov word [%6], ax
+	stkclose 0x0C
+%endmacro
+
+%macro idiv32 10
+	stkopen 0x11
+	mov ax,%1
+	mov ds,ax
+	mov ax,[%2+2]
+	mov word [bp+0], ax
+	mov ax,[%2]
+	mov word [bp+2], ax
+	mov ax,%3
+	mov ds,ax
+	mov ax,[%4+2]
+	mov word [bp+4], ax
+	mov ax,[%4]
+	mov word [bp+6], ax
+	call proc_idiv32
+	mov ax,sp
+	mov bp,ax
+	mov ax,%5
+	mov ds,ax
+	mov word ax, [bp+8]
+	mov word [%6+2], ax
+	mov word ax, [bp+0x0A]
+	mov word [%6], ax
+	mov ax,%7
+	mov ds,ax
+	mov word ax,[bp+0x0C]
+	mov word [%8+2],ax
+	mov word ax,[bp+0x0E]
+	mov word [%8],ax
+	mov ax,%9
+	mov ds,ax
+	mov byte al,[bp+0x10]
+	mov byte [%10],al
+	stkclose 0x11
+%endmacro
+
+%macro imul32 6
+	stkopen 0x0C
+	mov ax,%1
+	mov ds,ax
+	mov ax,[%2+2]
+	mov word [bp+0], ax
+	mov ax,[%2]
+	mov word [bp+2], ax
+	mov ax,%3
+	mov ds,ax
+	mov ax,[%4+2]
+	mov word [bp+4], ax
+	mov ax,[%4]
+	mov word [bp+6], ax
+	call proc_imul32
+	mov ax,sp
+	mov bp,ax
+	mov ax,%5
+	mov ds,ax
+	mov word ax, [bp+8]
+	mov word [%6+2], ax
+	mov word ax, [bp+0x0A]
+	mov word [%6], ax
+	stkclose 0x0C
+%endmacro
+	
+%macro cmp32 3
+	cmp32 cs, %1, cs, %2, %3
+%endmacro	
+	
+%macro cmp32 5
+	stkopen 9
+	mov ax,%1
+	mov ds,ax
+	mov word ax,[%2+2]
+	mov word [bp+0], ax
+	mov word ax,[%2]
+	mov word [bp+2], ax	
+	mov ax,%3
+	mov ds,ax
+	mov word ax,[%4+2]
+	mov word [bp+4], ax
+	mov word ax,[%4]
+	mov word [bp+6], ax	
+	call proc_cmp32
+	mov ax,sp
+	mov bp,ax
+	mov al,[bp+8]
+	mov byte %5,al
+	stkclose 9
+%endmacro
+	
+%macro shl32 2
+	shl32 cs, %1, %2
+%endmacro	
+	
+%macro shl32 3
+	stkopen 5
+	mov ax,%1
+	mov ds,ax
+	mov word ax,[%2+2]
+	mov word [bp+0], ax
+	mov word ax,[%2]
+	mov word [bp+2], ax
+	mov byte al, %3
+	mov byte [bp+4], al 
+	call proc_shl32
+	mov ax,sp
+	mov bp,ax
+	mov ax,%1
+	mov ds,ax
+	mov ax,[bp+0]
+	mov word [%2+2],ax
+	mov ax,[bp+2]
+	mov word [%2],ax
+	stkclose 5
+%endmacro
+
+
+%macro shr32 2
+	shr32 cs, %1, %2
+%endmacro	
+	
+%macro shr32 3
+	stkopen 5
+	mov ax,%1
+	mov ds,ax
+	mov word ax,[%2+2]
+	mov word [bp+0], ax
+	mov word ax,[%2]
+	mov word [bp+2], ax
+	mov byte al, %3
+	mov byte [bp+4], al 
+	call proc_shr32
+	mov ax,sp
+	mov bp,ax
+	mov ax,%1
+	mov ds,ax
+	mov ax,[bp+0]
+	mov word [%2+2],ax
+	mov ax,[bp+2]
+	mov word [%2],ax
+	stkclose 5
+%endmacro
+
+%macro inc16 2
+	mov ax,%1
+	mov ds,ax
+	inc word [%2]
+%endmacro
+
+%macro dec16 2
+	mov ax,%1
+	mov ds,ax
+	dec word [%2]
+%endmacro
+
+%macro add16 4	
+	mov ax,%3
+	mov ds,ax
+	mov bx,[%4]	
+	mov ax,%1
+	mov ds,ax	
+	add [%2],bx
+%endmacro
+
+%macro sub16 4
+	mov ax,%3
+	mov ds,ax
+	mov bx,[%4]
+	mov ax,%1
+	mov ds,ax
+	sub [%2],bx
+%endmacro
+
+%macro mul16 4
+	mov ax,%1
+	mov ds,ax
+	mov bx,[%2]
+	mov ax,%3
+	mov ds,ax
+	mov cx,[%4]
+	
+	mov ax,bx
+	imul cx
+	
+	mov dx,%1
+	mov ds,dx
+	mov [%2],ax
+%endmacro
+
+%macro div16 4
+	mov ax,%1
+	mov ds,ax
+	mov bx,[%2]
+	mov ax,%3
+	mov ds,ax
+	mov cx,[%4]
+	
+	xor dx,dx
+	mov ax,bx
+	idiv cx
+	
+	mov dx,%1
+	mov ds,dx
+	mov [%2],ax
+%endmacro
+
+
+%macro mod16 4
+	mov ax,%1
+	mov ds,ax
+	mov bx,[%2]
+	mov ax,%3
+	mov ds,ax
+	mov cx,[%4]
+	
+	xor dx,dx
+	mov ax,bx
+	idiv cx
+	
+	mov bx,%1
+	mov ds,bx
+	mov [%2],dx
+%endmacro
+
+%macro cmp16 5
+	mov ax,%1
+	mov ds,ax
+	mov bx,[%2]
+	mov ax,%3
+	mov ds,ax
+	mov	cx,[%4]
+	
+	cmp bx,cx
+	jg %%above
+	jl %%below
+		mov byte %5, 0
+		jmp %%endcmp
+	%%above:
+		mov byte %5, 1
+		jmp %%endcmp
+	%%below:
+		mov byte %5, -1
+	%%endcmp:
+%endmacro
+
+%macro chgsig 2
+	mov ax,%1
+	mov ds,ax
+	mov ax,[%2]
+	mov bx,0xFFFF
+	sub bx,ax
+	inc bx
+	mov [%2],bx
+%endmacro
+	
+%endif

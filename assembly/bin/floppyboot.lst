@@ -1,0 +1,57 @@
+     1                                  section .text
+     2                                  	global _start
+     3                                  
+     4                                  _start:		
+     5 00000000 31C0                    	xor ax,ax
+     6 00000002 8ED8                    	mov ds,ax
+     7                                  			
+     8 00000004 B8FE7F                  	mov ax,0x7FFE
+     9 00000007 8ED0                    	mov ss,ax
+    10                                  
+    11 00000009 B400                    	mov ah,00h
+    12 0000000B B003                    	mov al,03h
+    13 0000000D CD10                    	int 10h
+    14                                  
+    15                                  	; Carrega kernel na memória
+    16 0000000F B402                    	mov ah,02h						
+    17 00000011 B200                    	mov dl,00h						
+    18                                  
+    19 00000013 B600                    	mov dh,0						; Cabeçote
+    20 00000015 B500                    	mov ch,0						; Trilha
+    21 00000017 B102                    	mov cl,2						; Setor	
+    22 00000019 B011                    	mov al,0x11						; Quantidade de setores
+    23                                  
+    24 0000001B BB5000                  	mov bx,0x0050		 
+    25 0000001E 8EC3                    	mov es,bx
+    26 00000020 BB0000                  	mov bx,0x0000		
+    27 00000023 CD13                    	int 13h
+    28                                  	
+    29 00000025 B402                    	mov ah,02h						
+    30 00000027 B200                    	mov dl,00h						
+    31                                  
+    32 00000029 B601                    	mov dh,1						; Cabeçote
+    33 0000002B B500                    	mov ch,0						; Trilha
+    34 0000002D B101                    	mov cl,1						; Setor	
+    35 0000002F B012                    	mov al,0x12						; Quantidade de setores
+    36                                  
+    37 00000031 BB5000                  	mov bx,0x0050		 
+    38 00000034 8EC3                    	mov es,bx
+    39 00000036 BB0022                  	mov bx,0x2200		
+    40 00000039 CD13                    	int 13h	
+    41                                  	
+    42 0000003B B402                    	mov ah,02h						
+    43 0000003D B200                    	mov dl,00h						
+    44                                  
+    45 0000003F B600                    	mov dh,0						; Cabeçote
+    46 00000041 B501                    	mov ch,1						; Trilha
+    47 00000043 B101                    	mov cl,1						; Setor	
+    48 00000045 B012                    	mov al,0x12						; Quantidade de setores
+    49                                  
+    50 00000047 BB5000                  	mov bx,0x0050		 
+    51 0000004A 8EC3                    	mov es,bx
+    52 0000004C BB0046                  	mov bx,0x4600	
+    53 0000004F CD13                    	int 13h								
+    54                                  
+    55                                  	; Muda execução para o kernel
+    56 00000051 EA00005000              	jmp 0x0050:0x0000	
+    57                                  	

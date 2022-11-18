@@ -1,0 +1,23 @@
+
+VM_NAME=MinhaVM
+
+VMDK_FILE=sistema.vmdk
+RAWDISK=/dev/sdb
+STOR_CTL_NAME=IDE_Controller
+
+
+case $1 in
+  create)
+	./createvm $VM_NAME $VMDK_FILE $RAWDISK $STOR_CTL_NAME
+	;;
+  remove) 
+	./removevm $VM_NAME $VMDK_FILE
+	;; 		
+  start)
+	VBoxManage startvm $VM_NAME --type sdl
+	;;
+  pause|resume|reset|poweroff)	
+	VBoxManage controlvm $VM_NAME $1
+	;;
+esac
+  

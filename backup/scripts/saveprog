@@ -1,0 +1,11 @@
+
+BIN_DIR=bin
+DEV=$1
+FILE=$2
+SEEK=$3
+COUNT=$4
+
+echo "Gravando o programa $FILE no dispositivo $DEV"
+dd if=$BIN_DIR/$FILE of=$DEV bs=512 seek=$SEEK count=$COUNT
+
+echo ""

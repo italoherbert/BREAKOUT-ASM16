@@ -1,0 +1,191 @@
+
+%ifndef GRAPH_MAC
+	%define GRAPH_MAC
+
+	%include "lib/graph.asm"
+			
+%macro drawstring 4
+	drawstring cs, %1, cs, %2, cs, %3, cs, %4
+%endmacro
+			
+%macro drawlineh 4
+	drawlineh cs, %1, cs, %2, cs, %3, cs, %4
+%endmacro			
+
+%macro drawlinev 4
+	drawlinev cs, %1, cs, %2, cs, %3, cs, %4
+%endmacro			
+			
+%macro drawrect 5
+	drawrect cs, %1, cs, %2, cs, %3, cs, %4, cs, %5
+%endmacro
+
+%macro fillrect 5
+	fillrect cs, %1, cs, %2, cs, %3, cs, %4, cs, %5
+%endmacro	
+
+%macro drawarc 5
+	drawarc cs, %1, cs, %2, cs, %3, cs, %4, cs, %5
+%endmacro
+
+%macro fillarc 5
+	fillarc cs, %1, cs, %2, cs, %3, cs, %4, cs, %5
+%endmacro			
+
+%macro repaint 1
+	repaint cs, %1
+%endmacro
+
+%macro drawstring 8	
+	stkopen 0x07	
+	mov word [bp+0],%1
+	mov word [bp+2],%2	
+	mov ax,%3
+	mov ds,ax
+	mov al,[%4]
+	mov [bp+4],al	
+	mov ax,%5
+	mov ds,ax
+	mov al,[%6]
+	mov [bp+6],al
+	mov ax,%7	
+	mov ds,ax
+	mov al,[%8]
+	mov [bp+8],al			
+	call proc_drawstring
+	stkclose 0x07
+%endmacro
+
+%macro drawlineh 8
+	stkopen 0x07
+	mov ax,%1
+	mov ds,ax
+	mov ax,[%2]
+	mov [bp+0],ax	
+	mov ax,%3
+	mov ds,ax
+	mov ax,[%4]
+	mov [bp+2],ax	
+	mov ax,%5
+	mov ds,ax
+	mov ax,[%6]
+	mov [bp+4],ax		
+	mov ax,%7
+	mov ds,ax
+	mov al,[%8]
+	mov [bp+6],al
+	call proc_drawlineh	
+	stkclose 0x07
+%endmacro
+
+%macro drawlinev 8
+	stkopen 0x07
+	mov ax,%1
+	mov ds,ax
+	mov ax,[%2]
+	mov [bp+0],ax	
+	mov ax,%3
+	mov ds,ax
+	mov ax,[%4]
+	mov [bp+2],ax	
+	mov ax,%5
+	mov ds,ax
+	mov ax,[%6]
+	mov [bp+4],ax		
+	mov ax,%7
+	mov ds,ax
+	mov al,[%8]
+	mov [bp+6],al
+	call proc_drawlinev	
+	stkclose 0x07
+%endmacro
+
+%macro drawrect 10
+	stkopen 0x09	
+	mov ax,%1
+	mov ds,ax
+	mov ax,[%2]
+	mov [bp+0],ax	
+	mov ax,%3
+	mov ds,ax
+	mov ax,[%4]
+	mov [bp+2],ax	
+	mov ax,%5
+	mov ds,ax
+	mov ax,[%6]
+	mov [bp+4],ax	
+	mov ax,%7
+	mov ds,ax
+	mov ax,[%8]
+	mov [bp+6],ax	
+	mov ax,%9
+	mov ds,ax
+	mov al,[%10]
+	mov [bp+8],al	
+	call proc_drawrect	
+	stkclose 0x09
+%endmacro
+
+%macro fillrect 10
+	stkopen 0x09	
+	mov ax,%1
+	mov ds,ax
+	mov ax,[%2]
+	mov [bp+0],ax	
+	mov ax,%3
+	mov ds,ax
+	mov ax,[%4]
+	mov [bp+2],ax	
+	mov ax,%5
+	mov ds,ax
+	mov ax,[%6]
+	mov [bp+4],ax	
+	mov ax,%7
+	mov ds,ax
+	mov ax,[%8]
+	mov [bp+6],ax	
+	mov ax,%9
+	mov ds,ax
+	mov al,[%10]
+	mov [bp+8],al	
+	call proc_fillrect	
+	stkclose 0x09
+%endmacro
+
+%macro drawarc 10
+	drawarc %1, %2, %3, %4, %5, %6, %7, %8, %9, %10, 0
+%endmacro
+
+%macro fillarc 10
+	drawarc %1, %2, %3, %4, %5, %6, %7, %8, %9, %10, 1
+%endmacro
+		
+%macro drawarc 11
+	stkopen 0x0A
+	mov ax,%1
+	mov ds,ax
+	mov ax,[%2]
+	mov [bp+0],ax	
+	mov ax,%3
+	mov ds,ax
+	mov ax,[%4]
+	mov [bp+2],ax	
+	mov ax,%5
+	mov ds,ax
+	mov ax,[%6]
+	mov [bp+4],ax	
+	mov ax,%7
+	mov ds,ax
+	mov ax,[%8]
+	mov [bp+6],ax	
+	mov ax,%9
+	mov ds,ax
+	mov al,[%10]
+	mov byte [bp+8],al		
+	mov byte [bp+9],%11	
+	call proc_drawarc	
+	stkclose 0x0A
+%endmacro
+		
+		
+%endif

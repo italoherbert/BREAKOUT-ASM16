@@ -1,0 +1,22 @@
+
+%ifndef MEMORY_MAC
+	%define MEMORY_MAC
+	
+	%include "lib/mem.asm"
+		
+%macro initmem 0
+	call proc_initmem
+%endmacro
+
+%macro malloc 3
+	openstack 5
+	mov byte [ bp + 4 ], %3
+	call proc_malloc
+	push sp
+	pop bp
+	mov word %1, [ bp + 0 ]
+	mov word %2, [ bp + 2 ]
+	closestack 5	
+%endmacro	
+	
+%endif

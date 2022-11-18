@@ -1,0 +1,9 @@
+
+PROG=boot
+
+./compile $PROG
+#./savembr /dev/sdb $PROG.bin
+
+echo ""
+echo "Pronto!"
+echo ""

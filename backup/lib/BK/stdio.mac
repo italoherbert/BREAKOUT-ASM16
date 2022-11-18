@@ -1,0 +1,123 @@
+
+%ifndef STDIO_MAC
+	%define STDIO_MAC
+	
+	%include "lib/stdio.asm"
+ 	%include "lib/system.mac"
+
+; OBS: Esta macro não deve ser utilizada em procedimentos dinâmicos		
+%macro printf 1-*	
+	%rep %0					
+		__print %1
+		%rotate 1		
+	%endrep
+%endmacro	
+
+; OBS: Esta macro não deve ser utilizada em procedimentos dinâmicos		
+%macro __print 1
+	section .data
+		%%str: db %1,0
+	section .text
+		printstr cs, %%str				
+%endmacro
+
+%macro printstr 2
+	openstack 4
+	mov word [bp], %1
+	mov word [bp+2], %2
+	call proc_printstr
+	closestack 4
+%endmacro
+
+%macro printbool 1	
+	cmp byte %1, TRUE
+	je .true
+	jmp .false
+	.true:
+		printf "true"
+		jmp .endcmp
+	.false:
+		printf "false"
+	.endcmp:	
+%endmacro
+
+%macro printptr 2-3 TRUE
+	openstack 3
+	mov word [ bp + 0 ], %2
+	mov byte [ bp + 2 ], %3
+	printhex16 %1, %3
+	writechar ':'
+	push sp
+	pop bp
+	mov word ax, [ bp + 0 ]
+	mov byte bl, [ bp + 2 ]
+	printhex16 ax, bl
+	closestack 3
+%endmacro
+
+%macro printfptr 2-3 TRUE
+	openstack 3
+	mov word [ bp + 0 ], %1
+	mov byte [ bp + 2 ], %3
+	printhex16 %2, %3
+	push sp
+	pop bp
+	mov word ax, [ bp + 0 ]
+	mov byte bl, [ bp + 2 ]
+	printhex16 ax, bl
+	closestack 3
+%endmacro
+
+%macro printbin 3-4 FALSE
+	openstack 6
+	mov word [bp], %1
+	mov word [bp+2], %2
+	mov byte [bp+4], %3
+	mov byte [bp+5], %4	
+	call proc_printbin
+	closestack 6	
+%endmacro
+
+%macro printhex 3-4 FALSE		
+	openstack 6
+	mov word [bp], %1
+	mov word [bp+2], %2
+	mov byte [bp+4], %3
+	mov byte [bp+5], %4
+	call proc_printhex
+	closestack 6	
+%endmacro
+
+%macro printbin16 1-2 FALSE
+	openstack 3
+	mov word [bp], %1
+	mov byte [bp+2], %2	
+	call proc_printbin16
+	closestack 3
+%endmacro
+
+%macro printbin8 1-2 FALSE
+	openstack 2
+	mov byte [bp], %1
+	mov byte [bp+1], %2
+	call proc_printbin8
+	closestack 2
+%endmacro
+
+%macro printhex16 1-2 FALSE
+	openstack 3
+	mov word [bp], %1
+	mov byte [bp+2], %2	
+	call proc_printhex16
+	closestack 3
+%endmacro
+
+%macro printhex8 1-2 FALSE
+	openstack 2
+	mov byte [bp], %1
+	mov byte [bp+1], %2
+	call proc_printhex8
+	closestack 2
+%endmacro
+
+%endif

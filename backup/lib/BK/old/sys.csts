@@ -1,0 +1,11 @@
+
+%ifndef SYS_CSTS
+	%define SYS_CSTS
+
+	%define TRUE 01h
+	%define FALSE 00h
+
+section .data
+	SYS_SEGMENT: equ 0x1000	
+		
+%endif

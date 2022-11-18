@@ -1,0 +1,28 @@
+
+%ifndef STDIO_MAC
+	%define STDIO_MAC
+	
+	%include "lib/stdio.asm"
+ 	%include "lib/system.mac"
+
+%macro prtbin 3-4 FALSE
+	openstack 6
+	mov word [bp], %1
+	mov word [bp+2], %2
+	mov byte [bp+4], %3
+	mov byte [bp+5], %4	
+	call proc_prtbin
+	closestack 6	
+%endmacro
+
+%macro prthex 3-4 FALSE		
+	openstack 6
+	mov word [bp], %1
+	mov word [bp+2], %2
+	mov byte [bp+4], %3
+	mov byte [bp+5], %4
+	call proc_prthex
+	closestack 6	
+%endmacro
+
+%endif

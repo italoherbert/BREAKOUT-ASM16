@@ -1,0 +1,166 @@
+
+%ifndef STRING_MAC
+	%define STRING_MAC
+				
+	%include "lib/sys.mac"
+			
+%macro strlen 2
+	mov bx,%1
+	mov si,%2
+	
+	mov cl,0
+	%%loop:
+		lodsb
+		cmp al,0
+		jz %%done
+	
+		inc cl
+		jmp %%loop
+	%%done:
+	mov byte [bx], cl
+%endmacro			
+					
+%macro tobcdstr 2
+	mov bx,%1
+	mov di,bx
+		
+	mov dx,%2
+	
+	mov ax,dx
+	
+	; sinal (+/-)	
+	shr ax,15
+	cmp ax,01h
+	je %%negint
+	jmp %%end_negint
+	
+	%%negint:
+		mov al,2Dh
+		stosb	
+	%%end_negint:
+	
+	; sinal tratado
+	
+	; magnitude
+	
+	shl dx,1
+	shr dx,1
+	
+	xor bx,bx
+	
+	push bx
+	push dx
+	
+	mov cx,4
+	%%loop:
+		cmp cx,0
+		jz %%endloop
+		
+		pop dx
+		push dx
+		
+		push cx
+		%%desloc:
+			cmp cx,0
+			jz %%enddesloc
+			
+			shl dx,4
+			dec cx	
+			jmp %%desloc
+		%%enddesloc:
+		pop cx
+		
+		shr dx,12
+				
+		cmp dx,0
+		jz %%nextit							
+							
+		mov ax,0006h
+		push cx		
+		mov bx,cx
+		mov cx,4
+		sub cx,bx
+		%%mul:
+			cmp cx,4
+			jae %%endmul
+			
+			mov bx,0006h
+			mul bx
+			inc cx
+			jmp %%mul
+		%%endmul:		
+		pop cx
+		
+		mov bx,dx
+		mul bx
+		
+		pop dx		
+		pop bx		
+		add bx,ax	
+		push bx
+		push dx	
+		
+		%%nextit:															
+			dec cx
+			jmp %%loop
+	%%endloop:
+	
+	pop dx
+	pop bx
+	
+	add dx,bx
+	tohexstr di,dx 
+	; magnitude tratada			
+	
+%endmacro		
+		
+%macro tohexstr 2	
+	mov ax,%2
+	push ax	
+	
+	mov bx,%1
+	
+	mov cx,4	
+	%%hextostr_loop:				
+		mov ax,4
+		sub ax,cx								
+		
+		pop dx	
+		push dx
+		
+		%%hextostr_loop11:
+			cmp ax,0
+			jbe %%hextostr_endloop11
+							
+			shl dx,4
+			dec ax
+			jmp %%hextostr_loop11
+		%%hextostr_endloop11:
+								
+		shr dx,12
+		
+		cmp dl,0
+		jz %%nextit							
+						
+		cmp dl,9
+		ja %%hextostr_sumseven
+		jmp %%hextostr_notsumseven  
+		
+		%%hextostr_sumseven:
+			add dl,7
+		%%hextostr_notsumseven:
+						
+		add dl,30h
+		
+		mov byte [bx],dl
+		inc bx
+		
+		%%nextit:
+	loop %%hextostr_loop					
+	
+	pop ax
+	
+	mov byte [bx], 00h
+%endmacro	
+	
+%endif

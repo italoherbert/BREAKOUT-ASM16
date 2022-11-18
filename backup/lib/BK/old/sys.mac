@@ -1,0 +1,31 @@
+ 
+%ifndef SYS_MAC
+ 	%define SYS_MAC
+ 	
+ 	%include "lib/sys.asm"
+ 	 	
+%macro openstack 1		
+	sub word sp, %1
+	push sp
+	pop bp
+%endmacro
+
+%macro closestack 1
+	add word sp, %1
+%endmacro
+
+%macro multipush 1-* 	
+ 	%rep %0
+ 		push %1
+ 		%rotate 1
+ 	%endrep 	
+%endmacro
+ 
+%macro multipop 1-*
+ 	%rep %0
+ 	 	%rotate -1
+ 		pop %1
+ 	%endrep 	 	
+%endmacro  	
+ 	
+%endif 

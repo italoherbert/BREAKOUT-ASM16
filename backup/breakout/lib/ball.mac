@@ -1,0 +1,107 @@
+%ifndef BALL_MAC
+	%define BALL_MAC
+			
+	%include "lib/system.mac"
+	%include "lib/math.mac"
+	%include "lib/float.mac"
+	%include "lib/trigon.mac"
+	%include "lib/stdio.mac"
+
+	%include "src/lib/constants.asm"
+
+section .data
+	__BALL_ANGLE: dd 45.0
+	__BALL_VAR_ANGLE: dd 15.0
+	
+	__BALL_RINC: dd 1.5
+	__BALL_X: dw 11
+	__BALL_Y: dw 11
+
+	__ball_xinc: dw 0
+	__ball_yinc: dw 0
+	__ball_rinc: dd 0
+	__ball_x: dw 0
+	__ball_y: dw 0	
+	__ball_radial: dw 10
+	
+	
+	
+	__ball_color: db 09h
+	__ball_bordercolor: db 07h		
+		
+	__ball_angle: dd 0
+
+%macro ball_move 0
+section .data
+	%%x: dw 0
+	%%y: dw 0
+section .text
+	mov16 %%x, __ball_x
+	mov16 %%y, __ball_y
+
+	add16 %%x, __ball_xinc
+	add16 %%y, __ball_yinc
+	
+	cmp16 %%x, __tray_x1, cl
+	cmp cl,0
+	jle %%end
+	
+	cmp16 %%x, __tray_x2, cl
+	cmp cl,0
+	jge %%end
+	
+	cmp16 %%y, __tray_y1, cl
+	cmp cl,0
+	jle %%end
+	
+	cmp16 %%y, __tray_y2, cl
+	cmp cl,0
+	jge %%end
+	
+		add16 __ball_x, __ball_xinc
+		add16 __ball_y, __ball_yinc
+		
+	%%end:
+%endmacro
+
+
+%macro ball_leftangle 0
+	;to0x360 __ball_angle
+	flinvsig __ball_angle			
+	flsub __ball_angle, __BALL_VAR_ANGLE, __ball_angle
+	ball_updateangle
+%endmacro
+
+%macro ball_rightangle 0	
+	;to0x360 __ball_angle
+	flinvsig __ball_angle			
+	fladd __ball_angle, __BALL_VAR_ANGLE, __ball_angle
+	ball_updateangle
+%endmacro
+
+%macro ball_xinvdirection 0
+	flinvsig __ball_angle
+	;to0x360 __ball_angle
+	fladd __ball_angle, PI, __ball_angle	
+	ball_updateangle
+%endmacro
+
+%macro ball_yinvdirection 0
+	flinvsig __ball_angle			
+	ball_updateangle
+%endmacro
+
+%macro ball_updateangle 0
+section .data
+	%%aux1: dd 0
+	%%aux2: dd 0
+section .text
+	cos __ball_angle, %%aux1	
+	sin __ball_angle, %%aux2
+	flmul %%aux1, __ball_rinc, %%aux1
+	flmul %%aux2, __ball_rinc, %%aux2
+	fltoint16 %%aux1, __ball_xinc
+	fltoint16 %%aux2, __ball_yinc
+%endmacro
+	
+%endif

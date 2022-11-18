@@ -1,0 +1,273 @@
+%ifndef CRT_MAC	
+	%define CRT_MAC
+	
+	%include "lib/sys.mac"
+	%include "lib/crt.csts"	
+	
+%macro writehexln 1
+	writehex %1
+	newline
+%endmacro
+
+%macro writestrln 1
+	writestr %1
+	newline
+%endmacro
+
+%macro writeln 1
+	write %1
+	newline	
+%endmacro
+
+%macro writehex 1
+	;multipush ax,bx,cx,dx
+	
+	mov ax,%1
+	push ax	
+	
+	mov cx,4	
+	%%writehex_loop:				
+		mov ax,4
+		sub ax,cx								
+		
+		pop dx	
+		push dx
+		
+		%%writehex_loop11:
+			cmp ax,0
+			jbe %%writehex_endloop11
+							
+			shl dx,4
+			dec ax
+			jmp %%writehex_loop11
+		%%writehex_endloop11:
+						
+		shr dx,12							
+						
+		cmp dl,9
+		ja %%writehex_sumseven
+		jmp %%writehex_notsumseven  
+		
+		%%writehex_sumseven:
+			add dl,7
+		%%writehex_notsumseven:
+						
+		add dl,30h
+
+		push cx
+		write dl
+		pop cx
+		
+	loop %%writehex_loop					
+	
+	pop ax
+	
+	write 68h
+	
+	;multipop ax,bx,cx,dx
+%endmacro
+
+%macro writestr 1
+	section .data
+		%%str: db %1,0
+
+	section .text
+		mov bx,ds
+		mov cx,si
+		
+		push ds
+		push si
+	
+		mov ax,cs
+		mov ds,ax
+		mov si,%%str
+	
+		%%writestr_loop:
+			lodsb
+			cmp al,0h
+			jz %%writestr_done
+					
+			push ds
+			push si						
+			mov ds,bx
+			mov si,cx
+			push bx
+			push cx	
+			
+			write al
+			
+			pop cx
+			pop bx
+			pop si
+			pop ds
+									
+			jmp %%writestr_loop 
+		%%writestr_done:
+		
+		pop si
+		pop ds
+%endmacro
+
+%macro write 1
+	mov al,%1
+	push ax
+			
+	; get cursor
+	mov ax,0300h
+	mov bh,00h
+	int 10h
+		
+	; seta cursor e cores (texto,fundo)	
+	mov cx,dx
+	mov bh, byte [_CRT_TEXTBG]
+	mov bl, byte [_CRT_TEXTCOLOR]
+	shl bl,4
+	shl bx,4
+	mov ax,0600h	
+	int 10h
+	
+	; imprime caracter
+	pop ax 	
+	mov ah,0Eh
+	mov bh,00h
+	int 10h	
+		
+	call __finish_write			
+
+%endmacro
+
+%macro inittextmode 0
+	mov ah,CRT_Y1
+	mov al,CRT_X1	
+	mov [_CRT_Y1],ah
+	mov [_CRT_X1],al
+
+	mov ah,CRT_Y2
+	mov al,CRT_X2		
+	mov [_CRT_Y2],ah
+	mov [_CRT_X2],al
+
+	mov ah,CRT_TEXTBG
+	mov al,CRT_TEXTCOLOR	
+	mov [_CRT_TEXTBG],ah		
+	mov [_CRT_TEXTCOLOR],al
+			
+	mov ah,00h
+	mov al,CRT_MODE
+	int 10h		
+%endmacro
+		
+%macro window 4
+	mov cl,%1
+	mov ch,%2
+	mov dl,%3
+	mov dh,%4	
+			
+	mov [_CRT_Y1],ch
+	mov [_CRT_X1],cl
+	
+	mov [_CRT_Y2],dh
+	mov [_CRT_X2],dl
+%endmacro
+	
+%macro textcolor 1
+	mov bl,%1	
+	mov [_CRT_TEXTCOLOR],bl	
+%endmacro
+	
+%macro textbackground 1	
+	mov bl,%1					
+	mov [_CRT_TEXTBG],bl
+%endmacro
+
+%macro clrscr 0			
+	mov ch,[_CRT_Y1]
+	mov cl,[_CRT_X1]
+	
+	mov dh,[_CRT_Y2]
+	mov dl,[_CRT_X2]
+	
+	mov bh,[_CRT_TEXTBG]
+	mov bl,[_CRT_TEXTCOLOR]
+
+	shl bl,4
+	shl bx,4
+			
+	mov ax,0600h
+	int 10h
+	
+	; move cursor
+	mov ah,02h
+	mov bh,00h
+	mov dh,[_CRT_Y1]
+	mov dl,[_CRT_X1]
+	int 10h
+%endmacro
+
+%macro gotoxy 2	
+	mov dh,%2
+	mov dl,%1
+	
+	add dh,[_CRT_Y1]
+	add dl,[_CRT_X1]
+	mov ah,02h
+	mov bh,00h
+	
+	int 10h	
+%endmacro
+
+%macro newline 0
+	;multipush ax,bx,cx,dx
+
+	mov ah,03h	
+	int 10h	
+			
+	inc dh	
+	mov dl,[_CRT_X1]
+			
+	mov ah,02h
+	mov bh,0
+	int 10h
+	
+	;multipop ax,bx,cx,dx
+%endmacro
+
+%macro scroll 0		
+	mov ax,0701h
+	mov bh,0	
+	mov ch,[_CRT_Y1]
+	mov cl,[_CRT_X1]
+	mov dh,ch
+	mov dl,[_CRT_X2]
+	int 10h	
+%endmacro
+
+section .data
+
+__finish_write:
+	; get cursor				
+	mov ah,03h
+	mov bh,00h
+	int 10h				
+		
+	mov al,[_CRT_X2]
+	cmp dl,al	
+	ja __finish_write_xoutbound
+	jmp __finish_write_xsetted
+	
+	__finish_write_xoutbound:
+		newline
+	__finish_write_xsetted:
+	
+	mov ah,[_CRT_Y2]
+	cmp dh,ah	
+	ja __finish_write_youtbound
+	jmp __finish_write_ysetted
+	
+	__finish_write_youtbound:
+		gotoxy 0,0
+	__finish_write_ysetted:
+		
+	ret
+
+%endif

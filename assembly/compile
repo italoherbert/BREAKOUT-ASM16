@@ -1,0 +1,21 @@
+SRC_DIR=src
+BIN_DIR=bin
+FILE=$1
+
+if [ -e $FILE.o ]; then
+	rm $FILE.o
+	echo "Removido $FILE.o"
+fi
+
+if [ -e $FILE.lst ]; then
+	rm $FILE.lst
+	echo "Removido $FILE.lst"
+fi
+
+if [ -e $FILE.bin ]; then
+	rm $FILE.bin
+	echo "Removido $FILE.bin"
+fi
+
+nasm -f bin -l $BIN_DIR/$FILE.lst -o $BIN_DIR/$FILE.bin $SRC_DIR/$FILE.asm
+

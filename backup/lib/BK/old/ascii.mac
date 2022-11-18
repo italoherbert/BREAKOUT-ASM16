@@ -1,0 +1,9 @@
+%ifndef ASCII_MAC
+	%define ASCII_MAC
+	
+	%include "lib/sys.mac"
+	%include "lib/math.mac"
+	
+
+	
+%endif

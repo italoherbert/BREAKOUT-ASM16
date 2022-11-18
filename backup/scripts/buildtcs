@@ -1,0 +1,20 @@
+
+PROG_DIR=../ASMTestUnit/bin
+PROG_NAME=TCBinBuilder
+
+TEST_DIR=src/test
+TC_DIR=testcase
+
+FILE_PATH=$TEST_DIR/bits/$TC_DIR/bitcmp8
+
+
+rm $PROG_NAME.class
+cp $PROG_DIR/$PROG_NAME.class .
+
+java $PROG_NAME $FILE_PATH
+
+echo ""
+
+hd $FILE_PATH.dat
+
+echo ""

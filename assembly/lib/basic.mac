@@ -1,0 +1,51 @@
+
+%ifndef BASIC_MAC
+	%define BASIC_MAC
+	
+	%include "lib/basic.asm"		
+
+%macro prtstrln 1
+	prtstr %1
+	prtln
+%endmacro
+
+%macro prtstr 1
+	section .data
+		%%str: db %1,0
+	section .text
+		prtstr cs, %%str
+%endmacro
+
+%macro prtstr 2
+	sub sp,4
+	push sp
+	pop bp
+	mov word [bp+0], %1
+	mov word [bp+2], %2
+	call proc_prtstr
+	add sp,4
+%endmacro
+
+%macro prthex16 1
+	sub sp,2
+	push sp
+	pop bp
+	mov word [bp], %1
+	call proc_prthex16
+	add sp,2
+%endmacro
+
+%macro prthex8 1
+	sub sp,1
+	push sp
+	pop bp
+	mov byte [bp], %1
+	call proc_prthex8
+	add sp,1
+%endmacro
+
+%macro prtln 0
+	call proc_prtln	
+%endmacro
+	
+%endif

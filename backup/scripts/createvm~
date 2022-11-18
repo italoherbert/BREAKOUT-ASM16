@@ -1,0 +1,23 @@
+
+VM_NAME=MinhaVM
+
+VMDK_FILE=sistema.vmdk
+RAWDISK=/dev/sdb
+STOR_CTL_NAME=IDE_Controller
+
+
+VBoxManage createvm --name $VM_NAME -register
+
+VBoxManage internalcommands createrawvmdk -filename $VMDK_FILE -rawdisk $RAWDISK
+
+VBoxManage storagectl $VM_NAME --name $STOR_CTL_NAME --add ide --controller PIIX4
+
+VBoxManage storageattach $VM_NAME --storagectl $STOR_CTL_NAME --device 0 --port 0 --type hdd --medium $VMDK_FILE
+
+echo ""
+echo "Criação e Configuração de Maquina Virtual Completada."
+echo ""
+echo "VMs registradas:"
+echo ""
+
+VBoxManage list vms

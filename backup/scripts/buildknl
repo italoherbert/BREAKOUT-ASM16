@@ -1,0 +1,8 @@
+
+PROG=kernel
+SEEK=1
+COUNT=62
+
+./compile $PROG
+#./saveprog /dev/sdb $PROG.bin $SEEK $COUNT
+

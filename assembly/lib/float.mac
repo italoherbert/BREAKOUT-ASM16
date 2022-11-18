@@ -1,0 +1,407 @@
+
+%ifndef FLOAT_MAC
+	%define FLOAT_MAC
+	
+	%include "lib/float.asm"	
+
+%macro flgetsig 2
+	flgetsig cs, %1, %2
+%endmacro
+
+%macro flinvsig 1
+	flinvsig cs, %1
+%endmacro
+
+%macro flsetsig 1
+	flsetsig cs, %1
+%endmacro
+
+%macro flclrsig 1
+	flclrsig cs, %1
+%endmacro
+
+%macro flroundtoint16 2
+	flroundtoint16 cs, %1, cs, %2
+%endmacro
+
+%macro flroundtoint32 1
+	flroundtoint32 %1, %1
+%endmacro
+
+%macro flroundtoint32 2
+	flroundtoint32 cs, %1, cs, %2
+%endmacro
+
+%macro int16tofl 2
+	int16tofl cs, %1, cs, %2
+%endmacro
+
+%macro fltoint16 2
+	fltoint16 cs, %1, cs, %2
+%endmacro
+
+%macro fltoint32 1
+	fltoint32 %1, %1
+%endmacro
+
+%macro fltoint32 2
+	fltoint32 cs, %1, cs, %2
+%endmacro
+
+%macro int32tofl 1
+	int32tofl %1, %1
+%endmacro
+
+%macro int32tofl 2
+	int32tofl cs, %1, cs, %2
+%endmacro
+
+%macro flcmp 3
+	flcmp cs, %1, cs, %2, %3
+%endmacro
+
+%macro flshl 2
+	flshl cs, %1, cs, %2
+%endmacro
+
+%macro flshr 2
+	flshr cs, %1, cs, %2
+%endmacro
+
+%macro fladd 3
+	fladd cs, %1, cs, %2, cs, %3
+%endmacro
+
+%macro flsub 3
+	flsub cs, %1, cs, %2, cs, %3
+%endmacro	
+
+%macro flmul 3
+	flmul cs, %1, cs, %2, cs, %3
+%endmacro
+
+%macro fldiv 3
+	fldiv cs, %1, cs, %2, cs, %3
+%endmacro	
+
+%macro fladd 6
+	fladdorsub %1, %2, %3, %4, %5, %6, 0
+%endmacro
+
+%macro flsub 6
+	fladdorsub %1, %2, %3, %4, %5, %6, 0x8000
+%endmacro
+
+%macro flroundtoint16 4
+	stkopen 0x06
+	mov ax,%1
+	mov ds,ax
+	mov ax,[%2+2]
+	mov [bp+0],ax
+	mov ax,[%2]
+	mov [bp+2],ax	
+	call proc_flroundtoint16
+	mov ax,sp
+	mov bp,ax
+	mov ax,%3
+	mov ds,ax
+	mov ax,[bp+4]
+	mov [%4],ax
+	stkclose 0x06
+%endmacro
+
+%macro flroundtoint32 4
+	stkopen 0x08
+	mov ax,%1
+	mov ds,ax
+	mov ax,[%2+2]
+	mov [bp+0],ax
+	mov ax,[%2]
+	mov [bp+2],ax	
+	call proc_flroundtoint32
+	mov ax,sp
+	mov bp,ax
+	mov ax,%3
+	mov ds,ax
+	mov ax,[bp+4]
+	mov [%4+2],ax
+	mov ax,[bp+6]
+	mov [%4],ax
+	stkclose 0x08
+%endmacro
+
+%macro fltoint16 4
+	stkopen 0x06
+	mov ax,%1
+	mov ds,ax
+	mov ax,[%2+2]
+	mov [bp+0],ax
+	mov ax,[%2]
+	mov [bp+2],ax	
+	call proc_fltoint16
+	mov ax,sp
+	mov bp,ax
+	mov ax,%3
+	mov ds,ax
+	mov ax,[bp+4]
+	mov [%4],ax
+	stkclose 0x06
+%endmacro
+
+%macro int16tofl 4	
+	stkopen 0x06
+	mov ax,%1
+	mov ds,ax
+	mov ax,[%2]
+	mov [bp+0],ax	
+	call proc_int16tofl
+	mov ax,sp
+	mov bp,ax
+	mov ax,%3
+	mov ds,ax
+	mov ax,[bp+2]
+	mov [%4+2],ax
+	mov ax,[bp+4]
+	mov [%4],ax
+	stkclose 0x06
+%endmacro
+
+%macro fltoint32 4
+	stkopen 0x08
+	mov ax,%1
+	mov ds,ax
+	mov ax,[%2+2]
+	mov [bp+0],ax
+	mov ax,[%2]
+	mov [bp+2],ax	
+	call proc_fltoint32
+	mov ax,sp
+	mov bp,ax
+	mov ax,%3
+	mov ds,ax
+	mov ax,[bp+4]
+	mov [%4+2],ax
+	mov ax,[bp+6]
+	mov [%4],ax
+	stkclose 0x08
+%endmacro
+
+%macro int32tofl 4
+	stkopen 0x08
+	mov ax,%1
+	mov ds,ax
+	mov ax,[%2+2]
+	mov [bp+0],ax
+	mov ax,[%2]
+	mov [bp+2],ax	
+	call proc_int32tofl
+	mov ax,sp
+	mov bp,ax
+	mov ax,%3
+	mov ds,ax
+	mov ax,[bp+4]
+	mov [%4+2],ax
+	mov ax,[bp+6]
+	mov [%4],ax
+	stkclose 0x08
+%endmacro
+
+%macro flgetsig 3
+	stkopen 0x04
+	mov ax,%1
+	mov ds,ax
+	mov ax,[%2+2]
+	mov word [bp+0], ax
+	call proc_flgetsig
+	push sp
+	pop bp
+	mov ax,[bp+2]
+	mov word %3, ax
+	stkclose 0x04
+%endmacro
+
+%macro flinvsig 2
+	stkopen 0x02
+	mov ax,%1
+	mov ds,ax
+	mov ax,[%2+2]
+	mov word [bp+0], ax
+	call proc_flinvsig
+	push sp
+	pop bp
+	mov ax,[bp+0]
+	mov word [%2+2],ax
+	stkclose 0x02
+%endmacro
+
+%macro flsetsig 2
+	stkopen 0x04
+	mov ax,%1
+	mov ds,ax
+	mov ax,[%2+2]
+	mov word [bp+0], ax
+	mov word [bp+2], 0x8000
+	call proc_flsetsig
+	push sp
+	pop bp
+	mov ax,[bp+0]
+	mov word [%2+2],ax
+	stkclose 0x04	
+%endmacro
+
+%macro flclrsig 2
+	stkopen 0x04
+	mov ax,%1
+	mov ds,ax
+	mov ax,[%2+2]
+	mov word [bp+0], ax
+	mov word [bp+2], 0x0000
+	call proc_flsetsig
+	push sp
+	pop bp
+	mov ax,[bp+0]
+	mov word [%2+2],ax
+	stkclose 0x04	
+%endmacro
+
+%macro flcmp 5	
+	stkopen 0x09
+	mov ax,%1
+	mov ds,ax
+	mov ax,[%2+2]
+	mov [bp+0],ax
+	mov ax,[%2]
+	mov [bp+2],ax
+	mov ax,%3
+	mov ds,ax
+	mov ax,[%4+2]
+	mov [bp+4],ax
+	mov ax,[%4]
+	mov [bp+6],ax
+	call proc_flcmp
+	mov ax,sp
+	mov bp,ax
+	mov byte %5,[bp+8]
+	stkclose 0x09
+%endmacro
+
+%macro flshl 4	
+	stkopen 0x03
+	mov ax,%1
+	mov ds,ax
+	mov ax,[%2+2]
+	mov [bp+0],ax
+	mov ax,%3
+	mov ds,ax
+	mov al,[%4]
+	mov [bp+2],al
+	call proc_flshl
+	mov ax,sp
+	mov bp,ax
+	mov ax,%1
+	mov ds,ax
+	mov ax,[bp+0]
+	mov [%2+2],ax
+	stkclose 0x03
+%endmacro
+
+%macro flshr 4	
+	stkopen 0x03
+	mov ax,%1
+	mov ds,ax
+	mov ax,[%2+2]
+	mov [bp+0],ax	
+	mov ax,%3
+	mov ds,ax
+	mov al,[%4]
+	mov [bp+2],al
+	call proc_flshr
+	mov ax,sp
+	mov bp,ax
+	mov ax,%1
+	mov ds,ax
+	mov ax,[bp+0]
+	mov [%2+2],ax
+	stkclose 0x03
+%endmacro
+
+%macro fldiv 6	
+	stkopen 0x0C
+	mov ax,%1
+	mov ds,ax
+	mov ax,[%2+2]
+	mov [bp+0],ax
+	mov ax,[%2]
+	mov [bp+2],ax
+	mov ax,%3
+	mov ds,ax
+	mov ax,[%4+2]
+	mov [bp+4],ax
+	mov ax,[%4]
+	mov [bp+6],ax
+	call proc_fldiv
+	mov ax,sp
+	mov bp,ax
+	mov ax,%5
+	mov ds,ax
+	mov ax,[bp+8]
+	mov [%6+2],ax
+	mov ax,[bp+0x0A]
+	mov [%6],ax
+	stkclose 0x0C
+%endmacro
+
+%macro flmul 6	
+	stkopen 0x0C
+	mov ax,%1
+	mov ds,ax
+	mov ax,[%2+2]
+	mov [bp+0],ax
+	mov ax,[%2]
+	mov [bp+2],ax
+	mov ax,%3
+	mov ds,ax
+	mov ax,[%4+2]
+	mov [bp+4],ax
+	mov ax,[%4]
+	mov [bp+6],ax
+	call proc_flmul
+	mov ax,sp
+	mov bp,ax
+	mov ax,%5
+	mov ds,ax
+	mov ax,[bp+8]
+	mov [%6+2],ax
+	mov ax,[bp+0x0A]
+	mov [%6],ax
+	stkclose 0x0C
+%endmacro
+	
+%macro fladdorsub 7
+	stkopen 0x0E
+	mov ax,%1
+	mov ds,ax
+	mov ax,[%2+2]
+	mov [bp+0],ax
+	mov ax,[%2]
+	mov [bp+2],ax
+	mov ax,%3
+	mov ds,ax
+	mov ax,[%4+2]
+	mov [bp+4],ax
+	mov ax,[%4]
+	mov [bp+6],ax
+	mov word [bp+0x0C], %7
+	call proc_fladdorsub
+	mov ax,sp
+	mov bp,ax
+	mov ax,%5
+	mov ds,ax
+	mov ax,[bp+8]
+	mov [%6+2],ax
+	mov ax,[bp+0x0A]
+	mov [%6],ax
+	stkclose 0x0E
+%endmacro
+	
+%endif

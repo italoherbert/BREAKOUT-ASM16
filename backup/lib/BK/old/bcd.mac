@@ -1,0 +1,127 @@
+%ifndef BCD_MAC
+	%define BCD_MAC
+	
+	%include "lib/math.mac"
+
+%macro bcdsum 4		; ( @bytes[n], bytes[n], bytes[n], n ) 
+	section .bss
+		%%bcdresult: resw 1
+	section .text	
+		mov byte [MATH_OF], FALSE
+		
+		mov bx,%1
+		mov ax,%2
+		mov dx,%3
+			
+		mov cx,%4
+		dec cx	
+		push cx
+		%%zloop:
+			mov byte [bx],00h
+			inc bx
+			inc ax
+			inc dx			
+		loop %%zloop
+		pop cx
+		inc cx
+		
+		%%loop:							
+			cmp cx,0
+			jz %%endloop
+			
+			push dx		
+			push ax
+			push cx			
+			push bx		
+		
+			mov di,ax
+			mov byte ch,[di]				
+			mov di,dx
+			mov byte cl,[di]
+				
+			bcdsum4 %%bcdresult, ch, cl
+			mov byte dh,[%%bcdresult]
+			mov byte dl,[%%bcdresult+1]
+			
+			pop bx
+			pop cx	
+			cmp byte [MATH_CF],TRUE
+			je %%carry4
+			cmp byte [MATH_OF],TRUE
+			je %%overflow
+			jmp %%notcarry4
+			%%carry4:		
+				cmp cx,1
+				jbe %%overflow
+						
+				mov byte [bx-1],dh
+				add byte [bx],dl
+				jmp %%end4verify
+			%%notcarry4:
+				add byte [bx],dl	
+			%%end4verify:
+								
+			cmp byte [bx],09h
+			ja %%carry
+			jmp %%endverify
+			%%carry:							
+				cmp cx,1
+				jbe %%overflow
+				
+				sub byte [bx],0Ah
+				add byte [bx-1],01h
+				jmp %%endverify
+			%%overflow:												
+				mov byte [MATH_OF],TRUE
+				jmp %%endloop
+			%%endverify:	
+																				
+			pop ax
+			pop dx
+	
+			dec ax		
+			dec bx
+			dec dx
+			dec cx
+			jmp %%loop
+		%%endloop:				
+		
+%endmacro
+	
+%macro bcdsum4 3 		; ( @word, byte, byte )
+	mov byte [MATH_OF], FALSE
+	mov byte [MATH_CF], FALSE
+
+	mov word bx,%1	
+
+	mov byte al,%2
+	mov byte dl,%3		
+	
+	cmp al,09h
+	ja %%throw_overflow
+	cmp dl,09h
+	ja %%throw_overflow	
+	
+	xor ah,ah	
+	add al,dl
+	jc %%throw_overflow
+	jo %%throw_overflow	
+						
+	cmp al,09h	
+	ja %%throw_carry			
+	jmp %%end_throw
+				
+	%%throw_overflow:
+		mov byte [MATH_OF], TRUE
+		jmp %%end_throw				
+	%%throw_carry:
+		mov byte [MATH_CF], TRUE					
+		add ah,1
+		sub al,0Ah	
+	%%end_throw:
+	
+	mov byte [bx],ah
+	mov byte [bx+1],al
+%endmacro
+
+%endif

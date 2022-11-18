@@ -1,0 +1,18 @@
+
+SIZE			SIZE=2(B) 	MAX=64KB - 2(B)
+
+INITFMAP		SIZE=64(B)	
+FINISHFMAP		SIZE=64(B)
+FUNCSMAP		SIZE=64(B) * N, N=número de funções
+
+INIT			
+FINISH
+FUNCTIONS
+
+
+
+-----------
+
+MAP --> 2(B) para OFFSET
+	n(B) para LABEL, n <= 62(B)
+	SIZE=64B	

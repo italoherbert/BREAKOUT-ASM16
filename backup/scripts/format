@@ -1,0 +1,10 @@
+
+PROG_DIR=../Formatador/bin
+PROG_NAME=Formatador
+
+rm $PROG_NAME.class
+cp $PROG_DIR/$PROG_NAME.class .
+
+java $PROG_PK$PROG_NAME
+
+echo ""

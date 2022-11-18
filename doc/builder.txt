@@ -1,0 +1,6 @@
+
+
+compile -f boot -sd src -od bin
+
+compile -f system -sd lib -od bin
+genh -f system -od bin -md map -hd lib

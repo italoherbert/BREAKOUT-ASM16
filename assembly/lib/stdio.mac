@@ -1,0 +1,194 @@
+
+%ifndef STDIO_MAC
+	%define STDIO_MAC
+	
+	%include "lib/stdio.asm"
+ 	%include "lib/system.mac"
+
+; OBS: Esta macro não deve ser utilizada em procedimentos dinâmicos		
+%macro printf 1-*	
+	%rep %0					
+		__printf %1
+		%rotate 1		
+	%endrep
+%endmacro	
+
+; OBS: Esta macro não deve ser utilizada em procedimentos dinâmicos		
+%macro __printf 1
+	section .data
+		%%str: db %1,0
+	section .text
+		prtstr cs, %%str				
+%endmacro
+
+%macro prtstr 2
+	stkopen 4
+	mov word [bp], %1
+	mov word [bp+2], %2
+	call proc_prtstr
+	stkclose 4
+%endmacro
+
+
+%macro prtIEEE754 1
+	prtIEEE754 cs, %1
+%endmacro
+
+%macro prtIEEE754 2
+	stkopen 4
+	mov ax,%1
+	mov ds,ax
+	mov ax, [%2+2]
+	mov word [bp+0], ax
+	mov ax, [%2]
+	mov word [bp+2], ax
+	call proc_prtIEEE754
+	stkclose 4
+%endmacro
+
+%macro prtbool 1	
+	cmp byte %1, TRUE
+	je .true
+	jmp .false
+	.true:
+		prtf "true"
+		jmp .endcmp
+	.false:
+		prtf "false"
+	.endcmp:	
+%endmacro
+
+%macro prtptr 2-3 TRUE
+	stkopen 3
+	mov word [ bp + 0 ], %2
+	mov byte [ bp + 2 ], %3
+	prthex16 %1, %3
+	writechar ':'
+	push sp
+	pop bp
+	mov word ax, [ bp + 0 ]
+	mov byte bl, [ bp + 2 ]
+	prthex16 ax, bl
+	stkclose 3
+%endmacro
+
+%macro prtfptr 2-3 TRUE
+	stkopen 3
+	mov word [ bp + 0 ], %1
+	mov byte [ bp + 2 ], %3
+	prthex16 %2, %3
+	push sp
+	pop bp
+	mov word ax, [ bp + 0 ]
+	mov byte bl, [ bp + 2 ]
+	prthex16 ax, bl
+	stkclose 3
+%endmacro
+
+%macro prtbin32 1
+	prtbin32 cs, %1
+%endmacro
+
+%macro prtbin32 2
+	mov ax,%1
+	mov ds,ax
+	mov word ax,[%2+2]
+	prtbin16 ax
+	prtch 20h
+	mov ax,%1
+	mov ds,ax
+	mov word ax,[%2]
+	prtbin16 ax
+%endmacro
+
+%macro prthex32 1
+	prthex32 cs, %1
+%endmacro
+
+%macro iprthex32 1
+	iprthex32 cs, %1
+%endmacro
+
+%macro prthex32 2
+	mov ax,%1
+	mov ds,ax
+	mov word ax,[%2+2]
+	prthex16 ax	
+	mov ax,%1
+	mov ds,ax
+	mov word ax,[%2]
+	prthex16 ax
+%endmacro
+
+%macro iprthex32 2
+	mov ax,%1
+	mov ds,ax
+	mov word ax,[%2+2]
+	mov word bx,ax
+	and ax,0x7FFF
+	push ax
+	and bx,0x8000
+	cmp bx,0
+	jz %%prt
+		prtch '-'		
+	%%prt:	
+	pop ax
+	prthex16 ax
+	mov ax,%1
+	mov ds,ax
+	mov word ax,[%2]
+	prthex16 ax	
+%endmacro
+
+%macro prtsubbin8 3
+	__prtsubbin8 %1,%2,%3
+%endmacro
+
+%macro prtbin16 1
+	stkopen 3
+	mov word [bp], %1
+	mov byte [bp+2], TRUE
+	call proc_prtbin16
+	stkclose 3
+%endmacro
+
+%macro prtbin8 1
+	stkopen 2
+	mov byte [bp], %1
+	mov byte [bp+1], TRUE
+	call proc_prtbin8
+	stkclose 2
+%endmacro
+
+%macro prthex16 1
+	stkopen 3
+	mov word [bp], %1
+	mov byte [bp+2], TRUE
+	call proc_prthex16
+	stkclose 3
+%endmacro
+
+%macro prthex8 1
+	stkopen 2
+	mov byte [bp], %1
+	mov byte [bp+1], TRUE
+	call proc_prthex8
+	stkclose 2
+%endmacro
+
+%macro prtch 1
+	__prtch %1
+%endmacro
+
+%macro prtln 0
+	__prtln
+%endmacro	
+
+
+%macro prtstk 0
+	printf "stack ---> "
+	mov ax,sp
+	prthex16 ax
+%endmacro  
+
+%endif

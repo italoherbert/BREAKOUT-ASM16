@@ -1,0 +1,3381 @@
+     1                                  
+     2                                  %include "lib/system.mac"
+     3                              <1>  
+     4                              <1> %ifndef SYSTEM_MAC
+     5                              <1>  	%define SYSTEM_MAC
+     6                              <1>  	
+     7                              <1> 	%ifndef TRUE
+     8                              <1> 		%define TRUE 01h
+     9                              <1> 	%endif
+    10                              <1> 	%ifndef FALSE
+    11                              <1> 		%define FALSE 00h
+    12                              <1> 	%endif 	
+    13                              <1>  	
+    14                              <1>  	%include "lib/kernel.asmh"
+    15                              <2> %ifndef KERNEL_ASMH
+    16                              <2> 	%define KERNEL_ASMH
+    17                              <2> 
+    18                              <2> section .data
+    19                              <2> 
+    20                              <2> 	kernel_segment: equ 0x50
+    21                              <2> 
+    22                              <2> 	mformat: equ 0x144
+    23                              <2> 	malloc: equ 0x175
+    24                              <2> 	laddr: equ 0x1EB
+    25                              <2> 	faddr: equ 0x201
+    26                              <2> 
+    27                              <2> %endif
+    28                              <1>  	 	
+    29                              <1> %macro mformat 4
+    30                              <1> 	stkopen 8
+    31                              <1> 	mov word [ bp + 0 ], %1
+    32                              <1> 	mov word [ bp + 2 ], %2
+    33                              <1> 	mov word [ bp + 4 ], %3
+    34                              <1> 	mov word [ bp + 6 ], %4
+    35                              <1> 	call kernel_segment:mformat
+    36                              <1> 	stkclose 8
+    37                              <1> %endmacro
+    38                              <1> 
+    39                              <1> %macro malloc 6
+    40                              <1> 	stkopen 0Bh
+    41                              <1> 	mov word [ bp + 4 ], %3
+    42                              <1> 	mov word [ bp + 6 ], %4
+    43                              <1> 	mov word [ bp + 8 ], %5	
+    44                              <1> 	call kernel_segment:malloc
+    45                              <1> 	push sp
+    46                              <1> 	pop bp
+    47                              <1> 	mov word %1, [ bp ]
+    48                              <1> 	mov word %2, [ bp + 2 ]
+    49                              <1> 	mov byte %6, [ bp + 0x0A ]
+    50                              <1> 	stkclose 0Bh
+    51                              <1> %endmacro 	
+    52                              <1> 
+    53                              <1> %macro laddr 2
+    54                              <1> 	laddr %1, %2, %1, %2
+    55                              <1> %endmacro
+    56                              <1> 
+    57                              <1> %macro faddr 2
+    58                              <1> 	faddr %1, %2, %1, %2
+    59                              <1> %endmacro
+    60                              <1>  	
+    61                              <1> %macro laddr 4
+    62                              <1> 	stkopen 8
+    63                              <1> 	mov word [ bp + 4 ], %3
+    64                              <1> 	mov word [ bp + 6 ], %4	
+    65                              <1> 	call kernel_segment:laddr
+    66                              <1> 	push sp
+    67                              <1> 	pop bp
+    68                              <1> 	mov word %1, [ bp + 0 ]
+    69                              <1> 	mov word %2, [ bp + 2 ]	
+    70                              <1> 	stkclose 8
+    71                              <1> %endmacro
+    72                              <1> 
+    73                              <1> %macro faddr 4
+    74                              <1> 	stkopen 8
+    75                              <1> 	mov word [ bp + 4 ], %3
+    76                              <1> 	mov word [ bp + 6 ], %4	
+    77                              <1> 	call kernel_segment:faddr
+    78                              <1> 	push sp
+    79                              <1> 	pop bp
+    80                              <1> 	mov word %1, [ bp + 0 ]
+    81                              <1> 	mov word %2, [ bp + 2 ]	
+    82                              <1> 	stkclose 8
+    83                              <1> %endmacro	
+    84                              <1>  
+    85                              <1> 
+    86                              <1> %macro stkopen 1		
+    87                              <1> 	sub word sp, %1
+    88                              <1> 	push sp
+    89                              <1> 	pop bp
+    90                              <1> %endmacro
+    91                              <1> 
+    92                              <1> %macro stkclose 1
+    93                              <1> 	add word sp, %1
+    94                              <1> %endmacro
+    95                              <1> 
+    96                              <1> %macro stkload 1-* 	
+    97                              <1>  	%rep %0
+    98                              <1>  	 	%rotate -1
+    99                              <1>  		pop %1
+   100                              <1>  	%endrep
+   101                              <1>  	%rep %0
+   102                              <1>  		push %1
+   103                              <1>  		%rotate 1
+   104                              <1>  	%endrep
+   105                              <1> %endmacro
+   106                              <1> 
+   107                              <1> %macro stkpush 1-* 	
+   108                              <1>  	%rep %0
+   109                              <1>  		push %1
+   110                              <1>  		%rotate 1
+   111                              <1>  	%endrep 	
+   112                              <1> %endmacro
+   113                              <1>  
+   114                              <1> %macro stkpop 1-*
+   115                              <1>  	%rep %0
+   116                              <1>  	 	%rotate -1
+   117                              <1>  		pop %1
+   118                              <1>  	%endrep 	 	
+   119                              <1> %endmacro
+   120                              <1> 
+   121                              <1> %macro toreg16 3
+   122                              <1> 	push %1
+   123                              <1> 	pop ds
+   124                              <1> 	mov word %3, [%2]
+   125                              <1> %endmacro
+   126                              <1> 
+   127                              <1> %macro toreg8 3
+   128                              <1> 	push %1
+   129                              <1> 	pop ds
+   130                              <1> 	mov byte %3, [%2]
+   131                              <1> %endmacro
+   132                              <1> 
+   133                              <1> %macro tovar16 3
+   134                              <1> 	push %1
+   135                              <1> 	pop ds
+   136                              <1> 	mov word [%2], %3
+   137                              <1> %endmacro
+   138                              <1> 
+   139                              <1> %macro tovar8 3
+   140                              <1> 	push %1
+   141                              <1> 	pop ds
+   142                              <1> 	mov byte [%2], %3
+   143                              <1> %endmacro 
+   144                              <1>  	
+   145                              <1> %endif 
+   146                                  %include "lib/stdio.mac"
+   147                              <1> 
+   148                              <1> %ifndef STDIO_MAC
+   149                              <1> 	%define STDIO_MAC
+   150                              <1> 	
+   151                              <1> 	%include "lib/stdio.asm"
+   152                              <2> 
+   153                              <2> %ifndef STDIO_ASM
+   154                              <2> 	%define STDIO_ASM
+   155                              <2> 	
+   156                              <2> 	%include "lib/system.mac"
+   157                              <3>  
+   158                              <3> %ifndef SYSTEM_MAC
+   159                              <3>  	%define SYSTEM_MAC
+   160                              <3>  	
+   161                              <3> 	%ifndef TRUE
+   162                              <3> 		%define TRUE 01h
+   163                              <3> 	%endif
+   164                              <3> 	%ifndef FALSE
+   165                              <3> 		%define FALSE 00h
+   166                              <3> 	%endif 	
+   167                              <3>  	
+   168                              <3>  	%include "lib/kernel.asmh"
+   169                              <3>  	 	
+   170                              <3> %macro mformat 4
+   171                              <3> 	stkopen 8
+   172                              <3> 	mov word [ bp + 0 ], %1
+   173                              <3> 	mov word [ bp + 2 ], %2
+   174                              <3> 	mov word [ bp + 4 ], %3
+   175                              <3> 	mov word [ bp + 6 ], %4
+   176                              <3> 	call kernel_segment:mformat
+   177                              <3> 	stkclose 8
+   178                              <3> %endmacro
+   179                              <3> 
+   180                              <3> %macro malloc 6
+   181                              <3> 	stkopen 0Bh
+   182                              <3> 	mov word [ bp + 4 ], %3
+   183                              <3> 	mov word [ bp + 6 ], %4
+   184                              <3> 	mov word [ bp + 8 ], %5	
+   185                              <3> 	call kernel_segment:malloc
+   186                              <3> 	push sp
+   187                              <3> 	pop bp
+   188                              <3> 	mov word %1, [ bp ]
+   189                              <3> 	mov word %2, [ bp + 2 ]
+   190                              <3> 	mov byte %6, [ bp + 0x0A ]
+   191                              <3> 	stkclose 0Bh
+   192                              <3> %endmacro 	
+   193                              <3> 
+   194                              <3> %macro laddr 2
+   195                              <3> 	laddr %1, %2, %1, %2
+   196                              <3> %endmacro
+   197                              <3> 
+   198                              <3> %macro faddr 2
+   199                              <3> 	faddr %1, %2, %1, %2
+   200                              <3> %endmacro
+   201                              <3>  	
+   202                              <3> %macro laddr 4
+   203                              <3> 	stkopen 8
+   204                              <3> 	mov word [ bp + 4 ], %3
+   205                              <3> 	mov word [ bp + 6 ], %4	
+   206                              <3> 	call kernel_segment:laddr
+   207                              <3> 	push sp
+   208                              <3> 	pop bp
+   209                              <3> 	mov word %1, [ bp + 0 ]
+   210                              <3> 	mov word %2, [ bp + 2 ]	
+   211                              <3> 	stkclose 8
+   212                              <3> %endmacro
+   213                              <3> 
+   214                              <3> %macro faddr 4
+   215                              <3> 	stkopen 8
+   216                              <3> 	mov word [ bp + 4 ], %3
+   217                              <3> 	mov word [ bp + 6 ], %4	
+   218                              <3> 	call kernel_segment:faddr
+   219                              <3> 	push sp
+   220                              <3> 	pop bp
+   221                              <3> 	mov word %1, [ bp + 0 ]
+   222                              <3> 	mov word %2, [ bp + 2 ]	
+   223                              <3> 	stkclose 8
+   224                              <3> %endmacro	
+   225                              <3>  
+   226                              <3> 
+   227                              <3> %macro stkopen 1		
+   228                              <3> 	sub word sp, %1
+   229                              <3> 	push sp
+   230                              <3> 	pop bp
+   231                              <3> %endmacro
+   232                              <3> 
+   233                              <3> %macro stkclose 1
+   234                              <3> 	add word sp, %1
+   235                              <3> %endmacro
+   236                              <3> 
+   237                              <3> %macro stkload 1-* 	
+   238                              <3>  	%rep %0
+   239                              <3>  	 	%rotate -1
+   240                              <3>  		pop %1
+   241                              <3>  	%endrep
+   242                              <3>  	%rep %0
+   243                              <3>  		push %1
+   244                              <3>  		%rotate 1
+   245                              <3>  	%endrep
+   246                              <3> %endmacro
+   247                              <3> 
+   248                              <3> %macro stkpush 1-* 	
+   249                              <3>  	%rep %0
+   250                              <3>  		push %1
+   251                              <3>  		%rotate 1
+   252                              <3>  	%endrep 	
+   253                              <3> %endmacro
+   254                              <3>  
+   255                              <3> %macro stkpop 1-*
+   256                              <3>  	%rep %0
+   257                              <3>  	 	%rotate -1
+   258                              <3>  		pop %1
+   259                              <3>  	%endrep 	 	
+   260                              <3> %endmacro
+   261                              <3> 
+   262                              <3> %macro toreg16 3
+   263                              <3> 	push %1
+   264                              <3> 	pop ds
+   265                              <3> 	mov word %3, [%2]
+   266                              <3> %endmacro
+   267                              <3> 
+   268                              <3> %macro toreg8 3
+   269                              <3> 	push %1
+   270                              <3> 	pop ds
+   271                              <3> 	mov byte %3, [%2]
+   272                              <3> %endmacro
+   273                              <3> 
+   274                              <3> %macro tovar16 3
+   275                              <3> 	push %1
+   276                              <3> 	pop ds
+   277                              <3> 	mov word [%2], %3
+   278                              <3> %endmacro
+   279                              <3> 
+   280                              <3> %macro tovar8 3
+   281                              <3> 	push %1
+   282                              <3> 	pop ds
+   283                              <3> 	mov byte [%2], %3
+   284                              <3> %endmacro 
+   285                              <3>  	
+   286                              <3> %endif 
+   287                              <2> 	
+   288                              <2> %macro __prtch 1	
+   289                              <2> 	stkopen 1	
+   290                              <2> 	mov byte [ bp ], %1
+   291                              <2> 	call proc_prtch
+   292                              <2> 	stkclose 1
+   293                              <2> %endmacro
+   294                              <2> 
+   295                              <2> %macro __prtln 0
+   296                              <2> 	call proc_prtln
+   297                              <2> %endmacro	
+   298                              <2> 
+   299                              <2> %macro __prtsubbin8 3
+   300                              <2> 	stkopen 3
+   301                              <2> 	mov byte [bp+0],%1
+   302                              <2> 	mov byte [bp+1],%2
+   303                              <2> 	mov byte [bp+2],%3
+   304                              <2> 	call proc_prtsubbin8
+   305                              <2> 	stkclose 3
+   306                              <2> %endmacro
+   307                              <2> 	
+   308                              <2> section .data
+   309                              <2> 	
+   310                              <2> proc_prtIEEE754:
+   311 00000000 89E0                <2> 	mov ax,sp
+   312 00000002 89C5                <2> 	mov bp,ax			
+   313 00000004 8B4602              <2> 	mov ax,[bp+2]	
+   314 00000007 50                  <2> 	push ax
+   315 00000008 50                  <2> 	push ax
+   316 00000009 50                  <2> 	push ax
+   317 0000000A 50                  <2> 	push ax	
+   318 0000000B 50                  <2> 	push ax
+   319                              <2> 	
+   320                              <2> 	__prtsubbin8 ah,0,1
+   321                              <3>  stkopen 3
+   322 0000000C 83EC03              <4>  sub word sp, %1
+   323 0000000F 54                  <4>  push sp
+   324 00000010 5D                  <4>  pop bp
+   325 00000011 886600              <3>  mov byte [bp+0],%1
+   326 00000014 C6460100            <3>  mov byte [bp+1],%2
+   327 00000018 C6460201            <3>  mov byte [bp+2],%3
+   328 0000001C E87201              <3>  call proc_prtsubbin8
+   329                              <3>  stkclose 3
+   330 0000001F 83C403              <4>  add word sp, %1
+   331                              <2> 	__prtch 20h
+   332                              <3>  stkopen 1
+   333 00000022 83EC01              <4>  sub word sp, %1
+   334 00000025 54                  <4>  push sp
+   335 00000026 5D                  <4>  pop bp
+   336 00000027 C6460020            <3>  mov byte [ bp ], %1
+   337 0000002B E82004              <3>  call proc_prtch
+   338                              <3>  stkclose 1
+   339 0000002E 83C401              <4>  add word sp, %1
+   340                              <2> 	__prtch 20h
+   341                              <3>  stkopen 1
+   342 00000031 83EC01              <4>  sub word sp, %1
+   343 00000034 54                  <4>  push sp
+   344 00000035 5D                  <4>  pop bp
+   345 00000036 C6460020            <3>  mov byte [ bp ], %1
+   346 0000003A E81104              <3>  call proc_prtch
+   347                              <3>  stkclose 1
+   348 0000003D 83C401              <4>  add word sp, %1
+   349 00000040 58                  <2> 	pop ax
+   350                              <2> 	__prtsubbin8 ah,1,5
+   351                              <3>  stkopen 3
+   352 00000041 83EC03              <4>  sub word sp, %1
+   353 00000044 54                  <4>  push sp
+   354 00000045 5D                  <4>  pop bp
+   355 00000046 886600              <3>  mov byte [bp+0],%1
+   356 00000049 C6460101            <3>  mov byte [bp+1],%2
+   357 0000004D C6460205            <3>  mov byte [bp+2],%3
+   358 00000051 E83D01              <3>  call proc_prtsubbin8
+   359                              <3>  stkclose 3
+   360 00000054 83C403              <4>  add word sp, %1
+   361 00000057 58                  <2> 	pop ax
+   362                              <2> 	__prtsubbin8 ah,5,8
+   363                              <3>  stkopen 3
+   364 00000058 83EC03              <4>  sub word sp, %1
+   365 0000005B 54                  <4>  push sp
+   366 0000005C 5D                  <4>  pop bp
+   367 0000005D 886600              <3>  mov byte [bp+0],%1
+   368 00000060 C6460105            <3>  mov byte [bp+1],%2
+   369 00000064 C6460208            <3>  mov byte [bp+2],%3
+   370 00000068 E82601              <3>  call proc_prtsubbin8
+   371                              <3>  stkclose 3
+   372 0000006B 83C403              <4>  add word sp, %1
+   373                              <2> 	
+   374 0000006E 58                  <2> 	pop ax
+   375                              <2> 	__prtsubbin8 al,0,1
+   376                              <3>  stkopen 3
+   377 0000006F 83EC03              <4>  sub word sp, %1
+   378 00000072 54                  <4>  push sp
+   379 00000073 5D                  <4>  pop bp
+   380 00000074 884600              <3>  mov byte [bp+0],%1
+   381 00000077 C6460100            <3>  mov byte [bp+1],%2
+   382 0000007B C6460201            <3>  mov byte [bp+2],%3
+   383 0000007F E80F01              <3>  call proc_prtsubbin8
+   384                              <3>  stkclose 3
+   385 00000082 83C403              <4>  add word sp, %1
+   386                              <2> 	__prtch 20h
+   387                              <3>  stkopen 1
+   388 00000085 83EC01              <4>  sub word sp, %1
+   389 00000088 54                  <4>  push sp
+   390 00000089 5D                  <4>  pop bp
+   391 0000008A C6460020            <3>  mov byte [ bp ], %1
+   392 0000008E E8BD03              <3>  call proc_prtch
+   393                              <3>  stkclose 1
+   394 00000091 83C401              <4>  add word sp, %1
+   395                              <2> 	__prtch 20h
+   396                              <3>  stkopen 1
+   397 00000094 83EC01              <4>  sub word sp, %1
+   398 00000097 54                  <4>  push sp
+   399 00000098 5D                  <4>  pop bp
+   400 00000099 C6460020            <3>  mov byte [ bp ], %1
+   401 0000009D E8AE03              <3>  call proc_prtch
+   402                              <3>  stkclose 1
+   403 000000A0 83C401              <4>  add word sp, %1
+   404 000000A3 58                  <2> 	pop ax
+   405                              <2> 	__prtsubbin8 al,1,4
+   406                              <3>  stkopen 3
+   407 000000A4 83EC03              <4>  sub word sp, %1
+   408 000000A7 54                  <4>  push sp
+   409 000000A8 5D                  <4>  pop bp
+   410 000000A9 884600              <3>  mov byte [bp+0],%1
+   411 000000AC C6460101            <3>  mov byte [bp+1],%2
+   412 000000B0 C6460204            <3>  mov byte [bp+2],%3
+   413 000000B4 E8DA00              <3>  call proc_prtsubbin8
+   414                              <3>  stkclose 3
+   415 000000B7 83C403              <4>  add word sp, %1
+   416                              <2> 	__prtch 20h
+   417                              <3>  stkopen 1
+   418 000000BA 83EC01              <4>  sub word sp, %1
+   419 000000BD 54                  <4>  push sp
+   420 000000BE 5D                  <4>  pop bp
+   421 000000BF C6460020            <3>  mov byte [ bp ], %1
+   422 000000C3 E88803              <3>  call proc_prtch
+   423                              <3>  stkclose 1
+   424 000000C6 83C401              <4>  add word sp, %1
+   425 000000C9 58                  <2> 	pop ax
+   426                              <2> 	__prtsubbin8 al,4,8
+   427                              <3>  stkopen 3
+   428 000000CA 83EC03              <4>  sub word sp, %1
+   429 000000CD 54                  <4>  push sp
+   430 000000CE 5D                  <4>  pop bp
+   431 000000CF 884600              <3>  mov byte [bp+0],%1
+   432 000000D2 C6460104            <3>  mov byte [bp+1],%2
+   433 000000D6 C6460208            <3>  mov byte [bp+2],%3
+   434 000000DA E8B400              <3>  call proc_prtsubbin8
+   435                              <3>  stkclose 3
+   436 000000DD 83C403              <4>  add word sp, %1
+   437                              <2> 	__prtch 20h
+   438                              <3>  stkopen 1
+   439 000000E0 83EC01              <4>  sub word sp, %1
+   440 000000E3 54                  <4>  push sp
+   441 000000E4 5D                  <4>  pop bp
+   442 000000E5 C6460020            <3>  mov byte [ bp ], %1
+   443 000000E9 E86203              <3>  call proc_prtch
+   444                              <3>  stkclose 1
+   445 000000EC 83C401              <4>  add word sp, %1
+   446                              <2> 	
+   447 000000EF 89E0                <2> 	mov ax,sp
+   448 000000F1 89C5                <2> 	mov bp,ax			
+   449 000000F3 8B4604              <2> 	mov ax,[bp+4]
+   450 000000F6 50                  <2> 	push ax
+   451 000000F7 50                  <2> 	push ax
+   452 000000F8 50                  <2> 	push ax
+   453                              <2> 	
+   454                              <2> 	__prtsubbin8 ah,0,4
+   455                              <3>  stkopen 3
+   456 000000F9 83EC03              <4>  sub word sp, %1
+   457 000000FC 54                  <4>  push sp
+   458 000000FD 5D                  <4>  pop bp
+   459 000000FE 886600              <3>  mov byte [bp+0],%1
+   460 00000101 C6460100            <3>  mov byte [bp+1],%2
+   461 00000105 C6460204            <3>  mov byte [bp+2],%3
+   462 00000109 E88500              <3>  call proc_prtsubbin8
+   463                              <3>  stkclose 3
+   464 0000010C 83C403              <4>  add word sp, %1
+   465                              <2> 	__prtch 20h
+   466                              <3>  stkopen 1
+   467 0000010F 83EC01              <4>  sub word sp, %1
+   468 00000112 54                  <4>  push sp
+   469 00000113 5D                  <4>  pop bp
+   470 00000114 C6460020            <3>  mov byte [ bp ], %1
+   471 00000118 E83303              <3>  call proc_prtch
+   472                              <3>  stkclose 1
+   473 0000011B 83C401              <4>  add word sp, %1
+   474 0000011E 58                  <2> 	pop ax
+   475                              <2> 	__prtsubbin8 ah,4,8
+   476                              <3>  stkopen 3
+   477 0000011F 83EC03              <4>  sub word sp, %1
+   478 00000122 54                  <4>  push sp
+   479 00000123 5D                  <4>  pop bp
+   480 00000124 886600              <3>  mov byte [bp+0],%1
+   481 00000127 C6460104            <3>  mov byte [bp+1],%2
+   482 0000012B C6460208            <3>  mov byte [bp+2],%3
+   483 0000012F E85F00              <3>  call proc_prtsubbin8
+   484                              <3>  stkclose 3
+   485 00000132 83C403              <4>  add word sp, %1
+   486                              <2> 	__prtch 20h
+   487                              <3>  stkopen 1
+   488 00000135 83EC01              <4>  sub word sp, %1
+   489 00000138 54                  <4>  push sp
+   490 00000139 5D                  <4>  pop bp
+   491 0000013A C6460020            <3>  mov byte [ bp ], %1
+   492 0000013E E80D03              <3>  call proc_prtch
+   493                              <3>  stkclose 1
+   494 00000141 83C401              <4>  add word sp, %1
+   495                              <2> 	
+   496 00000144 58                  <2> 	pop ax
+   497                              <2> 	__prtsubbin8 al,0,4
+   498                              <3>  stkopen 3
+   499 00000145 83EC03              <4>  sub word sp, %1
+   500 00000148 54                  <4>  push sp
+   501 00000149 5D                  <4>  pop bp
+   502 0000014A 884600              <3>  mov byte [bp+0],%1
+   503 0000014D C6460100            <3>  mov byte [bp+1],%2
+   504 00000151 C6460204            <3>  mov byte [bp+2],%3
+   505 00000155 E83900              <3>  call proc_prtsubbin8
+   506                              <3>  stkclose 3
+   507 00000158 83C403              <4>  add word sp, %1
+   508                              <2> 	__prtch 20h
+   509                              <3>  stkopen 1
+   510 0000015B 83EC01              <4>  sub word sp, %1
+   511 0000015E 54                  <4>  push sp
+   512 0000015F 5D                  <4>  pop bp
+   513 00000160 C6460020            <3>  mov byte [ bp ], %1
+   514 00000164 E8E702              <3>  call proc_prtch
+   515                              <3>  stkclose 1
+   516 00000167 83C401              <4>  add word sp, %1
+   517 0000016A 58                  <2> 	pop ax
+   518                              <2> 	__prtsubbin8 al,4,8
+   519                              <3>  stkopen 3
+   520 0000016B 83EC03              <4>  sub word sp, %1
+   521 0000016E 54                  <4>  push sp
+   522 0000016F 5D                  <4>  pop bp
+   523 00000170 884600              <3>  mov byte [bp+0],%1
+   524 00000173 C6460104            <3>  mov byte [bp+1],%2
+   525 00000177 C6460208            <3>  mov byte [bp+2],%3
+   526 0000017B E81300              <3>  call proc_prtsubbin8
+   527                              <3>  stkclose 3
+   528 0000017E 83C403              <4>  add word sp, %1
+   529                              <2> 	__prtch 20h
+   530                              <3>  stkopen 1
+   531 00000181 83EC01              <4>  sub word sp, %1
+   532 00000184 54                  <4>  push sp
+   533 00000185 5D                  <4>  pop bp
+   534 00000186 C6460020            <3>  mov byte [ bp ], %1
+   535 0000018A E8C102              <3>  call proc_prtch
+   536                              <3>  stkclose 1
+   537 0000018D 83C401              <4>  add word sp, %1
+   538                              <2> 	
+   539 00000190 C3                  <2> 	ret
+   540                              <2> 	
+   541                              <2> proc_prtsubbin8:
+   542 00000191 89E0                <2> 	mov ax,sp
+   543 00000193 89C5                <2> 	mov bp,ax
+   544                              <2> 	
+   545 00000195 8A4602              <2> 	mov al,[bp+2]
+   546 00000198 50                  <2> 	push ax
+   547                              <2> 	
+   548 00000199 8A4E03              <2> 	mov cl,[bp+3]
+   549 0000019C 8A6E04              <2> 	mov ch,[bp+4]
+   550 0000019F 80FD08              <2> 	cmp ch,8
+   551 000001A2 7602                <2> 	jbe .l1	
+   552 000001A4 B508                <2> 		mov ch,8
+   553                              <2> 	.l1:		
+   554 000001A6 38E9                <2> 		cmp cl,ch		
+   555 000001A8 731D                <2> 		jae .l2
+   556                              <2> 		
+   557 000001AA 58                  <2> 		pop ax
+   558 000001AB 50                  <2> 		push ax
+   559 000001AC D2E0                <2> 		shl al,cl
+   560 000001AE C0E807              <2> 		shr al,7		
+   561 000001B1 0430                <2> 		add al,30h
+   562                              <2> 		
+   563 000001B3 51                  <2> 		push cx
+   564                              <2> 		__prtch al
+   565                              <3>  stkopen 1
+   566 000001B4 83EC01              <4>  sub word sp, %1
+   567 000001B7 54                  <4>  push sp
+   568 000001B8 5D                  <4>  pop bp
+   569 000001B9 884600              <3>  mov byte [ bp ], %1
+   570 000001BC E88F02              <3>  call proc_prtch
+   571                              <3>  stkclose 1
+   572 000001BF 83C401              <4>  add word sp, %1
+   573 000001C2 59                  <2> 		pop cx
+   574                              <2> 		
+   575 000001C3 FEC1                <2> 		inc cl
+   576 000001C5 EBDF                <2> 		jmp .l1
+   577                              <2> 	.l2:	
+   578 000001C7 58                  <2> 	pop ax
+   579                              <2> 	
+   580 000001C8 C3                  <2> 	ret
+   581                              <2> 	
+   582                              <2> proc_prtbin16:
+   583 000001C9 89E0                <2> 	mov ax,sp
+   584 000001CB 89C5                <2> 	mov bp,ax
+   585                              <2> 		
+   586 000001CD 8A7E04              <2> 	mov bh, [bp+4]
+   587 000001D0 B300                <2> 	mov bl,0
+   588 000001D2 B201                <2> 	mov dl,TRUE
+   589 000001D4 30ED                <2> 	xor ch,ch
+   590 000001D6 B102                <2> 	mov cl,2
+   591                              <2> 	.l1:
+   592 000001D8 80F900              <2> 		cmp cl,0
+   593 000001DB 744B                <2> 		jz .l2		
+   594                              <2> 		
+   595 000001DD 55                  <2> 		push bp
+   596 000001DE 01CD                <2> 		add bp,cx
+   597 000001E0 45                  <2> 		inc bp
+   598                              <2> 		
+   599 000001E1 0A5E00              <2> 		or byte bl, [bp]
+   600 000001E4 08FB                <2> 		or byte bl, bh
+   601 000001E6 743B                <2> 		jz .prted											
+   602 000001E8 53                  <2> 			push bx
+   603 000001E9 51                  <2> 			push cx	
+   604 000001EA 80FA01              <2> 			cmp dl, TRUE
+   605 000001ED 7402                <2> 			je .first
+   606 000001EF EB10                <2> 			jmp .nfirst
+   607                              <2> 			.first:
+   608 000001F1 B200                <2> 				mov dl, FALSE
+   609 000001F3 52                  <2> 				push dx
+   610                              <2> 				
+   611 000001F4 88FC                <2> 				mov ah, bh
+   612 000001F6 8A4600              <2> 				mov byte al, [bp]
+   613 000001F9 50                  <2> 				push ax
+   614 000001FA E84000              <2> 				call proc_prtbin8
+   615 000001FD 58                  <2> 				pop ax
+   616                              <2> 							
+   617 000001FE 5A                  <2> 				pop dx
+   618 000001FF EB0C                <2> 				jmp .endfirst
+   619                              <2> 			.nfirst:
+   620 00000201 52                  <2> 				push dx
+   621                              <2> 				
+   622 00000202 B401                <2> 				mov ah, TRUE
+   623 00000204 8A4600              <2> 				mov byte al, [bp]
+   624 00000207 50                  <2> 				push ax
+   625 00000208 E83200              <2> 				call proc_prtbin8
+   626 0000020B 58                  <2> 				pop ax
+   627                              <2> 								
+   628 0000020C 5A                  <2> 				pop dx
+   629                              <2> 			.endfirst:	
+   630 0000020D 59                  <2> 			pop cx
+   631 0000020E 5B                  <2> 			pop bx		
+   632                              <2> 			
+   633 0000020F 80F901              <2> 			cmp cl,1
+   634 00000212 760F                <2> 			jbe .spaceprted
+   635                              <2> 				__prtch 20h
+   636                              <3>  stkopen 1
+   637 00000214 83EC01              <4>  sub word sp, %1
+   638 00000217 54                  <4>  push sp
+   639 00000218 5D                  <4>  pop bp
+   640 00000219 C6460020            <3>  mov byte [ bp ], %1
+   641 0000021D E82E02              <3>  call proc_prtch
+   642                              <3>  stkclose 1
+   643 00000220 83C401              <4>  add word sp, %1
+   644                              <2> 			.spaceprted:
+   645                              <2> 		.prted:
+   646                              <2> 		
+   647 00000223 5D                  <2> 		pop bp
+   648                              <2> 		
+   649 00000224 FEC9                <2> 		dec cl
+   650 00000226 EBB0                <2> 		jmp .l1
+   651                              <2> 	.l2:
+   652                              <2> 	
+   653 00000228 80FB00              <2> 	cmp bl,0
+   654 0000022B 750F                <2> 	jnz .end
+   655                              <2> 		__prtch 30h
+   656                              <3>  stkopen 1
+   657 0000022D 83EC01              <4>  sub word sp, %1
+   658 00000230 54                  <4>  push sp
+   659 00000231 5D                  <4>  pop bp
+   660 00000232 C6460030            <3>  mov byte [ bp ], %1
+   661 00000236 E81502              <3>  call proc_prtch
+   662                              <3>  stkclose 1
+   663 00000239 83C401              <4>  add word sp, %1
+   664                              <2> 	.end:
+   665                              <2> 	
+   666 0000023C C3                  <2> 	ret	
+   667                              <2> 	
+   668                              <2> proc_prtbin8:
+   669 0000023D 89E0                <2> 	mov ax,sp
+   670 0000023F 89C5                <2> 	mov bp,ax
+   671 00000241 8A4602              <2> 	mov byte al, [bp+2]
+   672 00000244 3C00                <2> 	cmp al, 0
+   673 00000246 0F858700            <2> 	jnz .nzero
+   674                              <2> 		__prtch 30h
+   675                              <3>  stkopen 1
+   676 0000024A 83EC01              <4>  sub word sp, %1
+   677 0000024D 54                  <4>  push sp
+   678 0000024E 5D                  <4>  pop bp
+   679 0000024F C6460030            <3>  mov byte [ bp ], %1
+   680 00000253 E8F801              <3>  call proc_prtch
+   681                              <3>  stkclose 1
+   682 00000256 83C401              <4>  add word sp, %1
+   683                              <2> 		
+   684 00000259 89E0                <2> 		mov ax,sp
+   685 0000025B 89C5                <2> 		mov bp,ax
+   686 0000025D 8A4603              <2> 		mov byte al, [bp+3]		
+   687 00000260 3C00                <2> 		cmp al, FALSE
+   688 00000262 0F84C500            <2> 		je .end
+   689                              <2> 			__prtch 30h
+   690                              <3>  stkopen 1
+   691 00000266 83EC01              <4>  sub word sp, %1
+   692 00000269 54                  <4>  push sp
+   693 0000026A 5D                  <4>  pop bp
+   694 0000026B C6460030            <3>  mov byte [ bp ], %1
+   695 0000026F E8DC01              <3>  call proc_prtch
+   696                              <3>  stkclose 1
+   697 00000272 83C401              <4>  add word sp, %1
+   698                              <2> 			__prtch 30h
+   699                              <3>  stkopen 1
+   700 00000275 83EC01              <4>  sub word sp, %1
+   701 00000278 54                  <4>  push sp
+   702 00000279 5D                  <4>  pop bp
+   703 0000027A C6460030            <3>  mov byte [ bp ], %1
+   704 0000027E E8CD01              <3>  call proc_prtch
+   705                              <3>  stkclose 1
+   706 00000281 83C401              <4>  add word sp, %1
+   707                              <2> 			__prtch 30h
+   708                              <3>  stkopen 1
+   709 00000284 83EC01              <4>  sub word sp, %1
+   710 00000287 54                  <4>  push sp
+   711 00000288 5D                  <4>  pop bp
+   712 00000289 C6460030            <3>  mov byte [ bp ], %1
+   713 0000028D E8BE01              <3>  call proc_prtch
+   714                              <3>  stkclose 1
+   715 00000290 83C401              <4>  add word sp, %1
+   716                              <2> 			__prtch 30h
+   717                              <3>  stkopen 1
+   718 00000293 83EC01              <4>  sub word sp, %1
+   719 00000296 54                  <4>  push sp
+   720 00000297 5D                  <4>  pop bp
+   721 00000298 C6460030            <3>  mov byte [ bp ], %1
+   722 0000029C E8AF01              <3>  call proc_prtch
+   723                              <3>  stkclose 1
+   724 0000029F 83C401              <4>  add word sp, %1
+   725                              <2> 			__prtch 30h
+   726                              <3>  stkopen 1
+   727 000002A2 83EC01              <4>  sub word sp, %1
+   728 000002A5 54                  <4>  push sp
+   729 000002A6 5D                  <4>  pop bp
+   730 000002A7 C6460030            <3>  mov byte [ bp ], %1
+   731 000002AB E8A001              <3>  call proc_prtch
+   732                              <3>  stkclose 1
+   733 000002AE 83C401              <4>  add word sp, %1
+   734                              <2> 			__prtch 30h
+   735                              <3>  stkopen 1
+   736 000002B1 83EC01              <4>  sub word sp, %1
+   737 000002B4 54                  <4>  push sp
+   738 000002B5 5D                  <4>  pop bp
+   739 000002B6 C6460030            <3>  mov byte [ bp ], %1
+   740 000002BA E89101              <3>  call proc_prtch
+   741                              <3>  stkclose 1
+   742 000002BD 83C401              <4>  add word sp, %1
+   743                              <2> 			__prtch 30h
+   744                              <3>  stkopen 1
+   745 000002C0 83EC01              <4>  sub word sp, %1
+   746 000002C3 54                  <4>  push sp
+   747 000002C4 5D                  <4>  pop bp
+   748 000002C5 C6460030            <3>  mov byte [ bp ], %1
+   749 000002C9 E88201              <3>  call proc_prtch
+   750                              <3>  stkclose 1
+   751 000002CC 83C401              <4>  add word sp, %1
+   752 000002CF EB5A                <2> 			jmp .end		
+   753                              <2> 	.nzero:
+   754                              <2> 
+   755 000002D1 B000                <2> 	mov byte al, FALSE
+   756 000002D3 50                  <2> 	push ax
+   757                              <2> 
+   758 000002D4 89E0                <2> 	mov ax,sp
+   759 000002D6 89C5                <2> 	mov bp,ax
+   760 000002D8 8A5E04              <2> 	mov byte bl, [bp+4]
+   761 000002DB B100                <2> 	mov cl,0
+   762                              <2> 	.l1:
+   763 000002DD 80F908              <2> 		cmp cl,8
+   764 000002E0 7348                <2> 		jae .l2
+   765                              <2> 		
+   766 000002E2 88C8                <2> 		mov al,cl
+   767                              <2> 		
+   768 000002E4 88DA                <2> 		mov dl, bl		
+   769                              <2> 		
+   770                              <2> 		.l1.1:
+   771 000002E6 3C00                <2> 			cmp al,0
+   772 000002E8 7406                <2> 			jz .l1.2
+   773                              <2> 							
+   774 000002EA D0E2                <2> 			shl dl,1
+   775                              <2> 			
+   776 000002EC FEC8                <2> 			dec al
+   777 000002EE EBF6                <2> 			jmp .l1.1
+   778                              <2> 		.l1.2:
+   779                              <2> 						
+   780 000002F0 C0EA07              <2> 		shr dl,7
+   781                              <2> 		
+   782 000002F3 89E0                <2> 		mov ax,sp
+   783 000002F5 89C5                <2> 		mov bp,ax			
+   784 000002F7 8A4605              <2> 		mov byte al, [bp+5]
+   785 000002FA 3C01                <2> 		cmp al, TRUE
+   786 000002FC 7413                <2> 		je .endzero		
+   787 000002FE 80FA00              <2> 			cmp dl,0
+   788 00000301 7402                <2> 			jz .zero
+   789 00000303 EB08                <2> 			jmp .notzero
+   790                              <2> 			.zero:
+   791 00000305 58                  <2> 				pop ax
+   792 00000306 50                  <2> 				push ax
+   793 00000307 3C01                <2> 				cmp al, TRUE				
+   794 00000309 7406                <2> 				je .endzero
+   795 0000030B EB19                <2> 				jmp .inc
+   796                              <2> 			.notzero:
+   797 0000030D 58                  <2> 				pop ax
+   798 0000030E B001                <2> 				mov al, TRUE	
+   799 00000310 50                  <2> 				push ax				
+   800                              <2> 		.endzero:
+   801                              <2> 									
+   802 00000311 80C230              <2> 		add dl,30h
+   803                              <2> 
+   804 00000314 51                  <2> 		push cx
+   805 00000315 52                  <2> 		push dx
+   806                              <2> 		__prtch dl
+   807                              <3>  stkopen 1
+   808 00000316 83EC01              <4>  sub word sp, %1
+   809 00000319 54                  <4>  push sp
+   810 0000031A 5D                  <4>  pop bp
+   811 0000031B 885600              <3>  mov byte [ bp ], %1
+   812 0000031E E82D01              <3>  call proc_prtch
+   813                              <3>  stkclose 1
+   814 00000321 83C401              <4>  add word sp, %1
+   815 00000324 5A                  <2> 		pop dx
+   816 00000325 59                  <2> 		pop cx	
+   817                              <2> 
+   818                              <2> 		.inc:
+   819                              <2> 	
+   820 00000326 FEC1                <2> 		inc cl
+   821 00000328 EBB3                <2> 		jmp .l1	
+   822                              <2> 	.l2:
+   823                              <2> 	
+   824 0000032A 58                  <2> 	pop ax
+   825                              <2> 	
+   826                              <2> 	.end:
+   827                              <2> 	
+   828 0000032B C3                  <2> 	ret	
+   829                              <2> 
+   830                              <2> proc_prthex16:
+   831 0000032C 89E0                <2> 	mov ax,sp
+   832 0000032E 89C5                <2> 	mov bp,ax
+   833                              <2> 
+   834 00000330 8A7E04              <2> 	mov byte bh, [bp+4]		
+   835 00000333 B300                <2> 	mov bl,0	
+   836 00000335 B201                <2> 	mov dl,TRUE
+   837 00000337 30ED                <2> 	xor ch,ch
+   838 00000339 B102                <2> 	mov cl, 2	
+   839                              <2> 	.l1:			
+   840 0000033B 80F900              <2> 		cmp cl,0
+   841 0000033E 7437                <2> 		jz .l2
+   842                              <2> 							
+   843 00000340 55                  <2> 		push bp		
+   844 00000341 01CD                <2> 		add bp,cx
+   845 00000343 45                  <2> 		inc bp		
+   846                              <2> 		
+   847 00000344 0A5E00              <2> 		or byte bl, [bp]
+   848 00000347 08FB                <2> 		or byte bl, bh
+   849 00000349 7427                <2> 		jz .prted							
+   850 0000034B 53                  <2> 			push bx
+   851 0000034C 51                  <2> 			push cx	
+   852 0000034D 80FA01              <2> 			cmp dl, TRUE
+   853 00000350 7402                <2> 			je .first
+   854 00000352 EB10                <2> 			jmp .nfirst
+   855                              <2> 			.first:
+   856 00000354 B200                <2> 				mov dl, FALSE
+   857 00000356 52                  <2> 				push dx
+   858                              <2> 				
+   859 00000357 88FC                <2> 				mov ah, bh
+   860 00000359 8A4600              <2> 				mov byte al, [bp]
+   861 0000035C 50                  <2> 				push ax
+   862 0000035D E82C00              <2> 				call proc_prthex8
+   863 00000360 58                  <2> 				pop ax
+   864                              <2> 							
+   865 00000361 5A                  <2> 				pop dx
+   866 00000362 EB0C                <2> 				jmp .endfirst
+   867                              <2> 			.nfirst:
+   868 00000364 52                  <2> 				push dx
+   869                              <2> 				
+   870 00000365 B401                <2> 				mov ah, TRUE
+   871 00000367 8A4600              <2> 				mov byte al, [bp]
+   872 0000036A 50                  <2> 				push ax
+   873 0000036B E81E00              <2> 				call proc_prthex8
+   874 0000036E 58                  <2> 				pop ax
+   875                              <2> 								
+   876 0000036F 5A                  <2> 				pop dx
+   877                              <2> 			.endfirst:	
+   878 00000370 59                  <2> 			pop cx
+   879 00000371 5B                  <2> 			pop bx		
+   880                              <2> 		.prted:
+   881                              <2> 		
+   882 00000372 5D                  <2> 		pop bp
+   883                              <2> 	
+   884 00000373 FEC9                <2> 		dec cl
+   885 00000375 EBC4                <2> 		jmp .l1		
+   886                              <2> 	.l2:
+   887                              <2> 	
+   888 00000377 80FB00              <2> 	cmp bl,0
+   889 0000037A 750F                <2> 	jnz .end
+   890                              <2> 		__prtch 30h
+   891                              <3>  stkopen 1
+   892 0000037C 83EC01              <4>  sub word sp, %1
+   893 0000037F 54                  <4>  push sp
+   894 00000380 5D                  <4>  pop bp
+   895 00000381 C6460030            <3>  mov byte [ bp ], %1
+   896 00000385 E8C600              <3>  call proc_prtch
+   897                              <3>  stkclose 1
+   898 00000388 83C401              <4>  add word sp, %1
+   899                              <2> 	.end:
+   900                              <2> 	
+   901 0000038B C3                  <2> 	ret
+   902                              <2> 	
+   903                              <2> proc_prthex8:
+   904 0000038C 89E0                <2> 	mov ax,sp
+   905 0000038E 89C5                <2> 	mov bp,ax
+   906 00000390 8A4602              <2> 	mov byte al, [bp+2]
+   907 00000393 3C00                <2> 	cmp al, 0
+   908 00000395 752B                <2> 	jnz .nzero
+   909                              <2> 		__prtch 30h
+   910                              <3>  stkopen 1
+   911 00000397 83EC01              <4>  sub word sp, %1
+   912 0000039A 54                  <4>  push sp
+   913 0000039B 5D                  <4>  pop bp
+   914 0000039C C6460030            <3>  mov byte [ bp ], %1
+   915 000003A0 E8AB00              <3>  call proc_prtch
+   916                              <3>  stkclose 1
+   917 000003A3 83C401              <4>  add word sp, %1
+   918                              <2> 		
+   919 000003A6 89E0                <2> 		mov ax,sp
+   920 000003A8 89C5                <2> 		mov bp,ax
+   921 000003AA 8A4603              <2> 		mov byte al, [bp+3]		
+   922 000003AD 3C00                <2> 		cmp al, FALSE
+   923 000003AF 7476                <2> 		je .end
+   924                              <2> 			__prtch 30h
+   925                              <3>  stkopen 1
+   926 000003B1 83EC01              <4>  sub word sp, %1
+   927 000003B4 54                  <4>  push sp
+   928 000003B5 5D                  <4>  pop bp
+   929 000003B6 C6460030            <3>  mov byte [ bp ], %1
+   930 000003BA E89100              <3>  call proc_prtch
+   931                              <3>  stkclose 1
+   932 000003BD 83C401              <4>  add word sp, %1
+   933 000003C0 EB65                <2> 			jmp .end		
+   934                              <2> 	.nzero:
+   935                              <2> 
+   936 000003C2 B000                <2> 	mov byte al, FALSE
+   937 000003C4 50                  <2> 	push ax
+   938                              <2> 
+   939 000003C5 89E0                <2> 	mov ax,sp
+   940 000003C7 89C5                <2> 	mov bp,ax
+   941 000003C9 8A5E04              <2> 	mov byte bl, [bp+4]
+   942 000003CC B102                <2> 	mov cl,2
+   943                              <2> 	.l1:
+   944 000003CE 80F900              <2> 		cmp cl,0
+   945 000003D1 7453                <2> 		jz .l2
+   946                              <2> 		
+   947 000003D3 B002                <2> 		mov al,2
+   948 000003D5 28C8                <2> 		sub al,cl
+   949                              <2> 		
+   950 000003D7 88DA                <2> 		mov dl, bl	
+   951                              <2> 		
+   952                              <2> 		.l1.1:
+   953 000003D9 3C00                <2> 			cmp al,0
+   954 000003DB 7407                <2> 			jz .l1.2
+   955                              <2> 							
+   956 000003DD C0E204              <2> 			shl dl,4
+   957                              <2> 			
+   958 000003E0 FEC8                <2> 			dec al
+   959 000003E2 EBF5                <2> 			jmp .l1.1
+   960                              <2> 		.l1.2:
+   961                              <2> 						
+   962 000003E4 C0EA04              <2> 		shr dl,4
+   963                              <2> 
+   964 000003E7 89E0                <2> 		mov ax,sp
+   965 000003E9 89C5                <2> 		mov bp,ax			
+   966 000003EB 8A4605              <2> 		mov byte al, [bp+5]
+   967 000003EE 3C01                <2> 		cmp al, TRUE
+   968 000003F0 7413                <2> 		je .endzero		
+   969 000003F2 80FA00              <2> 			cmp dl,0
+   970 000003F5 7402                <2> 			jz .zero
+   971 000003F7 EB08                <2> 			jmp .notzero
+   972                              <2> 			.zero:
+   973 000003F9 58                  <2> 				pop ax
+   974 000003FA 50                  <2> 				push ax
+   975 000003FB 3C01                <2> 				cmp al, TRUE				
+   976 000003FD 7406                <2> 				je .endzero
+   977 000003FF EB21                <2> 				jmp .dec
+   978                              <2> 			.notzero:
+   979 00000401 58                  <2> 				pop ax
+   980 00000402 B001                <2> 				mov al, TRUE	
+   981 00000404 50                  <2> 				push ax				
+   982                              <2> 		.endzero:
+   983                              <2> 						
+   984 00000405 80FA09              <2> 		cmp dl,9
+   985 00000408 7603                <2> 		jbe .endsumseven  		
+   986 0000040A 80C207              <2> 		add dl,7
+   987                              <2> 		.endsumseven:
+   988                              <2> 						
+   989 0000040D 80C230              <2> 		add dl,30h
+   990                              <2> 
+   991 00000410 51                  <2> 		push cx
+   992 00000411 52                  <2> 		push dx
+   993                              <2> 		__prtch dl
+   994                              <3>  stkopen 1
+   995 00000412 83EC01              <4>  sub word sp, %1
+   996 00000415 54                  <4>  push sp
+   997 00000416 5D                  <4>  pop bp
+   998 00000417 885600              <3>  mov byte [ bp ], %1
+   999 0000041A E83100              <3>  call proc_prtch
+  1000                              <3>  stkclose 1
+  1001 0000041D 83C401              <4>  add word sp, %1
+  1002 00000420 5A                  <2> 		pop dx
+  1003 00000421 59                  <2> 		pop cx	
+  1004                              <2> 
+  1005                              <2> 		.dec:
+  1006                              <2> 	
+  1007 00000422 FEC9                <2> 		dec cl
+  1008 00000424 EBA8                <2> 		jmp .l1	
+  1009                              <2> 	.l2:
+  1010                              <2> 	
+  1011 00000426 58                  <2> 	pop ax
+  1012                              <2> 	
+  1013                              <2> 	.end:
+  1014                              <2> 	
+  1015 00000427 C3                  <2> 	ret
+  1016                              <2> 
+  1017                              <2> proc_prtstr:
+  1018 00000428 89E0                <2> 	mov ax,sp
+  1019 0000042A 89C5                <2> 	mov bp,ax
+  1020                              <2> 	
+  1021 0000042C 8B4602              <2> 	mov ax, [bp+2]
+  1022 0000042F 8ED8                <2> 	mov ds, ax
+  1023 00000431 8B7604              <2> 	mov si, [bp+4]						
+  1024                              <2> 	.loop:
+  1025 00000434 AC                  <2> 		lodsb
+  1026 00000435 3C00                <2> 		cmp al,0h
+  1027 00000437 7414                <2> 		jz .done
+  1028                              <2> 		
+  1029 00000439 1E                  <2> 		push ds
+  1030 0000043A 56                  <2> 		push si
+  1031                              <2> 					
+  1032                              <2> 		__prtch al										
+  1033                              <3>  stkopen 1
+  1034 0000043B 83EC01              <4>  sub word sp, %1
+  1035 0000043E 54                  <4>  push sp
+  1036 0000043F 5D                  <4>  pop bp
+  1037 00000440 884600              <3>  mov byte [ bp ], %1
+  1038 00000443 E80800              <3>  call proc_prtch
+  1039                              <3>  stkclose 1
+  1040 00000446 83C401              <4>  add word sp, %1
+  1041                              <2> 									
+  1042 00000449 5E                  <2> 		pop si
+  1043 0000044A 1F                  <2> 		pop ds
+  1044                              <2> 											
+  1045 0000044B EBE7                <2> 		jmp .loop 
+  1046                              <2> 	.done:
+  1047                              <2> 	
+  1048 0000044D C3                  <2> 	ret	
+  1049                              <2> 	
+  1050                              <2> proc_prtch:
+  1051 0000044E 89E0                <2> 	mov ax,sp
+  1052 00000450 89C5                <2> 	mov bp,ax
+  1053                              <2> 
+  1054 00000452 8A4602              <2> 	mov al,[bp+2]
+  1055 00000455 B40E                <2> 	mov ah,0Eh
+  1056 00000457 B700                <2> 	mov bh,00h
+  1057 00000459 CD10                <2> 	int 10h	
+  1058                              <2> 	
+  1059 0000045B C3                  <2> 	ret
+  1060                              <2> 
+  1061                              <2> proc_prtln:
+  1062 0000045C B403                <2> 	mov ah,03h
+  1063 0000045E B700                <2> 	mov bh,00h
+  1064 00000460 CD10                <2> 	int 10h
+  1065                              <2> 	
+  1066 00000462 B402                <2> 	mov ah,02h
+  1067 00000464 FEC6                <2> 	inc dh
+  1068 00000466 B200                <2> 	mov dl,00h
+  1069 00000468 CD10                <2> 	int 10h	
+  1070                              <2> 	
+  1071 0000046A C3                  <2> 	ret
+  1072                              <2> 	
+  1073                              <2> %endif
+  1074                              <1>  	%include "lib/system.mac"
+  1075                              <2>  
+  1076                              <2> %ifndef SYSTEM_MAC
+  1077                              <2>  	%define SYSTEM_MAC
+  1078                              <2>  	
+  1079                              <2> 	%ifndef TRUE
+  1080                              <2> 		%define TRUE 01h
+  1081                              <2> 	%endif
+  1082                              <2> 	%ifndef FALSE
+  1083                              <2> 		%define FALSE 00h
+  1084                              <2> 	%endif 	
+  1085                              <2>  	
+  1086                              <2>  	%include "lib/kernel.asmh"
+  1087                              <2>  	 	
+  1088                              <2> %macro mformat 4
+  1089                              <2> 	stkopen 8
+  1090                              <2> 	mov word [ bp + 0 ], %1
+  1091                              <2> 	mov word [ bp + 2 ], %2
+  1092                              <2> 	mov word [ bp + 4 ], %3
+  1093                              <2> 	mov word [ bp + 6 ], %4
+  1094                              <2> 	call kernel_segment:mformat
+  1095                              <2> 	stkclose 8
+  1096                              <2> %endmacro
+  1097                              <2> 
+  1098                              <2> %macro malloc 6
+  1099                              <2> 	stkopen 0Bh
+  1100                              <2> 	mov word [ bp + 4 ], %3
+  1101                              <2> 	mov word [ bp + 6 ], %4
+  1102                              <2> 	mov word [ bp + 8 ], %5	
+  1103                              <2> 	call kernel_segment:malloc
+  1104                              <2> 	push sp
+  1105                              <2> 	pop bp
+  1106                              <2> 	mov word %1, [ bp ]
+  1107                              <2> 	mov word %2, [ bp + 2 ]
+  1108                              <2> 	mov byte %6, [ bp + 0x0A ]
+  1109                              <2> 	stkclose 0Bh
+  1110                              <2> %endmacro 	
+  1111                              <2> 
+  1112                              <2> %macro laddr 2
+  1113                              <2> 	laddr %1, %2, %1, %2
+  1114                              <2> %endmacro
+  1115                              <2> 
+  1116                              <2> %macro faddr 2
+  1117                              <2> 	faddr %1, %2, %1, %2
+  1118                              <2> %endmacro
+  1119                              <2>  	
+  1120                              <2> %macro laddr 4
+  1121                              <2> 	stkopen 8
+  1122                              <2> 	mov word [ bp + 4 ], %3
+  1123                              <2> 	mov word [ bp + 6 ], %4	
+  1124                              <2> 	call kernel_segment:laddr
+  1125                              <2> 	push sp
+  1126                              <2> 	pop bp
+  1127                              <2> 	mov word %1, [ bp + 0 ]
+  1128                              <2> 	mov word %2, [ bp + 2 ]	
+  1129                              <2> 	stkclose 8
+  1130                              <2> %endmacro
+  1131                              <2> 
+  1132                              <2> %macro faddr 4
+  1133                              <2> 	stkopen 8
+  1134                              <2> 	mov word [ bp + 4 ], %3
+  1135                              <2> 	mov word [ bp + 6 ], %4	
+  1136                              <2> 	call kernel_segment:faddr
+  1137                              <2> 	push sp
+  1138                              <2> 	pop bp
+  1139                              <2> 	mov word %1, [ bp + 0 ]
+  1140                              <2> 	mov word %2, [ bp + 2 ]	
+  1141                              <2> 	stkclose 8
+  1142                              <2> %endmacro	
+  1143                              <2>  
+  1144                              <2> 
+  1145                              <2> %macro stkopen 1		
+  1146                              <2> 	sub word sp, %1
+  1147                              <2> 	push sp
+  1148                              <2> 	pop bp
+  1149                              <2> %endmacro
+  1150                              <2> 
+  1151                              <2> %macro stkclose 1
+  1152                              <2> 	add word sp, %1
+  1153                              <2> %endmacro
+  1154                              <2> 
+  1155                              <2> %macro stkload 1-* 	
+  1156                              <2>  	%rep %0
+  1157                              <2>  	 	%rotate -1
+  1158                              <2>  		pop %1
+  1159                              <2>  	%endrep
+  1160                              <2>  	%rep %0
+  1161                              <2>  		push %1
+  1162                              <2>  		%rotate 1
+  1163                              <2>  	%endrep
+  1164                              <2> %endmacro
+  1165                              <2> 
+  1166                              <2> %macro stkpush 1-* 	
+  1167                              <2>  	%rep %0
+  1168                              <2>  		push %1
+  1169                              <2>  		%rotate 1
+  1170                              <2>  	%endrep 	
+  1171                              <2> %endmacro
+  1172                              <2>  
+  1173                              <2> %macro stkpop 1-*
+  1174                              <2>  	%rep %0
+  1175                              <2>  	 	%rotate -1
+  1176                              <2>  		pop %1
+  1177                              <2>  	%endrep 	 	
+  1178                              <2> %endmacro
+  1179                              <2> 
+  1180                              <2> %macro toreg16 3
+  1181                              <2> 	push %1
+  1182                              <2> 	pop ds
+  1183                              <2> 	mov word %3, [%2]
+  1184                              <2> %endmacro
+  1185                              <2> 
+  1186                              <2> %macro toreg8 3
+  1187                              <2> 	push %1
+  1188                              <2> 	pop ds
+  1189                              <2> 	mov byte %3, [%2]
+  1190                              <2> %endmacro
+  1191                              <2> 
+  1192                              <2> %macro tovar16 3
+  1193                              <2> 	push %1
+  1194                              <2> 	pop ds
+  1195                              <2> 	mov word [%2], %3
+  1196                              <2> %endmacro
+  1197                              <2> 
+  1198                              <2> %macro tovar8 3
+  1199                              <2> 	push %1
+  1200                              <2> 	pop ds
+  1201                              <2> 	mov byte [%2], %3
+  1202                              <2> %endmacro 
+  1203                              <2>  	
+  1204                              <2> %endif 
+  1205                              <1> 
+  1206                              <1> ; OBS: Esta macro não deve ser utilizada em procedimentos dinâmicos		
+  1207                              <1> %macro printf 1-*	
+  1208                              <1> 	%rep %0					
+  1209                              <1> 		__printf %1
+  1210                              <1> 		%rotate 1		
+  1211                              <1> 	%endrep
+  1212                              <1> %endmacro	
+  1213                              <1> 
+  1214                              <1> ; OBS: Esta macro não deve ser utilizada em procedimentos dinâmicos		
+  1215                              <1> %macro __printf 1
+  1216                              <1> 	section .data
+  1217                              <1> 		%%str: db %1,0
+  1218                              <1> 	section .text
+  1219                              <1> 		prtstr cs, %%str				
+  1220                              <1> %endmacro
+  1221                              <1> 
+  1222                              <1> %macro prtstr 2
+  1223                              <1> 	stkopen 4
+  1224                              <1> 	mov word [bp], %1
+  1225                              <1> 	mov word [bp+2], %2
+  1226                              <1> 	call proc_prtstr
+  1227                              <1> 	stkclose 4
+  1228                              <1> %endmacro
+  1229                              <1> 
+  1230                              <1> 
+  1231                              <1> %macro prtIEEE754 1
+  1232                              <1> 	prtIEEE754 cs, %1
+  1233                              <1> %endmacro
+  1234                              <1> 
+  1235                              <1> %macro prtIEEE754 2
+  1236                              <1> 	stkopen 4
+  1237                              <1> 	mov ax,%1
+  1238                              <1> 	mov ds,ax
+  1239                              <1> 	mov ax, [%2+2]
+  1240                              <1> 	mov word [bp+0], ax
+  1241                              <1> 	mov ax, [%2]
+  1242                              <1> 	mov word [bp+2], ax
+  1243                              <1> 	call proc_prtIEEE754
+  1244                              <1> 	stkclose 4
+  1245                              <1> %endmacro
+  1246                              <1> 
+  1247                              <1> %macro prtbool 1	
+  1248                              <1> 	cmp byte %1, TRUE
+  1249                              <1> 	je .true
+  1250                              <1> 	jmp .false
+  1251                              <1> 	.true:
+  1252                              <1> 		prtf "true"
+  1253                              <1> 		jmp .endcmp
+  1254                              <1> 	.false:
+  1255                              <1> 		prtf "false"
+  1256                              <1> 	.endcmp:	
+  1257                              <1> %endmacro
+  1258                              <1> 
+  1259                              <1> %macro prtptr 2-3 TRUE
+  1260                              <1> 	stkopen 3
+  1261                              <1> 	mov word [ bp + 0 ], %2
+  1262                              <1> 	mov byte [ bp + 2 ], %3
+  1263                              <1> 	prthex16 %1, %3
+  1264                              <1> 	writechar ':'
+  1265                              <1> 	push sp
+  1266                              <1> 	pop bp
+  1267                              <1> 	mov word ax, [ bp + 0 ]
+  1268                              <1> 	mov byte bl, [ bp + 2 ]
+  1269                              <1> 	prthex16 ax, bl
+  1270                              <1> 	stkclose 3
+  1271                              <1> %endmacro
+  1272                              <1> 
+  1273                              <1> %macro prtfptr 2-3 TRUE
+  1274                              <1> 	stkopen 3
+  1275                              <1> 	mov word [ bp + 0 ], %1
+  1276                              <1> 	mov byte [ bp + 2 ], %3
+  1277                              <1> 	prthex16 %2, %3
+  1278                              <1> 	push sp
+  1279                              <1> 	pop bp
+  1280                              <1> 	mov word ax, [ bp + 0 ]
+  1281                              <1> 	mov byte bl, [ bp + 2 ]
+  1282                              <1> 	prthex16 ax, bl
+  1283                              <1> 	stkclose 3
+  1284                              <1> %endmacro
+  1285                              <1> 
+  1286                              <1> %macro prtbin32 1
+  1287                              <1> 	prtbin32 cs, %1
+  1288                              <1> %endmacro
+  1289                              <1> 
+  1290                              <1> %macro prtbin32 2
+  1291                              <1> 	mov ax,%1
+  1292                              <1> 	mov ds,ax
+  1293                              <1> 	mov word ax,[%2+2]
+  1294                              <1> 	prtbin16 ax
+  1295                              <1> 	prtch 20h
+  1296                              <1> 	mov ax,%1
+  1297                              <1> 	mov ds,ax
+  1298                              <1> 	mov word ax,[%2]
+  1299                              <1> 	prtbin16 ax
+  1300                              <1> %endmacro
+  1301                              <1> 
+  1302                              <1> %macro prthex32 1
+  1303                              <1> 	prthex32 cs, %1
+  1304                              <1> %endmacro
+  1305                              <1> 
+  1306                              <1> %macro iprthex32 1
+  1307                              <1> 	iprthex32 cs, %1
+  1308                              <1> %endmacro
+  1309                              <1> 
+  1310                              <1> %macro prthex32 2
+  1311                              <1> 	mov ax,%1
+  1312                              <1> 	mov ds,ax
+  1313                              <1> 	mov word ax,[%2+2]
+  1314                              <1> 	prthex16 ax	
+  1315                              <1> 	mov ax,%1
+  1316                              <1> 	mov ds,ax
+  1317                              <1> 	mov word ax,[%2]
+  1318                              <1> 	prthex16 ax
+  1319                              <1> %endmacro
+  1320                              <1> 
+  1321                              <1> %macro iprthex32 2
+  1322                              <1> 	mov ax,%1
+  1323                              <1> 	mov ds,ax
+  1324                              <1> 	mov word ax,[%2+2]
+  1325                              <1> 	mov word bx,ax
+  1326                              <1> 	and ax,0x7FFF
+  1327                              <1> 	push ax
+  1328                              <1> 	and bx,0x8000
+  1329                              <1> 	cmp bx,0
+  1330                              <1> 	jz %%prt
+  1331                              <1> 		prtch '-'		
+  1332                              <1> 	%%prt:	
+  1333                              <1> 	pop ax
+  1334                              <1> 	prthex16 ax
+  1335                              <1> 	mov ax,%1
+  1336                              <1> 	mov ds,ax
+  1337                              <1> 	mov word ax,[%2]
+  1338                              <1> 	prthex16 ax	
+  1339                              <1> %endmacro
+  1340                              <1> 
+  1341                              <1> %macro prtsubbin8 3
+  1342                              <1> 	__prtsubbin8 %1,%2,%3
+  1343                              <1> %endmacro
+  1344                              <1> 
+  1345                              <1> %macro prtbin16 1
+  1346                              <1> 	stkopen 3
+  1347                              <1> 	mov word [bp], %1
+  1348                              <1> 	mov byte [bp+2], TRUE
+  1349                              <1> 	call proc_prtbin16
+  1350                              <1> 	stkclose 3
+  1351                              <1> %endmacro
+  1352                              <1> 
+  1353                              <1> %macro prtbin8 1
+  1354                              <1> 	stkopen 2
+  1355                              <1> 	mov byte [bp], %1
+  1356                              <1> 	mov byte [bp+1], TRUE
+  1357                              <1> 	call proc_prtbin8
+  1358                              <1> 	stkclose 2
+  1359                              <1> %endmacro
+  1360                              <1> 
+  1361                              <1> %macro prthex16 1
+  1362                              <1> 	stkopen 3
+  1363                              <1> 	mov word [bp], %1
+  1364                              <1> 	mov byte [bp+2], TRUE
+  1365                              <1> 	call proc_prthex16
+  1366                              <1> 	stkclose 3
+  1367                              <1> %endmacro
+  1368                              <1> 
+  1369                              <1> %macro prthex8 1
+  1370                              <1> 	stkopen 2
+  1371                              <1> 	mov byte [bp], %1
+  1372                              <1> 	mov byte [bp+1], TRUE
+  1373                              <1> 	call proc_prthex8
+  1374                              <1> 	stkclose 2
+  1375                              <1> %endmacro
+  1376                              <1> 
+  1377                              <1> %macro prtch 1
+  1378                              <1> 	__prtch %1
+  1379                              <1> %endmacro
+  1380                              <1> 
+  1381                              <1> %macro prtln 0
+  1382                              <1> 	__prtln
+  1383                              <1> %endmacro	
+  1384                              <1> 
+  1385                              <1> 
+  1386                              <1> %macro prtstk 0
+  1387                              <1> 	printf "stack ---> "
+  1388                              <1> 	mov ax,sp
+  1389                              <1> 	prthex16 ax
+  1390                              <1> %endmacro  
+  1391                              <1> 
+  1392                              <1> %endif
+  1393                                  %include "lib/math.mac"
+  1394                              <1> 
+  1395                              <1> %ifndef MATH_MAC
+  1396                              <1> 	%define MATH_MAC
+  1397                              <1> 	
+  1398                              <1> 	%include "lib/math.asm"
+  1399                              <2> 
+  1400                              <2> %ifndef MATH_ASM
+  1401                              <2> 	%define MATH_ASM
+  1402                              <2> 
+  1403                              <2> %macro __iaddorsub32 7
+  1404                              <2> 	stkopen 0x0E
+  1405                              <2> 	mov word [bp+0], %1
+  1406                              <2> 	mov word [bp+2], %2
+  1407                              <2> 	mov word [bp+4], %3
+  1408                              <2> 	mov word [bp+6], %4
+  1409                              <2> 	mov word [bp+0x0C], %7	
+  1410                              <2> 	call proc_iaddorsub32
+  1411                              <2> 	push sp
+  1412                              <2> 	pop bp
+  1413                              <2> 	mov word %5, [bp+8]
+  1414                              <2> 	mov word %6, [bp+0x0A]
+  1415                              <2> 	stkclose 0x0E
+  1416                              <2> %endmacro
+  1417                              <2> 
+  1418                              <2> %macro __add32 6
+  1419                              <2> 	stkopen 0x0C
+  1420                              <2> 	mov word [bp+0], %1
+  1421                              <2> 	mov word [bp+2], %2
+  1422                              <2> 	mov word [bp+4], %3
+  1423                              <2> 	mov word [bp+6], %4	
+  1424                              <2> 	call proc_add32
+  1425                              <2> 	push sp
+  1426                              <2> 	pop bp
+  1427                              <2> 	mov word %5, [bp+8]
+  1428                              <2> 	mov word %6, [bp+0x0A]
+  1429                              <2> 	stkclose 0x0C
+  1430                              <2> %endmacro
+  1431                              <2> 
+  1432                              <2> %macro __sub32 6
+  1433                              <2> 	stkopen 0x0C
+  1434                              <2> 	mov word [bp+0], %1
+  1435                              <2> 	mov word [bp+2], %2
+  1436                              <2> 	mov word [bp+4], %3
+  1437                              <2> 	mov word [bp+6], %4	
+  1438                              <2> 	call proc_sub32
+  1439                              <2> 	push sp
+  1440                              <2> 	pop bp
+  1441                              <2> 	mov word %5, [bp+8]
+  1442                              <2> 	mov word %6, [bp+0x0A]
+  1443                              <2> 	stkclose 0x0C
+  1444                              <2> %endmacro
+  1445                              <2> 
+  1446                              <2> %macro __mul32 6
+  1447                              <2> 	stkopen 0x0C
+  1448                              <2> 	mov word [bp+0], %1
+  1449                              <2> 	mov word [bp+2], %2
+  1450                              <2> 	mov word [bp+4], %3
+  1451                              <2> 	mov word [bp+6], %4	
+  1452                              <2> 	call proc_mul32
+  1453                              <2> 	push sp
+  1454                              <2> 	pop bp
+  1455                              <2> 	mov word %5, [bp+8]
+  1456                              <2> 	mov word %6, [bp+0x0A]
+  1457                              <2> 	stkclose 0x0C
+  1458                              <2> %endmacro
+  1459                              <2> 
+  1460                              <2> %macro __div32 9
+  1461                              <2> 	stkopen 0x11
+  1462                              <2> 	mov word [bp+0], %1
+  1463                              <2> 	mov word [bp+2], %2
+  1464                              <2> 	mov word [bp+4], %3
+  1465                              <2> 	mov word [bp+6], %4
+  1466                              <2> 	mov word [bp+8], %5
+  1467                              <2> 	mov word [bp+0x0A], %6	
+  1468                              <2> 	call proc_div32
+  1469                              <2> 	push sp
+  1470                              <2> 	pop bp
+  1471                              <2> 	mov word %7, [bp+0x0C]
+  1472                              <2> 	mov word %8, [bp+0x0E]
+  1473                              <2> 	mov byte %9, [bp+0x10]
+  1474                              <2> 	stkclose 0x11
+  1475                              <2> %endmacro
+  1476                              <2> 
+  1477                              <2> %macro __cmp32 5
+  1478                              <2> 	stkopen 9
+  1479                              <2> 	mov word [bp+0], %1
+  1480                              <2> 	mov word [bp+2], %2
+  1481                              <2> 	mov word [bp+4], %3
+  1482                              <2> 	mov word [bp+6], %4
+  1483                              <2> 	call proc_cmp32
+  1484                              <2> 	push sp
+  1485                              <2> 	pop bp
+  1486                              <2> 	mov byte %5, [bp+8]
+  1487                              <2> 	stkclose 9	
+  1488                              <2> %endmacro
+  1489                              <2> 
+  1490                              <2> %macro __shl32 3
+  1491                              <2> 	stkopen 5
+  1492                              <2> 	mov word [bp+0], %1
+  1493                              <2> 	mov word [bp+2], %2
+  1494                              <2> 	mov byte [bp+4], %3
+  1495                              <2> 	call proc_shl32
+  1496                              <2> 	push sp
+  1497                              <2> 	pop bp
+  1498                              <2> 	mov word %1, [bp+0]
+  1499                              <2> 	mov word %2, [bp+2]
+  1500                              <2> 	stkclose 5
+  1501                              <2> %endmacro
+  1502                              <2> 
+  1503                              <2> %macro __shr32 3
+  1504                              <2> 	stkopen 5
+  1505                              <2> 	mov word [bp+0], %1
+  1506                              <2> 	mov word [bp+2], %2
+  1507                              <2> 	mov byte [bp+4], %3
+  1508                              <2> 	call proc_shr32
+  1509                              <2> 	push sp
+  1510                              <2> 	pop bp
+  1511                              <2> 	mov word %1, [bp+0]
+  1512                              <2> 	mov word %2, [bp+2]
+  1513                              <2> 	stkclose 5
+  1514                              <2> %endmacro
+  1515                              <2> 
+  1516                              <2> %macro __lzcount32 3	
+  1517                              <2> 	push %2		
+  1518                              <2> 	__lzcount16 %1, cl	
+  1519                              <2> 	pop ax
+  1520                              <2> 	cmp cl,4
+  1521                              <2> 	jb .end
+  1522                              <2> 		push cx		
+  1523                              <2> 		__lzcount16 ax, al		
+  1524                              <2> 		pop cx
+  1525                              <2> 		add cl,al
+  1526                              <2> 	.end:	
+  1527                              <2> 	mov byte %3, cl 
+  1528                              <2> %endmacro
+  1529                              <2> 
+  1530                              <2> %macro __lzcount16 2
+  1531                              <2> 	stkopen 3
+  1532                              <2> 	mov word [bp+0], %1
+  1533                              <2> 	call proc__lzcount16
+  1534                              <2> 	push sp
+  1535                              <2> 	pop bp
+  1536                              <2> 	mov byte %2, [bp+2]	
+  1537                              <2> 	stkclose 3
+  1538                              <2> %endmacro
+  1539                              <2> 
+  1540                              <2> %macro __lzbitcount32 3	
+  1541                              <2> 	push %2		
+  1542                              <2> 	__lzbitcount16 %1, cl
+  1543                              <2> 	pop ax
+  1544                              <2> 	cmp cl,16
+  1545                              <2> 	jb .end
+  1546                              <2> 		push cx		
+  1547                              <2> 		__lzbitcount16 ax, al		
+  1548                              <2> 		pop cx
+  1549                              <2> 		add cl,al
+  1550                              <2> 	.end:	
+  1551                              <2> 	mov byte %3, cl 
+  1552                              <2> %endmacro
+  1553                              <2> 		
+  1554                              <2> %macro __lzbitcount16 2
+  1555                              <2> 	stkopen 3
+  1556                              <2> 	mov word [bp+0], %1
+  1557                              <2> 	call proc__lzbitcount16
+  1558                              <2> 	push sp
+  1559                              <2> 	pop bp
+  1560                              <2> 	mov byte %2, [bp+2]	
+  1561                              <2> 	stkclose 3
+  1562                              <2> %endmacro	
+  1563                              <2> 
+  1564                              <2> %macro __calc_dividendo1 7
+  1565                              <2> 	stkopen 0x0D
+  1566                              <2> 	mov word [bp+0], %1
+  1567                              <2> 	mov word [bp+2], %2
+  1568                              <2> 	mov word [bp+4], %3
+  1569                              <2> 	mov word [bp+6], %4
+  1570                              <2> 	call proc_calc_dividendo1
+  1571                              <2> 	push sp
+  1572                              <2> 	pop bp
+  1573                              <2> 	mov word %5, [bp+0x08]
+  1574                              <2> 	mov word %6, [bp+0x0A]
+  1575                              <2> 	mov byte %7, [bp+0x0C]
+  1576                              <2> 	stkclose 0x0D
+  1577                              <2> %endmacro
+  1578                              <2> 
+  1579                              <2> %macro __calc__prox_dividendo 5
+  1580                              <2> 	stkopen 9
+  1581                              <2> 	mov word [bp+0], %1
+  1582                              <2> 	mov word [bp+2], %2
+  1583                              <2> 	mov word [bp+4], %3
+  1584                              <2> 	mov word [bp+6], %4
+  1585                              <2> 	mov word [bp+8], %5
+  1586                              <2> 	call proc_calc_prox_dividendo
+  1587                              <2> 	push sp
+  1588                              <2> 	pop bp
+  1589                              <2> 	mov word %3, [bp+4]
+  1590                              <2> 	mov word %4, [bp+6]
+  1591                              <2> 	mov byte %5, [bp+8]
+  1592                              <2> 	stkclose 9
+  1593                              <2> %endmacro
+  1594                              <2> 				
+  1595                              <2> section .data
+  1596                              <2> 
+  1597                              <2> proc_setsig:
+  1598 0000046B 89E0                <2> 	mov ax,sp
+  1599 0000046D 89C5                <2> 	mov bp,ax
+  1600                              <2> 	
+  1601 0000046F 816602FF7F          <2> 	and word [bp+2],0x7FFF
+  1602 00000474 8146020080          <2> 	add word [bp+2],0x8000	
+  1603                              <2> 	
+  1604 00000479 C3                  <2> 	ret
+  1605                              <2> 	
+  1606                              <2> proc_clrsig:
+  1607 0000047A 89E0                <2> 	mov ax,sp
+  1608 0000047C 89C5                <2> 	mov bp,ax
+  1609                              <2> 	
+  1610 0000047E 816602FF7F          <2> 	and word [bp+2],0x7FFF
+  1611                              <2> 
+  1612 00000483 C3                  <2> 	ret
+  1613                              <2> 
+  1614                              <2> proc_idiv32:
+  1615                              <2> 	stkopen 0x11
+  1616 00000484 83EC11              <3>  sub word sp, %1
+  1617 00000487 54                  <3>  push sp
+  1618 00000488 5D                  <3>  pop bp
+  1619 00000489 8B4613              <2> 	mov ax,[bp+0x13]
+  1620 0000048C 25FF7F              <2> 	and ax,0x7FFF
+  1621 0000048F 894600              <2> 	mov [bp+0],ax
+  1622 00000492 8B4615              <2> 	mov ax,[bp+0x15]
+  1623 00000495 894602              <2> 	mov [bp+2],ax
+  1624 00000498 8B4617              <2> 	mov ax,[bp+0x17]
+  1625 0000049B 25FF7F              <2> 	and ax,0x7FFF
+  1626 0000049E 894604              <2> 	mov [bp+4],ax
+  1627 000004A1 8B4619              <2> 	mov ax,[bp+0x19]
+  1628 000004A4 894606              <2> 	mov [bp+6],ax 
+  1629 000004A7 E88401              <2> 	call proc_div32
+  1630 000004AA 89E0                <2> 	mov ax,sp
+  1631 000004AC 89C5                <2> 	mov bp,ax
+  1632 000004AE 8B4608              <2> 	mov ax,[bp+8]
+  1633 000004B1 89461B              <2> 	mov [bp+0x1B], ax
+  1634 000004B4 8B460A              <2> 	mov ax,[bp+0x0A]
+  1635 000004B7 89461D              <2> 	mov [bp+0x1D], ax
+  1636 000004BA 8B460C              <2> 	mov ax,[bp+0x0C]
+  1637 000004BD 89461F              <2> 	mov [bp+0x1F], ax
+  1638 000004C0 8B460E              <2> 	mov ax,[bp+0x0E]
+  1639 000004C3 894621              <2> 	mov [bp+0x21], ax
+  1640 000004C6 8A4610              <2> 	mov al,[bp+0x10]
+  1641 000004C9 884623              <2> 	mov byte [bp+0x23], al
+  1642                              <2> 	stkclose 0x11
+  1643 000004CC 83C411              <3>  add word sp, %1
+  1644                              <2> 	
+  1645 000004CF 54                  <2> 	push sp
+  1646 000004D0 5D                  <2> 	pop bp
+  1647                              <2> 		
+  1648 000004D1 8B4E02              <2> 	mov cx,[bp+2]
+  1649 000004D4 8B5606              <2> 	mov dx,[bp+6]
+  1650 000004D7 81E10080            <2> 	and cx,0x8000
+  1651 000004DB 81E20080            <2> 	and dx,0x8000
+  1652 000004DF 31D1                <2> 	xor cx,dx
+  1653                              <2> 	
+  1654 000004E1 837E0A00            <2> 	cmp word [bp+0x0A],0
+  1655 000004E5 7506                <2> 	jnz .signal1
+  1656 000004E7 837E0C00            <2> 	cmp word [bp+0x0C],0
+  1657 000004EB 7403                <2> 	jz .endsignal1
+  1658                              <2> 	.signal1:
+  1659 000004ED 014E0A              <2> 		add word [bp+0x0A],cx
+  1660                              <2> 	.endsignal1:
+  1661                              <2> 	
+  1662 000004F0 837E0E00            <2> 	cmp word [bp+0x0E],0
+  1663 000004F4 7506                <2> 	jnz .signal2
+  1664 000004F6 837E1000            <2> 	cmp word [bp+0x10],0
+  1665 000004FA 7403                <2> 	jz .endsignal2
+  1666                              <2> 	.signal2:
+  1667 000004FC 014E0E              <2> 		add word [bp+0x0E],cx	
+  1668                              <2> 	.endsignal2:
+  1669                              <2> 		
+  1670 000004FF C3                  <2> 	ret	
+  1671                              <2> 
+  1672                              <2> proc_imul32:		
+  1673                              <2> 	stkopen 0x0C
+  1674 00000500 83EC0C              <3>  sub word sp, %1
+  1675 00000503 54                  <3>  push sp
+  1676 00000504 5D                  <3>  pop bp
+  1677 00000505 8B460E              <2> 	mov ax,[bp+0x0E]
+  1678 00000508 25FF7F              <2> 	and ax,0x7FFF
+  1679 0000050B 894600              <2> 	mov [bp+0],ax
+  1680 0000050E 8B4610              <2> 	mov ax,[bp+0x10]
+  1681 00000511 894602              <2> 	mov [bp+2],ax
+  1682 00000514 8B4612              <2> 	mov ax,[bp+0x12]
+  1683 00000517 25FF7F              <2> 	and ax,0x7FFF
+  1684 0000051A 894604              <2> 	mov [bp+4],ax
+  1685 0000051D 8B4614              <2> 	mov ax,[bp+0x14]
+  1686 00000520 894606              <2> 	mov [bp+6],ax 
+  1687 00000523 E88A02              <2> 	call proc_mul32
+  1688 00000526 89E0                <2> 	mov ax,sp
+  1689 00000528 89C5                <2> 	mov bp,ax
+  1690 0000052A 8B4608              <2> 	mov ax,[bp+8]
+  1691 0000052D 8B5E0A              <2> 	mov bx,[bp+0x0A]
+  1692                              <2> 	stkclose 0x0C
+  1693 00000530 83C40C              <3>  add word sp, %1
+  1694                              <2> 	
+  1695 00000533 89E1                <2> 	mov cx,sp
+  1696 00000535 89CD                <2> 	mov bp,cx		
+  1697                              <2> 		
+  1698 00000537 89460A              <2> 	mov [bp+0x0A],ax
+  1699 0000053A 895E0C              <2> 	mov [bp+0x0C],bx
+  1700                              <2> 	
+  1701 0000053D 837E0A00            <2> 	cmp word [bp+0x0A],0
+  1702 00000541 7506                <2> 	jnz .signal1
+  1703 00000543 837E0C00            <2> 	cmp word [bp+0x0C],0
+  1704 00000547 7413                <2> 	jz .endsignal1
+  1705                              <2> 	.signal1:
+  1706 00000549 8B4E02              <2> 		mov cx,[bp+2]
+  1707 0000054C 8B5606              <2> 		mov dx,[bp+6]
+  1708 0000054F 81E10080            <2> 		and cx,0x8000
+  1709 00000553 81E20080            <2> 		and dx,0x8000
+  1710 00000557 31D1                <2> 		xor cx,dx
+  1711 00000559 014E0A              <2> 		add word [bp+0x0A],cx
+  1712                              <2> 	.endsignal1:
+  1713                              <2> 	
+  1714 0000055C C3                  <2> 	ret
+  1715                              <2> 
+  1716                              <2> proc_iaddorsub32:
+  1717 0000055D 89E0                <2> 	mov ax,sp
+  1718 0000055F 89C5                <2> 	mov bp,ax
+  1719                              <2> 	
+  1720 00000561 8B4E02              <2> 	mov cx,[bp+2]
+  1721 00000564 8B5606              <2> 	mov dx,[bp+6]
+  1722 00000567 81E10080            <2> 	and cx,0x8000
+  1723 0000056B 81E20080            <2> 	and dx,0x8000
+  1724 0000056F 33560E              <2> 	xor dx,[bp+0x0E]
+  1725                              <2> 	
+  1726 00000572 31D1                <2> 	xor cx,dx
+  1727 00000574 83F900              <2> 	cmp cx,0
+  1728 00000577 0F848300            <2> 	jz .add
+  1729                              <2> 	
+  1730 0000057B 8B4602              <2> 	mov ax,[bp+2]
+  1731 0000057E 8B5E06              <2> 	mov bx,[bp+6]
+  1732 00000581 25FF7F              <2> 	and ax,0x7FFF
+  1733 00000584 81E3FF7F            <2> 	and bx,0x7FFF	
+  1734 00000588 39D8                <2> 	cmp ax,bx
+  1735 0000058A 7710                <2> 	ja .maior1
+  1736 0000058C 7224                <2> 	jb .maior2
+  1737                              <2> 	
+  1738 0000058E 8B4604              <2> 	mov ax,[bp+4]
+  1739 00000591 8B5E08              <2> 	mov bx,[bp+8]
+  1740 00000594 39D8                <2> 	cmp ax,bx
+  1741 00000596 7704                <2> 	ja .maior1
+  1742 00000598 7218                <2> 	jb .maior2
+  1743 0000059A EB2A                <2> 	jmp .iguais
+  1744                              <2> 	.maior1:
+  1745 0000059C 8B4602              <2> 		mov ax,[bp+2]
+  1746 0000059F 89C2                <2> 		mov dx,ax
+  1747 000005A1 8B5E04              <2> 		mov bx,[bp+4]
+  1748 000005A4 89460A              <2> 		mov [bp+0x0A],ax
+  1749 000005A7 895E0C              <2> 		mov [bp+0x0C],bx
+  1750 000005AA 8B4606              <2> 		mov ax,[bp+6]
+  1751 000005AD 8B5E08              <2> 		mov bx,[bp+8]
+  1752 000005B0 EB29                <2> 		jmp .sub
+  1753                              <2> 	.maior2:
+  1754 000005B2 8B4606              <2> 		mov ax,[bp+6]
+  1755 000005B5 8B5E08              <2> 		mov bx,[bp+8]
+  1756 000005B8 89460A              <2> 		mov [bp+0x0A],ax
+  1757 000005BB 895E0C              <2> 		mov [bp+0x0C],bx
+  1758 000005BE 8B4602              <2> 		mov ax,[bp+2]
+  1759 000005C1 8B5E04              <2> 		mov bx,[bp+4]
+  1760 000005C4 EB15                <2> 		jmp .sub
+  1761                              <2> 	.iguais:
+  1762 000005C6 8B4602              <2> 		mov ax,[bp+2]
+  1763 000005C9 BA0000              <2> 		mov dx,0x0000
+  1764 000005CC 8B5E04              <2> 		mov bx,[bp+4]
+  1765 000005CF 89460A              <2> 		mov [bp+0x0A],ax
+  1766 000005D2 895E0C              <2> 		mov [bp+0x0C],bx
+  1767 000005D5 8B4606              <2> 		mov ax,[bp+6]
+  1768 000005D8 8B5E08              <2> 		mov bx,[bp+8]
+  1769                              <2> 		
+  1770                              <2> 		
+  1771                              <2> 	.sub:
+  1772 000005DB 25FF7F              <2> 		and ax, 0x7FFF
+  1773 000005DE 81660AFF7F          <2> 		and word [bp+0x0A], 0x7FFF		
+  1774                              <2> 	
+  1775 000005E3 295E0C              <2> 		sub [bp+0x0C],bx
+  1776 000005E6 19460A              <2> 		sbb [bp+0x0A],ax		
+  1777                              <2> 		
+  1778 000005E9 837E0A00            <2> 		cmp word [bp+0x0A],0
+  1779 000005ED 7506                <2> 		jnz .signal1
+  1780 000005EF 837E0C00            <2> 		cmp word [bp+0x0C],0
+  1781 000005F3 7438                <2> 		jz .end
+  1782                              <2> 		.signal1:
+  1783 000005F5 81E20080            <2> 			and dx,0x8000		
+  1784 000005F9 01560A              <2> 			add word [bp+0x0A],dx
+  1785 000005FC EB2F                <2> 		jmp .end			
+  1786                              <2> 		
+  1787                              <2> 	.add:		
+  1788 000005FE 8B4602              <2> 		mov ax,[bp+2]
+  1789 00000601 8B5E04              <2> 		mov bx,[bp+4]
+  1790 00000604 89460A              <2> 		mov [bp+0x0A],ax
+  1791 00000607 895E0C              <2> 		mov [bp+0x0C],bx
+  1792 0000060A 8B4606              <2> 		mov ax,[bp+6]
+  1793 0000060D 8B5E08              <2> 		mov bx,[bp+8]
+  1794                              <2> 		
+  1795 00000610 25FF7F              <2> 		and ax, 0x7FFF
+  1796 00000613 81660AFF7F          <2> 		and word [bp+0x0A], 0x7FFF
+  1797                              <2> 	
+  1798 00000618 015E0C              <2> 		add [bp+0x0C],bx
+  1799 0000061B 11460A              <2> 		adc [bp+0x0A],ax
+  1800                              <2> 		
+  1801 0000061E 837E0A00            <2> 		cmp word [bp+0x0A],0
+  1802 00000622 7506                <2> 		jnz .signal2
+  1803 00000624 837E0C00            <2> 		cmp word [bp+0x0C],0
+  1804 00000628 7403                <2> 		jz .end
+  1805                              <2> 		.signal2:
+  1806 0000062A 01560A              <2> 			add word [bp+0x0A],dx
+  1807                              <2> 		
+  1808                              <2> 	.end:
+  1809                              <2> 		
+  1810                              <2> 		
+  1811 0000062D C3                  <2> 	ret
+  1812                              <2> 	
+  1813                              <2> 
+  1814                              <2> proc_div32:
+  1815 0000062E 89E0                <2> 	mov ax,sp
+  1816 00000630 89C5                <2> 	mov bp,ax
+  1817                              <2> 	
+  1818 00000632 8B4606              <2> 	mov ax,[bp+6]
+  1819 00000635 034608              <2> 	add ax,[bp+8]
+  1820 00000638 83F800              <2> 	cmp ax,0
+  1821 0000063B 0F846C01            <2> 	jz .divbyzero
+  1822                              <2> 	
+  1823 0000063F 837E0200            <2> 	cmp word [bp+2], 0
+  1824 00000643 7521                <2> 	jnz .div2
+  1825 00000645 837E0600            <2> 	cmp word [bp+6], 0
+  1826 00000649 751B                <2> 	jnz .div2
+  1827 0000064B 31D2                <2> 		xor dx,dx
+  1828 0000064D 8B4604              <2> 		mov ax, [bp+4]
+  1829 00000650 F77608              <2> 		div word [bp+8]
+  1830 00000653 C7460A0000          <2> 		mov word [bp+0x0A], 0
+  1831 00000658 89460C              <2> 		mov word [bp+0x0C], ax
+  1832 0000065B C7460E0000          <2> 		mov word [bp+0x0E], 0
+  1833 00000660 895610              <2> 		mov word [bp+0x10], dx
+  1834 00000663 E93F01              <2> 		jmp .enddiv
+  1835                              <2> 	.div2:
+  1836 00000666 8B4602              <2> 		mov ax,[bp+2]
+  1837 00000669 3B4606              <2> 		cmp ax,[bp+6]
+  1838 0000066C 0F821F01            <2> 		jb .qzero
+  1839 00000670 770A                <2> 		ja .div
+  1840 00000672 8B4604              <2> 		mov ax,[bp+4]
+  1841 00000675 3B4608              <2> 		cmp ax,[bp+8]
+  1842 00000678 0F821301            <2> 		jb .qzero
+  1843                              <2> 		
+  1844                              <2> 		.div:
+  1845                              <2> 		
+  1846 0000067C C7460A0000          <2> 		mov word [bp+0x0A], 0
+  1847 00000681 C7460C0000          <2> 		mov word [bp+0x0C], 0		
+  1848 00000686 C7460E0000          <2> 		mov word [bp+0x0E], 0
+  1849 0000068B C746100000          <2> 		mov word [bp+0x10], 0
+  1850                              <2> 		
+  1851 00000690 8B4602              <2> 		mov ax,[bp+2]
+  1852 00000693 8B5E04              <2> 		mov bx,[bp+4]
+  1853 00000696 8B4E06              <2> 		mov cx,[bp+6]
+  1854 00000699 8B5608              <2> 		mov dx,[bp+8]		
+  1855                              <2> 		__calc_dividendo1 ax, bx, cx, dx, ax, bx, cl
+  1856                              <3>  stkopen 0x0D
+  1857 0000069C 83EC0D              <4>  sub word sp, %1
+  1858 0000069F 54                  <4>  push sp
+  1859 000006A0 5D                  <4>  pop bp
+  1860 000006A1 894600              <3>  mov word [bp+0], %1
+  1861 000006A4 895E02              <3>  mov word [bp+2], %2
+  1862 000006A7 894E04              <3>  mov word [bp+4], %3
+  1863 000006AA 895606              <3>  mov word [bp+6], %4
+  1864 000006AD E89A02              <3>  call proc_calc_dividendo1
+  1865 000006B0 54                  <3>  push sp
+  1866 000006B1 5D                  <3>  pop bp
+  1867 000006B2 8B4608              <3>  mov word %5, [bp+0x08]
+  1868 000006B5 8B5E0A              <3>  mov word %6, [bp+0x0A]
+  1869 000006B8 8A4E0C              <3>  mov byte %7, [bp+0x0C]
+  1870                              <3>  stkclose 0x0D
+  1871 000006BB 83C40D              <4>  add word sp, %1
+  1872                              <2> 
+  1873 000006BE 89E2                <2> 		mov dx,sp
+  1874 000006C0 89D5                <2> 		mov bp,dx
+  1875 000006C2 89460E              <2> 		mov word [bp+0x0E], ax
+  1876 000006C5 895E10              <2> 		mov word [bp+0x10], bx
+  1877                              <2> 		
+  1878 000006C8 51                  <2> 		push cx
+  1879                              <2> 		.l1:							
+  1880 000006C9 89E2                <2> 			mov dx,sp
+  1881 000006CB 89D5                <2> 			mov bp,dx		
+  1882 000006CD 83C502              <2> 			add bp,2
+  1883 000006D0 8B460E              <2> 			mov ax, [bp+0x0E]
+  1884 000006D3 8B5E10              <2> 			mov bx, [bp+0x10]
+  1885 000006D6 8B4E06              <2> 			mov cx, [bp+6]
+  1886 000006D9 8B5608              <2> 			mov dx, [bp+8]
+  1887                              <2> 			__cmp32 ax, bx, cx, dx, cl
+  1888                              <3>  stkopen 9
+  1889 000006DC 83EC09              <4>  sub word sp, %1
+  1890 000006DF 54                  <4>  push sp
+  1891 000006E0 5D                  <4>  pop bp
+  1892 000006E1 894600              <3>  mov word [bp+0], %1
+  1893 000006E4 895E02              <3>  mov word [bp+2], %2
+  1894 000006E7 894E04              <3>  mov word [bp+4], %3
+  1895 000006EA 895606              <3>  mov word [bp+6], %4
+  1896 000006ED E81F01              <3>  call proc_cmp32
+  1897 000006F0 54                  <3>  push sp
+  1898 000006F1 5D                  <3>  pop bp
+  1899 000006F2 8A4E08              <3>  mov byte %5, [bp+8]
+  1900                              <3>  stkclose 9
+  1901 000006F5 83C409              <4>  add word sp, %1
+  1902                              <2> 			
+  1903 000006F8 51                  <2> 			push cx
+  1904 000006F9 89E2                <2> 			mov dx,sp
+  1905 000006FB 89D5                <2> 			mov bp,dx
+  1906 000006FD 83C504              <2> 			add bp,4
+  1907 00000700 8B460A              <2> 			mov ax,[bp+0x0A]
+  1908 00000703 8B5E0C              <2> 			mov bx,[bp+0x0C]
+  1909 00000706 55                  <2> 			push bp
+  1910                              <2> 			__shl32 ax, bx, 1
+  1911                              <3>  stkopen 5
+  1912 00000707 83EC05              <4>  sub word sp, %1
+  1913 0000070A 54                  <4>  push sp
+  1914 0000070B 5D                  <4>  pop bp
+  1915 0000070C 894600              <3>  mov word [bp+0], %1
+  1916 0000070F 895E02              <3>  mov word [bp+2], %2
+  1917 00000712 C6460401            <3>  mov byte [bp+4], %3
+  1918 00000716 E82101              <3>  call proc_shl32
+  1919 00000719 54                  <3>  push sp
+  1920 0000071A 5D                  <3>  pop bp
+  1921 0000071B 8B4600              <3>  mov word %1, [bp+0]
+  1922 0000071E 8B5E02              <3>  mov word %2, [bp+2]
+  1923                              <3>  stkclose 5
+  1924 00000721 83C405              <4>  add word sp, %1
+  1925 00000724 5D                  <2> 			pop bp				
+  1926 00000725 59                  <2> 			pop cx	
+  1927                              <2> 									
+  1928 00000726 80F900              <2> 			cmp cl,0
+  1929 00000729 7C12                <2> 			jl .l11
+  1930 0000072B 83C301              <2> 				add bx,1
+  1931 0000072E 83D000              <2> 				adc ax,0	
+  1932                              <2> 				
+  1933 00000731 8B4E06              <2> 				mov cx,[bp+6]
+  1934 00000734 8B5608              <2> 				mov dx,[bp+8]
+  1935 00000737 295610              <2> 				sub [bp+0x10],dx
+  1936 0000073A 194E0E              <2> 				sbb [bp+0x0E],cx							
+  1937                              <2> 			.l11:							
+  1938 0000073D 89460A              <2> 			mov word [bp+0x0A], ax
+  1939 00000740 895E0C              <2> 			mov word [bp+0x0C], bx					
+  1940                              <2> 					
+  1941 00000743 59                  <2> 			pop cx
+  1942 00000744 51                  <2> 			push cx												
+  1943                              <2> 			
+  1944 00000745 80F920              <2> 			cmp cl,32
+  1945 00000748 7342                <2> 			jae .l2
+  1946                              <2> 						
+  1947 0000074A 59                  <2> 			pop cx
+  1948                              <2> 			stkopen 9
+  1949 0000074B 83EC09              <3>  sub word sp, %1
+  1950 0000074E 54                  <3>  push sp
+  1951 0000074F 5D                  <3>  pop bp
+  1952 00000750 8B460B              <2> 			mov ax,[bp+0x0B]
+  1953 00000753 894600              <2> 			mov word [bp+0], ax
+  1954 00000756 8B460D              <2> 			mov ax,[bp+0x0D]
+  1955 00000759 894602              <2> 			mov word [bp+2], ax
+  1956 0000075C 8B4617              <2> 			mov ax,[bp+0x17]
+  1957 0000075F 894604              <2> 			mov word [bp+4], ax
+  1958 00000762 8B4619              <2> 			mov ax,[bp+0x19]
+  1959 00000765 894606              <2> 			mov word [bp+6], ax
+  1960 00000768 884E08              <2> 			mov byte [bp+8], cl
+  1961 0000076B E8AD02              <2> 			call proc_calc_prox_dividendo
+  1962 0000076E 89E0                <2> 			mov ax,sp
+  1963 00000770 89C5                <2> 			mov bp,ax
+  1964 00000772 8B4604              <2> 			mov word ax,[bp+4]
+  1965 00000775 8B5E06              <2> 			mov word bx,[bp+6]
+  1966 00000778 8A4E08              <2> 			mov byte cl,[bp+8] 
+  1967                              <2> 			stkclose 9
+  1968 0000077B 83C409              <3>  add word sp, %1
+  1969 0000077E 89E2                <2> 			mov dx,sp
+  1970 00000780 89D5                <2> 			mov bp,dx
+  1971 00000782 89460E              <2> 			mov [bp+0x0E],ax
+  1972 00000785 895E10              <2> 			mov [bp+0x10],bx
+  1973 00000788 51                  <2> 			push cx
+  1974 00000789 E93DFF              <2> 			jmp .l1
+  1975                              <2> 		.l2:	
+  1976 0000078C 59                  <2> 		pop cx
+  1977                              <2> 			
+  1978 0000078D EB16                <2> 		jmp .enddiv
+  1979                              <2> 	.qzero:
+  1980 0000078F C7460A0000          <2> 		mov word [bp+0x0A], 0
+  1981 00000794 C7460C0000          <2> 		mov word [bp+0x0C], 0
+  1982 00000799 8B4602              <2> 		mov ax,[bp+2]
+  1983 0000079C 89460E              <2> 		mov word [bp+0x0E], ax
+  1984 0000079F 8B4604              <2> 		mov ax,[bp+4]
+  1985 000007A2 894610              <2> 		mov word [bp+0x10], ax	
+  1986                              <2> 	.enddiv:
+  1987 000007A5 C6461200            <2> 		mov byte [bp+0x12], 0
+  1988 000007A9 EB04                <2> 		jmp .end
+  1989                              <2> 	.divbyzero:
+  1990 000007AB C6461201            <2> 		mov byte [bp+0x12], 1						
+  1991                              <2> 	.end:		
+  1992                              <2> 			
+  1993 000007AF C3                  <2> 	ret
+  1994                              <2> 		
+  1995                              <2> proc_mul32:
+  1996 000007B0 89E0                <2> 	mov ax,sp
+  1997 000007B2 89C5                <2> 	mov bp,ax
+  1998                              <2> 	
+  1999 000007B4 31D2                <2> 	xor dx,dx
+  2000 000007B6 8B4604              <2> 	mov ax,[bp+4]
+  2001 000007B9 F76608              <2> 	mul word [bp+8]
+  2002                              <2> 	
+  2003 000007BC 89560A              <2> 	mov word [bp+0x0A], dx
+  2004 000007BF 89460C              <2> 	mov word [bp+0x0C], ax	
+  2005                              <2> 	
+  2006 000007C2 31D2                <2> 	xor dx,dx
+  2007 000007C4 8B4604              <2> 	mov ax,[bp+4]
+  2008 000007C7 F76606              <2> 	mul word [bp+6]
+  2009                              <2> 		
+  2010 000007CA 01460A              <2> 	add word [bp+0x0A],ax
+  2011                              <2> 	
+  2012 000007CD 31D2                <2> 	xor dx,dx
+  2013 000007CF 8B4602              <2> 	mov ax,[bp+2]
+  2014 000007D2 F76608              <2> 	mul word [bp+8]
+  2015                              <2> 	
+  2016 000007D5 01460A              <2> 	add word [bp+0x0A],ax
+  2017                              <2> 	
+  2018 000007D8 C3                  <2> 	ret
+  2019                              <2> 
+  2020                              <2> proc_add32:
+  2021 000007D9 89E0                <2> 	mov ax,sp
+  2022 000007DB 89C5                <2> 	mov bp,ax
+  2023                              <2> 	
+  2024 000007DD 8B4602              <2> 	mov ax,[bp+2]
+  2025 000007E0 8B5E04              <2> 	mov bx,[bp+4]
+  2026 000007E3 8B4E06              <2> 	mov cx,[bp+6]
+  2027 000007E6 8B5608              <2> 	mov dx,[bp+8]
+  2028                              <2> 	
+  2029 000007E9 01D3                <2> 	add bx,dx
+  2030 000007EB 11C8                <2> 	adc ax,cx
+  2031                              <2> 	
+  2032 000007ED 89460A              <2> 	mov [bp+0x0A],ax
+  2033 000007F0 895E0C              <2> 	mov [bp+0x0C],bx	
+  2034                              <2> 	
+  2035 000007F3 C3                  <2> 	ret
+  2036                              <2> 	
+  2037                              <2> proc_sub32:
+  2038 000007F4 89E0                <2> 	mov ax,sp
+  2039 000007F6 89C5                <2> 	mov bp,ax
+  2040                              <2> 	
+  2041 000007F8 8B4602              <2> 	mov ax,[bp+2]
+  2042 000007FB 8B5E04              <2> 	mov bx,[bp+4]
+  2043 000007FE 8B4E06              <2> 	mov cx,[bp+6]
+  2044 00000801 8B5608              <2> 	mov dx,[bp+8]
+  2045                              <2> 	
+  2046 00000804 29D3                <2> 	sub bx,dx
+  2047 00000806 19C8                <2> 	sbb ax,cx
+  2048                              <2> 	
+  2049 00000808 89460A              <2> 	mov [bp+0x0A],ax
+  2050 0000080B 895E0C              <2> 	mov [bp+0x0C],bx	
+  2051                              <2> 	
+  2052 0000080E C3                  <2> 	ret
+  2053                              <2> 		
+  2054                              <2> proc_cmp32:
+  2055 0000080F 89E0                <2> 	mov ax,sp
+  2056 00000811 89C5                <2> 	mov bp,ax		
+  2057                              <2> 		
+  2058 00000813 8B4602              <2> 	mov ax,[bp+2]
+  2059 00000816 3B4606              <2> 	cmp word ax,[bp+6]
+  2060 00000819 7F04                <2> 	jg .above
+  2061 0000081B 7C08                <2> 	jl .below
+  2062 0000081D 740C                <2> 	je .equal
+  2063                              <2> 	.above:
+  2064 0000081F C6460A01            <2> 		mov byte [bp+0x0A], 00000001b
+  2065 00000823 EB14                <2> 		jmp .endcmp
+  2066                              <2> 	.below:
+  2067 00000825 C6460A81            <2> 		mov byte [bp+0x0A], 10000001b
+  2068 00000829 EB0E                <2> 		jmp .endcmp
+  2069                              <2> 	.equal:
+  2070 0000082B 8B4604              <2> 		mov ax,[bp+4]
+  2071 0000082E 3B4608              <2> 		cmp word ax,[bp+8]
+  2072 00000831 7FEC                <2> 		jg .above
+  2073 00000833 7CF0                <2> 		jl .below
+  2074 00000835 C6460A00            <2> 		mov byte [bp+0x0A], 00000000b
+  2075                              <2> 	.endcmp:		
+  2076 00000839 C3                  <2> 	ret
+  2077                              <2> 
+  2078                              <2> proc_shl32:
+  2079 0000083A 89E0                <2> 	mov ax,sp
+  2080 0000083C 89C5                <2> 	mov bp,ax
+  2081                              <2> 	
+  2082 0000083E 31C0                <2> 	xor ax,ax
+  2083 00000840 8A4606              <2> 	mov byte al,[bp+6]
+  2084 00000843 B310                <2> 	mov bl,10h
+  2085 00000845 F6F3                <2> 	div bl
+  2086                              <2> 					
+  2087 00000847 3C01                <2> 	cmp al,1
+  2088 00000849 7204                <2> 	jb .zero
+  2089 0000084B 7418                <2> 	je .one	
+  2090 0000084D EB27                <2> 	jmp .above
+  2091                              <2> 	.zero:	
+  2092 0000084F B110                <2> 		mov cl,10h
+  2093 00000851 28E1                <2> 		sub cl,ah
+  2094 00000853 8B5E04              <2> 		mov bx,[bp+4]		
+  2095 00000856 D3EB                <2> 		shr bx,cl
+  2096                              <2> 		
+  2097 00000858 88E1                <2> 		mov cl,ah		
+  2098 0000085A D36602              <2> 		shl word [bp+2],cl
+  2099 0000085D 015E02              <2> 		add word [bp+2],bx				
+  2100 00000860 D36604              <2> 		shl word [bp+4],cl
+  2101 00000863 EB1B                <2> 		jmp .endzo
+  2102                              <2> 	.one:
+  2103 00000865 88E1                <2> 		mov cl,ah
+  2104 00000867 8B5E04              <2> 		mov bx, [bp+4]				
+  2105 0000086A D3E3                <2> 		shl bx, cl 
+  2106 0000086C 895E02              <2> 		mov word [bp+2], bx
+  2107 0000086F C746040000          <2> 		mov word [bp+4], 0
+  2108 00000874 EB0A                <2> 		jmp .endzo
+  2109                              <2> 	.above:		
+  2110 00000876 C746020000          <2> 		mov word [bp+2], 0
+  2111 0000087B C746040000          <2> 		mov word [bp+4], 0
+  2112                              <2> 	.endzo:	
+  2113                              <2> 	
+  2114 00000880 C3                  <2> 	ret
+  2115                              <2> 	
+  2116                              <2> proc_shr32:
+  2117 00000881 89E0                <2> 	mov ax,sp
+  2118 00000883 89C5                <2> 	mov bp,ax
+  2119                              <2> 	
+  2120 00000885 31C0                <2> 	xor ax,ax
+  2121 00000887 8A4606              <2> 	mov byte al,[bp+6]
+  2122 0000088A B310                <2> 	mov bl,10h
+  2123 0000088C F6F3                <2> 	div bl
+  2124                              <2> 					
+  2125 0000088E 3C01                <2> 	cmp al,1
+  2126 00000890 7204                <2> 	jb .zero
+  2127 00000892 7418                <2> 	je .one	
+  2128 00000894 EB27                <2> 	jmp .above
+  2129                              <2> 	.zero:	
+  2130 00000896 B110                <2> 		mov cl,10h
+  2131 00000898 28E1                <2> 		sub cl,ah		
+  2132 0000089A 8B5E02              <2> 		mov bx,[bp+2]		
+  2133 0000089D D3E3                <2> 		shl bx,cl
+  2134                              <2> 		
+  2135 0000089F 88E1                <2> 		mov cl,ah		
+  2136 000008A1 D36E02              <2> 		shr word [bp+2],cl
+  2137 000008A4 D36E04              <2> 		shr word [bp+4],cl
+  2138 000008A7 015E04              <2> 		add word [bp+4],bx	
+  2139 000008AA EB1B                <2> 		jmp .endzo
+  2140                              <2> 	.one:			
+  2141 000008AC 88E1                <2> 		mov cl,ah
+  2142 000008AE 8B5E02              <2> 		mov bx,[bp+2]
+  2143 000008B1 D3EB                <2> 		shr bx,cl
+  2144 000008B3 C746020000          <2> 		mov word [bp+2],0 
+  2145 000008B8 895E04              <2> 		mov word [bp+4],bx
+  2146 000008BB EB0A                <2> 		jmp .endzo
+  2147                              <2> 	.above:		
+  2148 000008BD C746020000          <2> 		mov word [bp+2],0
+  2149 000008C2 C746040000          <2> 		mov word [bp+4],0
+  2150                              <2> 	.endzo:		
+  2151                              <2> 
+  2152 000008C7 C3                  <2> 	ret
+  2153                              <2> 	
+  2154                              <2> proc__lzcount16:
+  2155 000008C8 89E0                <2> 	mov ax,sp
+  2156 000008CA 89C5                <2> 	mov bp,ax
+  2157                              <2> 	
+  2158 000008CC B100                <2> 	mov cl,0
+  2159                              <2> 		
+  2160 000008CE 8A6603              <2> 	mov ah, [bp+3]	
+  2161 000008D1 80E4F0              <2> 	and ah,0xF0
+  2162 000008D4 80FC00              <2> 	cmp ah,0
+  2163 000008D7 7529                <2> 	jnz .end
+  2164 000008D9 FEC1                <2> 	inc cl
+  2165                              <2> 	
+  2166 000008DB 8A6603              <2> 	mov ah, [bp+3]
+  2167 000008DE 80E40F              <2> 	and ah,0x0F
+  2168 000008E1 80FC00              <2> 	cmp ah,0
+  2169 000008E4 751C                <2> 	jnz .end
+  2170 000008E6 FEC1                <2> 	inc cl
+  2171                              <2> 	
+  2172 000008E8 8A6602              <2> 	mov ah, [bp+2]
+  2173 000008EB 80E4F0              <2> 	and ah,0xF0
+  2174 000008EE 80FC00              <2> 	cmp ah,0
+  2175 000008F1 750F                <2> 	jnz .end
+  2176 000008F3 FEC1                <2> 	inc cl
+  2177                              <2> 	
+  2178 000008F5 8A6602              <2> 	mov ah, [bp+2]
+  2179 000008F8 80E40F              <2> 	and ah,0x0F
+  2180 000008FB 80FC00              <2> 	cmp ah,0
+  2181 000008FE 7502                <2> 	jnz .end
+  2182 00000900 FEC1                <2> 	inc cl
+  2183                              <2> 		
+  2184                              <2> 	.end:
+  2185 00000902 884E04              <2> 	mov byte [bp+4], cl
+  2186                              <2> 	
+  2187 00000905 C3                  <2> 	ret
+  2188                              <2> 
+  2189                              <2> proc__lzbitcount16:
+  2190 00000906 89E0                <2> 	mov ax,sp
+  2191 00000908 89C5                <2> 	mov bp,ax
+  2192                              <2> 	
+  2193 0000090A 8B4602              <2> 	mov word ax,[bp+2]
+  2194                              <2> 		
+  2195 0000090D B100                <2> 	mov cl,0
+  2196                              <2> 	.l1:
+  2197 0000090F 80F910              <2> 		cmp cl,16
+  2198 00000912 7310                <2> 		jae .l2
+  2199                              <2> 		
+  2200 00000914 89C3                <2> 		mov bx,ax
+  2201 00000916 D3E3                <2> 		shl bx,cl
+  2202 00000918 C1EB0F              <2> 		shr bx,15
+  2203                              <2> 		
+  2204 0000091B 83FB00              <2> 		cmp bx,0
+  2205 0000091E 7504                <2> 		jnz .l2
+  2206                              <2> 		
+  2207 00000920 FEC1                <2> 		inc cl		
+  2208 00000922 EBEB                <2> 		jmp .l1
+  2209                              <2> 	.l2:
+  2210                              <2> 	
+  2211 00000924 884E04              <2> 	mov byte [bp+4], cl
+  2212                              <2> 	
+  2213 00000927 C3                  <2> 	ret
+  2214                              <2> 	
+  2215                              <2> proc__lzbitcount8:
+  2216 00000928 89E0                <2> 	mov ax,sp
+  2217 0000092A 89C5                <2> 	mov bp,ax
+  2218                              <2> 	
+  2219 0000092C 8A4602              <2> 	mov byte al,[bp+2]
+  2220                              <2> 	
+  2221 0000092F B100                <2> 	mov cl,0
+  2222                              <2> 	.l1:
+  2223 00000931 80F908              <2> 		cmp cl,8
+  2224 00000934 7410                <2> 		je .l2
+  2225                              <2> 		
+  2226 00000936 88C3                <2> 		mov bl,al
+  2227 00000938 D2E3                <2> 		shl bl,cl
+  2228 0000093A C0EB07              <2> 		shr bl,7
+  2229                              <2> 		
+  2230 0000093D 80FB00              <2> 		cmp bl,0
+  2231 00000940 7504                <2> 		jnz .l2
+  2232                              <2> 		
+  2233 00000942 FEC1                <2> 		inc cl		
+  2234 00000944 EBEB                <2> 		jmp .l1
+  2235                              <2> 	.l2:
+  2236                              <2> 	
+  2237 00000946 884E03              <2> 	mov byte [bp+3], cl
+  2238                              <2> 		
+  2239 00000949 C3                  <2> 	ret
+  2240                              <2> 	
+  2241                              <2> proc_calc_dividendo1:
+  2242 0000094A 89E0                <2> 	mov ax,sp
+  2243 0000094C 89C5                <2> 	mov bp,ax
+  2244                              <2> 	
+  2245 0000094E 8B4606              <2> 	mov ax,[bp+6]
+  2246 00000951 8B5E08              <2> 	mov bx,[bp+8]
+  2247 00000954 55                  <2> 	push bp
+  2248                              <2> 	__lzbitcount32 ax, bx, cl
+  2249 00000955 53                  <3>  push %2
+  2250                              <3>  __lzbitcount16 %1, cl
+  2251                              <4>  stkopen 3
+  2252 00000956 83EC03              <5>  sub word sp, %1
+  2253 00000959 54                  <5>  push sp
+  2254 0000095A 5D                  <5>  pop bp
+  2255 0000095B 894600              <4>  mov word [bp+0], %1
+  2256 0000095E E8A5FF              <4>  call proc__lzbitcount16
+  2257 00000961 54                  <4>  push sp
+  2258 00000962 5D                  <4>  pop bp
+  2259 00000963 8A4E02              <4>  mov byte %2, [bp+2]
+  2260                              <4>  stkclose 3
+  2261 00000966 83C403              <5>  add word sp, %1
+  2262 00000969 58                  <3>  pop ax
+  2263 0000096A 80F910              <3>  cmp cl,16
+  2264 0000096D 7217                <3>  jb .end
+  2265 0000096F 51                  <3>  push cx
+  2266                              <3>  __lzbitcount16 ax, al
+  2267                              <4>  stkopen 3
+  2268 00000970 83EC03              <5>  sub word sp, %1
+  2269 00000973 54                  <5>  push sp
+  2270 00000974 5D                  <5>  pop bp
+  2271 00000975 894600              <4>  mov word [bp+0], %1
+  2272 00000978 E88BFF              <4>  call proc__lzbitcount16
+  2273 0000097B 54                  <4>  push sp
+  2274 0000097C 5D                  <4>  pop bp
+  2275 0000097D 8A4602              <4>  mov byte %2, [bp+2]
+  2276                              <4>  stkclose 3
+  2277 00000980 83C403              <5>  add word sp, %1
+  2278 00000983 59                  <3>  pop cx
+  2279 00000984 00C1                <3>  add cl,al
+  2280                              <3>  .end:
+  2281 00000986 88C9                <3>  mov byte %3, cl
+  2282 00000988 5D                  <2> 	pop bp
+  2283 00000989 B320                <2> 	mov bl,32
+  2284 0000098B 28CB                <2> 	sub bl,cl
+  2285 0000098D 53                  <2> 	push bx
+  2286                              <2> 		
+  2287 0000098E 8B4602              <2> 	mov ax,[bp+2]
+  2288 00000991 8B5604              <2> 	mov dx,[bp+4]
+  2289 00000994 55                  <2> 	push bp
+  2290                              <2> 	__shr32 ax, dx, cl
+  2291                              <3>  stkopen 5
+  2292 00000995 83EC05              <4>  sub word sp, %1
+  2293 00000998 54                  <4>  push sp
+  2294 00000999 5D                  <4>  pop bp
+  2295 0000099A 894600              <3>  mov word [bp+0], %1
+  2296 0000099D 895602              <3>  mov word [bp+2], %2
+  2297 000009A0 884E04              <3>  mov byte [bp+4], %3
+  2298 000009A3 E8DBFE              <3>  call proc_shr32
+  2299 000009A6 54                  <3>  push sp
+  2300 000009A7 5D                  <3>  pop bp
+  2301 000009A8 8B4600              <3>  mov word %1, [bp+0]
+  2302 000009AB 8B5602              <3>  mov word %2, [bp+2]
+  2303                              <3>  stkclose 5
+  2304 000009AE 83C405              <4>  add word sp, %1
+  2305 000009B1 5D                  <2> 	pop bp
+  2306 000009B2 50                  <2> 	push ax
+  2307 000009B3 52                  <2> 	push dx	
+  2308                              <2> 	
+  2309 000009B4 8B4E06              <2> 	mov cx,[bp+6]
+  2310 000009B7 8B5E08              <2> 	mov bx,[bp+8]
+  2311                              <2> 	
+  2312 000009BA 55                  <2> 	push bp
+  2313                              <2> 	__cmp32 ax, dx, cx, bx, cl
+  2314                              <3>  stkopen 9
+  2315 000009BB 83EC09              <4>  sub word sp, %1
+  2316 000009BE 54                  <4>  push sp
+  2317 000009BF 5D                  <4>  pop bp
+  2318 000009C0 894600              <3>  mov word [bp+0], %1
+  2319 000009C3 895602              <3>  mov word [bp+2], %2
+  2320 000009C6 894E04              <3>  mov word [bp+4], %3
+  2321 000009C9 895E06              <3>  mov word [bp+6], %4
+  2322 000009CC E840FE              <3>  call proc_cmp32
+  2323 000009CF 54                  <3>  push sp
+  2324 000009D0 5D                  <3>  pop bp
+  2325 000009D1 8A4E08              <3>  mov byte %5, [bp+8]
+  2326                              <3>  stkclose 9
+  2327 000009D4 83C409              <4>  add word sp, %1
+  2328 000009D7 5D                  <2> 	pop bp
+  2329 000009D8 5A                  <2> 	pop dx
+  2330 000009D9 58                  <2> 	pop ax
+  2331 000009DA 5B                  <2> 	pop bx
+  2332                              <2> 		
+  2333 000009DB 80F900              <2> 	cmp cl,0
+  2334 000009DE 7D2D                <2> 	jge .l1
+  2335                              <2> 		stkopen 9
+  2336 000009E0 83EC09              <3>  sub word sp, %1
+  2337 000009E3 54                  <3>  push sp
+  2338 000009E4 5D                  <3>  pop bp
+  2339 000009E5 8B4E0B              <2> 		mov cx,[bp+0x0B]
+  2340 000009E8 894E00              <2> 		mov word [bp+0], cx
+  2341 000009EB 8B4E0D              <2> 		mov cx,[bp+0x0D]
+  2342 000009EE 894E02              <2> 		mov word [bp+2], cx
+  2343 000009F1 894604              <2> 		mov word [bp+4], ax
+  2344 000009F4 895606              <2> 		mov word [bp+6], dx
+  2345 000009F7 885E08              <2> 		mov byte [bp+8], bl
+  2346 000009FA E81E00              <2> 		call proc_calc_prox_dividendo
+  2347 000009FD 89E0                <2> 		mov ax,sp
+  2348 000009FF 89C5                <2> 		mov bp,ax
+  2349 00000A01 8B4604              <2> 		mov word ax,[bp+4]
+  2350 00000A04 8B5606              <2> 		mov word dx,[bp+6]
+  2351 00000A07 8A5E08              <2> 		mov byte bl,[bp+8] 
+  2352                              <2> 		stkclose 9		 
+  2353 00000A0A 83C409              <3>  add word sp, %1
+  2354                              <2> 	.l1:
+  2355                              <2> 	
+  2356 00000A0D 89E1                <2> 	mov cx,sp
+  2357 00000A0F 89CD                <2> 	mov bp,cx
+  2358 00000A11 89460A              <2> 	mov word [bp+0x0A], ax
+  2359 00000A14 89560C              <2> 	mov word [bp+0x0C], dx
+  2360 00000A17 885E0E              <2> 	mov byte [bp+0x0E], bl	 
+  2361                              <2> 	
+  2362 00000A1A C3                  <2> 	ret
+  2363                              <2> 
+  2364                              <2> proc_calc_prox_dividendo:
+  2365 00000A1B 89E0                <2> 	mov ax,sp
+  2366 00000A1D 89C5                <2> 	mov bp,ax
+  2367                              <2> 	
+  2368 00000A1F 30E4                <2> 	xor ah,ah	
+  2369 00000A21 8A460A              <2> 	mov al,[bp+0x0A]
+  2370 00000A24 B310                <2> 	mov bl,10h
+  2371 00000A26 F6F3                <2> 	div bl
+  2372                              <2> 	
+  2373 00000A28 3C00                <2> 	cmp al,0
+  2374 00000A2A 7402                <2> 	jz .zero
+  2375 00000A2C EB05                <2> 	jmp .one
+  2376                              <2> 	.zero:
+  2377 00000A2E 8B5E02              <2> 		mov bx,[bp+2]
+  2378 00000A31 EB03                <2> 		jmp .endcmp
+  2379                              <2> 	.one:
+  2380 00000A33 8B5E04              <2> 		mov bx,[bp+4]		
+  2381                              <2> 	.endcmp:
+  2382                              <2> 		
+  2383 00000A36 88E1                <2> 	mov cl,ah
+  2384 00000A38 D3E3                <2> 	shl bx,cl
+  2385 00000A3A C1EB0F              <2> 	shr bx,15
+  2386                              <2> 	
+  2387 00000A3D 8B4606              <2> 	mov ax,[bp+6]
+  2388 00000A40 8B5608              <2> 	mov dx,[bp+8]
+  2389 00000A43 53                  <2> 	push bx
+  2390                              <2> 	__shl32 ax, dx, 1
+  2391                              <3>  stkopen 5
+  2392 00000A44 83EC05              <4>  sub word sp, %1
+  2393 00000A47 54                  <4>  push sp
+  2394 00000A48 5D                  <4>  pop bp
+  2395 00000A49 894600              <3>  mov word [bp+0], %1
+  2396 00000A4C 895602              <3>  mov word [bp+2], %2
+  2397 00000A4F C6460401            <3>  mov byte [bp+4], %3
+  2398 00000A53 E8E4FD              <3>  call proc_shl32
+  2399 00000A56 54                  <3>  push sp
+  2400 00000A57 5D                  <3>  pop bp
+  2401 00000A58 8B4600              <3>  mov word %1, [bp+0]
+  2402 00000A5B 8B5602              <3>  mov word %2, [bp+2]
+  2403                              <3>  stkclose 5
+  2404 00000A5E 83C405              <4>  add word sp, %1
+  2405 00000A61 5B                  <2> 	pop bx
+  2406                              <2> 	
+  2407 00000A62 01DA                <2> 	add dx,bx
+  2408 00000A64 83D000              <2> 	adc ax,0
+  2409                              <2> 
+  2410 00000A67 89E1                <2> 	mov cx,sp
+  2411 00000A69 89CD                <2> 	mov bp,cx	
+  2412 00000A6B 894606              <2> 	mov [bp+6],ax
+  2413 00000A6E 895608              <2> 	mov [bp+8],dx
+  2414                              <2> 	
+  2415 00000A71 FE460A              <2> 	inc byte [bp+0x0A]
+  2416                              <2> 	
+  2417 00000A74 C3                  <2> 	ret
+  2418                              <2> 	
+  2419                              <2> %endif
+  2420                              <1> 	%include "lib/system.mac"
+  2421                              <2>  
+  2422                              <2> %ifndef SYSTEM_MAC
+  2423                              <2>  	%define SYSTEM_MAC
+  2424                              <2>  	
+  2425                              <2> 	%ifndef TRUE
+  2426                              <2> 		%define TRUE 01h
+  2427                              <2> 	%endif
+  2428                              <2> 	%ifndef FALSE
+  2429                              <2> 		%define FALSE 00h
+  2430                              <2> 	%endif 	
+  2431                              <2>  	
+  2432                              <2>  	%include "lib/kernel.asmh"
+  2433                              <2>  	 	
+  2434                              <2> %macro mformat 4
+  2435                              <2> 	stkopen 8
+  2436                              <2> 	mov word [ bp + 0 ], %1
+  2437                              <2> 	mov word [ bp + 2 ], %2
+  2438                              <2> 	mov word [ bp + 4 ], %3
+  2439                              <2> 	mov word [ bp + 6 ], %4
+  2440                              <2> 	call kernel_segment:mformat
+  2441                              <2> 	stkclose 8
+  2442                              <2> %endmacro
+  2443                              <2> 
+  2444                              <2> %macro malloc 6
+  2445                              <2> 	stkopen 0Bh
+  2446                              <2> 	mov word [ bp + 4 ], %3
+  2447                              <2> 	mov word [ bp + 6 ], %4
+  2448                              <2> 	mov word [ bp + 8 ], %5	
+  2449                              <2> 	call kernel_segment:malloc
+  2450                              <2> 	push sp
+  2451                              <2> 	pop bp
+  2452                              <2> 	mov word %1, [ bp ]
+  2453                              <2> 	mov word %2, [ bp + 2 ]
+  2454                              <2> 	mov byte %6, [ bp + 0x0A ]
+  2455                              <2> 	stkclose 0Bh
+  2456                              <2> %endmacro 	
+  2457                              <2> 
+  2458                              <2> %macro laddr 2
+  2459                              <2> 	laddr %1, %2, %1, %2
+  2460                              <2> %endmacro
+  2461                              <2> 
+  2462                              <2> %macro faddr 2
+  2463                              <2> 	faddr %1, %2, %1, %2
+  2464                              <2> %endmacro
+  2465                              <2>  	
+  2466                              <2> %macro laddr 4
+  2467                              <2> 	stkopen 8
+  2468                              <2> 	mov word [ bp + 4 ], %3
+  2469                              <2> 	mov word [ bp + 6 ], %4	
+  2470                              <2> 	call kernel_segment:laddr
+  2471                              <2> 	push sp
+  2472                              <2> 	pop bp
+  2473                              <2> 	mov word %1, [ bp + 0 ]
+  2474                              <2> 	mov word %2, [ bp + 2 ]	
+  2475                              <2> 	stkclose 8
+  2476                              <2> %endmacro
+  2477                              <2> 
+  2478                              <2> %macro faddr 4
+  2479                              <2> 	stkopen 8
+  2480                              <2> 	mov word [ bp + 4 ], %3
+  2481                              <2> 	mov word [ bp + 6 ], %4	
+  2482                              <2> 	call kernel_segment:faddr
+  2483                              <2> 	push sp
+  2484                              <2> 	pop bp
+  2485                              <2> 	mov word %1, [ bp + 0 ]
+  2486                              <2> 	mov word %2, [ bp + 2 ]	
+  2487                              <2> 	stkclose 8
+  2488                              <2> %endmacro	
+  2489                              <2>  
+  2490                              <2> 
+  2491                              <2> %macro stkopen 1		
+  2492                              <2> 	sub word sp, %1
+  2493                              <2> 	push sp
+  2494                              <2> 	pop bp
+  2495                              <2> %endmacro
+  2496                              <2> 
+  2497                              <2> %macro stkclose 1
+  2498                              <2> 	add word sp, %1
+  2499                              <2> %endmacro
+  2500                              <2> 
+  2501                              <2> %macro stkload 1-* 	
+  2502                              <2>  	%rep %0
+  2503                              <2>  	 	%rotate -1
+  2504                              <2>  		pop %1
+  2505                              <2>  	%endrep
+  2506                              <2>  	%rep %0
+  2507                              <2>  		push %1
+  2508                              <2>  		%rotate 1
+  2509                              <2>  	%endrep
+  2510                              <2> %endmacro
+  2511                              <2> 
+  2512                              <2> %macro stkpush 1-* 	
+  2513                              <2>  	%rep %0
+  2514                              <2>  		push %1
+  2515                              <2>  		%rotate 1
+  2516                              <2>  	%endrep 	
+  2517                              <2> %endmacro
+  2518                              <2>  
+  2519                              <2> %macro stkpop 1-*
+  2520                              <2>  	%rep %0
+  2521                              <2>  	 	%rotate -1
+  2522                              <2>  		pop %1
+  2523                              <2>  	%endrep 	 	
+  2524                              <2> %endmacro
+  2525                              <2> 
+  2526                              <2> %macro toreg16 3
+  2527                              <2> 	push %1
+  2528                              <2> 	pop ds
+  2529                              <2> 	mov word %3, [%2]
+  2530                              <2> %endmacro
+  2531                              <2> 
+  2532                              <2> %macro toreg8 3
+  2533                              <2> 	push %1
+  2534                              <2> 	pop ds
+  2535                              <2> 	mov byte %3, [%2]
+  2536                              <2> %endmacro
+  2537                              <2> 
+  2538                              <2> %macro tovar16 3
+  2539                              <2> 	push %1
+  2540                              <2> 	pop ds
+  2541                              <2> 	mov word [%2], %3
+  2542                              <2> %endmacro
+  2543                              <2> 
+  2544                              <2> %macro tovar8 3
+  2545                              <2> 	push %1
+  2546                              <2> 	pop ds
+  2547                              <2> 	mov byte [%2], %3
+  2548                              <2> %endmacro 
+  2549                              <2>  	
+  2550                              <2> %endif 
+  2551                              <1> 
+  2552                              <1> %macro int32to16 2
+  2553                              <1> 	int32to16 cs, %1, %2
+  2554                              <1> %endmacro
+  2555                              <1> 
+  2556                              <1> %macro int16to32 2
+  2557                              <1> 	int16to32 %1, cs, %2
+  2558                              <1> %endmacro
+  2559                              <1> 
+  2560                              <1> %macro setsig 1
+  2561                              <1> 	setsig cs, %1
+  2562                              <1> %endmacro
+  2563                              <1> 
+  2564                              <1> %macro clrsig 1
+  2565                              <1> 	clrsig cs, %1
+  2566                              <1> %endmacro
+  2567                              <1> 
+  2568                              <1> %macro idiv32 5
+  2569                              <1> 	idiv32 cs, %1, cs, %2, cs, %3, cs, %4, cs, %5
+  2570                              <1> %endmacro
+  2571                              <1> 
+  2572                              <1> %macro imul32 3
+  2573                              <1> 	imul32 cs, %1, cs, %2, cs, %3
+  2574                              <1> %endmacro
+  2575                              <1> 
+  2576                              <1> %macro iadd32 3
+  2577                              <1> 	iadd32 cs, %1, cs, %2, cs, %3
+  2578                              <1> %endmacro
+  2579                              <1> 
+  2580                              <1> %macro isub32 3
+  2581                              <1> 	isub32 cs, %1, cs, %2, cs, %3
+  2582                              <1> %endmacro
+  2583                              <1> 
+  2584                              <1> %macro div32 5
+  2585                              <1> 	div32 cs, %1, cs, %2, cs, %3, cs, %4, cs, %5
+  2586                              <1> %endmacro
+  2587                              <1> 
+  2588                              <1> %macro mul32 3
+  2589                              <1> 	mul32 cs, %1, cs, %2, cs, %3
+  2590                              <1> %endmacro
+  2591                              <1> 	
+  2592                              <1> %macro add32 3
+  2593                              <1> 	add32 cs, %1, cs, %2, cs, %3
+  2594                              <1> %endmacro
+  2595                              <1> 
+  2596                              <1> %macro sub32 3
+  2597                              <1> 	sub32 cs, %1, cs, %2, cs, %3
+  2598                              <1> %endmacro
+  2599                              <1> 
+  2600                              <1> %macro int32to16 3
+  2601                              <1> 	mov ax,%1	
+  2602                              <1> 	mov ds,ax
+  2603                              <1> 	mov ax,[%2+2]
+  2604                              <1> 	mov bx,[%2]
+  2605                              <1> 	and ax,0x8000
+  2606                              <1> 	and bx,0x7FFF	
+  2607                              <1> 	cmp ax,0
+  2608                              <1> 	jz %%zero
+  2609                              <1> 	jmp %%one
+  2610                              <1> 	%%zero:
+  2611                              <1> 		add ax,bx
+  2612                              <1> 		jmp %%endcmp
+  2613                              <1> 	%%one:
+  2614                              <1> 		mov ax,0xFFFF
+  2615                              <1> 		sub ax,bx
+  2616                              <1> 	%%endcmp:	
+  2617                              <1> 	mov word %3, ax	
+  2618                              <1> %endmacro
+  2619                              <1> 
+  2620                              <1> %macro int16to32 3
+  2621                              <1> 	mov ax,%2
+  2622                              <1> 	mov ds,ax
+  2623                              <1> 	mov ax,%1
+  2624                              <1> 	mov bx,ax
+  2625                              <1> 	and ax,0x8000
+  2626                              <1> 	cmp ax,0
+  2627                              <1> 	jz %%zero
+  2628                              <1> 	jmp %%one
+  2629                              <1> 	%%zero:
+  2630                              <1> 		and bx,0x7FFF
+  2631                              <1> 		mov dx,bx			
+  2632                              <1> 		jmp %%endcmp
+  2633                              <1> 	%%one:
+  2634                              <1> 		mov dx,0xFFFF
+  2635                              <1> 		sub dx,bx
+  2636                              <1> 	%%endcmp:
+  2637                              <1> 	mov [%3+2],ax
+  2638                              <1> 	mov [%3],dx
+  2639                              <1> %endmacro
+  2640                              <1> 
+  2641                              <1> %macro setsig 2
+  2642                              <1> 	stkopen 0x02
+  2643                              <1> 	mov ax,%1
+  2644                              <1> 	mov ds,ax
+  2645                              <1> 	mov ax,[%2+2]
+  2646                              <1> 	mov word [bp+0], ax
+  2647                              <1> 	call proc_setsig
+  2648                              <1> 	mov ax,sp
+  2649                              <1> 	mov bp,ax
+  2650                              <1> 	mov ax,%1
+  2651                              <1> 	mov ds,ax
+  2652                              <1> 	mov ax,[bp+0]
+  2653                              <1> 	mov word [%2+2], ax
+  2654                              <1> 	stkclose 0x02
+  2655                              <1> %endmacro
+  2656                              <1> 
+  2657                              <1> %macro clrsig 2
+  2658                              <1> 	stkopen 0x02
+  2659                              <1> 	mov ax,%1
+  2660                              <1> 	mov ds,ax
+  2661                              <1> 	mov ax,[%2+2]
+  2662                              <1> 	mov word [bp+0], ax
+  2663                              <1> 	call proc_clrsig
+  2664                              <1> 	mov ax,sp
+  2665                              <1> 	mov bp,ax
+  2666                              <1> 	mov ax,%1
+  2667                              <1> 	mov ds,ax
+  2668                              <1> 	mov ax,[bp+0]
+  2669                              <1> 	mov word [%2+2], ax
+  2670                              <1> 	stkclose 0x02
+  2671                              <1> %endmacro
+  2672                              <1> 
+  2673                              <1> %macro div32 10
+  2674                              <1> 	stkopen 0x11
+  2675                              <1> 	mov ax,%1
+  2676                              <1> 	mov ds,ax
+  2677                              <1> 	mov ax,[%2+2]
+  2678                              <1> 	mov word [bp+0], ax
+  2679                              <1> 	mov ax,[%2]
+  2680                              <1> 	mov word [bp+2], ax
+  2681                              <1> 	mov ax,%3
+  2682                              <1> 	mov ds,ax
+  2683                              <1> 	mov ax,[%4+2]
+  2684                              <1> 	mov word [bp+4], ax
+  2685                              <1> 	mov ax,[%4]
+  2686                              <1> 	mov word [bp+6], ax
+  2687                              <1> 	call proc_div32
+  2688                              <1> 	mov ax,sp
+  2689                              <1> 	mov bp,ax
+  2690                              <1> 	mov ax,%5
+  2691                              <1> 	mov ds,ax
+  2692                              <1> 	mov word ax, [bp+8]
+  2693                              <1> 	mov word [%6+2], ax
+  2694                              <1> 	mov word ax, [bp+0x0A]
+  2695                              <1> 	mov word [%6], ax
+  2696                              <1> 	mov ax,%7
+  2697                              <1> 	mov ds,ax
+  2698                              <1> 	mov word ax,[bp+0x0C]
+  2699                              <1> 	mov word [%8+2],ax
+  2700                              <1> 	mov word ax,[bp+0x0E]
+  2701                              <1> 	mov word [%8],ax
+  2702                              <1> 	mov ax,%9
+  2703                              <1> 	mov ds,ax
+  2704                              <1> 	mov byte al,[bp+0x10]
+  2705                              <1> 	mov byte [%10],al
+  2706                              <1> 	stkclose 0x11
+  2707                              <1> %endmacro
+  2708                              <1> 	
+  2709                              <1> %macro mul32 6
+  2710                              <1> 	stkopen 0x0C
+  2711                              <1> 	mov ax,%1
+  2712                              <1> 	mov ds,ax
+  2713                              <1> 	mov ax,[%2+2]
+  2714                              <1> 	mov word [bp+0], ax
+  2715                              <1> 	mov ax,[%2]
+  2716                              <1> 	mov word [bp+2], ax
+  2717                              <1> 	mov ax,%3
+  2718                              <1> 	mov ds,ax
+  2719                              <1> 	mov ax,[%4+2]
+  2720                              <1> 	mov word [bp+4], ax
+  2721                              <1> 	mov ax,[%4]
+  2722                              <1> 	mov word [bp+6], ax
+  2723                              <1> 	call proc_mul32
+  2724                              <1> 	mov ax,sp
+  2725                              <1> 	mov bp,ax
+  2726                              <1> 	mov ax,%5
+  2727                              <1> 	mov ds,ax
+  2728                              <1> 	mov word ax, [bp+8]
+  2729                              <1> 	mov word [%6+2], ax
+  2730                              <1> 	mov word ax, [bp+0x0A]
+  2731                              <1> 	mov word [%6], ax
+  2732                              <1> 	stkclose 0x0C
+  2733                              <1> %endmacro	
+  2734                              <1> 	
+  2735                              <1> %macro add32 6
+  2736                              <1> 	stkopen 0x0C
+  2737                              <1> 	mov ax,%1
+  2738                              <1> 	mov ds,ax
+  2739                              <1> 	mov ax,[%2+2]
+  2740                              <1> 	mov word [bp+0], ax
+  2741                              <1> 	mov ax,[%2]
+  2742                              <1> 	mov word [bp+2], ax
+  2743                              <1> 	mov ax,%3
+  2744                              <1> 	mov ds,ax
+  2745                              <1> 	mov ax,[%4+2]
+  2746                              <1> 	mov word [bp+4], ax
+  2747                              <1> 	mov ax,[%4]
+  2748                              <1> 	mov word [bp+6], ax
+  2749                              <1> 	call proc_add32
+  2750                              <1> 	mov ax,sp
+  2751                              <1> 	mov bp,ax
+  2752                              <1> 	mov ax,%5
+  2753                              <1> 	mov ds,ax
+  2754                              <1> 	mov word ax, [bp+8]
+  2755                              <1> 	mov word [%6+2], ax
+  2756                              <1> 	mov word ax, [bp+0x0A]
+  2757                              <1> 	mov word [%6], ax
+  2758                              <1> 	stkclose 0x0C
+  2759                              <1> %endmacro
+  2760                              <1> 
+  2761                              <1> %macro sub32 6
+  2762                              <1> 	stkopen 0x0C
+  2763                              <1> 	mov ax,%1
+  2764                              <1> 	mov ds,ax
+  2765                              <1> 	mov ax,[%2+2]
+  2766                              <1> 	mov word [bp+0], ax
+  2767                              <1> 	mov ax,[%2]
+  2768                              <1> 	mov word [bp+2], ax
+  2769                              <1> 	mov ax,%3
+  2770                              <1> 	mov ds,ax
+  2771                              <1> 	mov ax,[%4+2]
+  2772                              <1> 	mov word [bp+4], ax
+  2773                              <1> 	mov ax,[%4]
+  2774                              <1> 	mov word [bp+6], ax
+  2775                              <1> 	call proc_sub32
+  2776                              <1> 	mov ax,sp
+  2777                              <1> 	mov bp,ax
+  2778                              <1> 	mov ax,%5
+  2779                              <1> 	mov ds,ax
+  2780                              <1> 	mov word ax, [bp+8]
+  2781                              <1> 	mov word [%6+2], ax
+  2782                              <1> 	mov word ax, [bp+0x0A]
+  2783                              <1> 	mov word [%6], ax
+  2784                              <1> 	stkclose 0x0C
+  2785                              <1> %endmacro
+  2786                              <1> 
+  2787                              <1> %macro idiv32 10
+  2788                              <1> 	stkopen 0x11
+  2789                              <1> 	mov ax,%1
+  2790                              <1> 	mov ds,ax
+  2791                              <1> 	mov ax,[%2+2]
+  2792                              <1> 	mov word [bp+0], ax
+  2793                              <1> 	mov ax,[%2]
+  2794                              <1> 	mov word [bp+2], ax
+  2795                              <1> 	mov ax,%3
+  2796                              <1> 	mov ds,ax
+  2797                              <1> 	mov ax,[%4+2]
+  2798                              <1> 	mov word [bp+4], ax
+  2799                              <1> 	mov ax,[%4]
+  2800                              <1> 	mov word [bp+6], ax
+  2801                              <1> 	call proc_idiv32
+  2802                              <1> 	mov ax,sp
+  2803                              <1> 	mov bp,ax
+  2804                              <1> 	mov ax,%5
+  2805                              <1> 	mov ds,ax
+  2806                              <1> 	mov word ax, [bp+8]
+  2807                              <1> 	mov word [%6+2], ax
+  2808                              <1> 	mov word ax, [bp+0x0A]
+  2809                              <1> 	mov word [%6], ax
+  2810                              <1> 	mov ax,%7
+  2811                              <1> 	mov ds,ax
+  2812                              <1> 	mov word ax,[bp+0x0C]
+  2813                              <1> 	mov word [%8+2],ax
+  2814                              <1> 	mov word ax,[bp+0x0E]
+  2815                              <1> 	mov word [%8],ax
+  2816                              <1> 	mov ax,%9
+  2817                              <1> 	mov ds,ax
+  2818                              <1> 	mov byte al,[bp+0x10]
+  2819                              <1> 	mov byte [%10],al
+  2820                              <1> 	stkclose 0x11
+  2821                              <1> %endmacro
+  2822                              <1> 
+  2823                              <1> %macro imul32 6
+  2824                              <1> 	stkopen 0x0C
+  2825                              <1> 	mov ax,%1
+  2826                              <1> 	mov ds,ax
+  2827                              <1> 	mov ax,[%2+2]
+  2828                              <1> 	mov word [bp+0], ax
+  2829                              <1> 	mov ax,[%2]
+  2830                              <1> 	mov word [bp+2], ax
+  2831                              <1> 	mov ax,%3
+  2832                              <1> 	mov ds,ax
+  2833                              <1> 	mov ax,[%4+2]
+  2834                              <1> 	mov word [bp+4], ax
+  2835                              <1> 	mov ax,[%4]
+  2836                              <1> 	mov word [bp+6], ax
+  2837                              <1> 	call proc_imul32
+  2838                              <1> 	mov ax,sp
+  2839                              <1> 	mov bp,ax
+  2840                              <1> 	mov ax,%5
+  2841                              <1> 	mov ds,ax
+  2842                              <1> 	mov word ax, [bp+8]
+  2843                              <1> 	mov word [%6+2], ax
+  2844                              <1> 	mov word ax, [bp+0x0A]
+  2845                              <1> 	mov word [%6], ax
+  2846                              <1> 	stkclose 0x0C
+  2847                              <1> %endmacro
+  2848                              <1> 
+  2849                              <1> %macro iadd32 6
+  2850                              <1> 	iaddorsub32 %1, %2, %3, %4, %5, %6, 0
+  2851                              <1> %endmacro
+  2852                              <1> 
+  2853                              <1> 
+  2854                              <1> %macro isub32 6
+  2855                              <1> 	iaddorsub32 %1, %2, %3, %4, %5, %6, 0x8000
+  2856                              <1> %endmacro
+  2857                              <1> 
+  2858                              <1> %macro iaddorsub32 7
+  2859                              <1> 	stkopen 0x0E
+  2860                              <1> 	mov ax,%1
+  2861                              <1> 	mov ds,ax
+  2862                              <1> 	mov ax,[%2+2]
+  2863                              <1> 	mov word [bp+0], ax
+  2864                              <1> 	mov ax,[%2]
+  2865                              <1> 	mov word [bp+2], ax
+  2866                              <1> 	mov ax,%3
+  2867                              <1> 	mov ds,ax
+  2868                              <1> 	mov ax,[%4+2]
+  2869                              <1> 	mov word [bp+4], ax
+  2870                              <1> 	mov ax,[%4]
+  2871                              <1> 	mov word [bp+6], ax
+  2872                              <1> 	mov word [bp+0x0C], %7
+  2873                              <1> 	call proc_iaddorsub32
+  2874                              <1> 	mov ax,sp
+  2875                              <1> 	mov bp,ax
+  2876                              <1> 	mov ax,%5
+  2877                              <1> 	mov ds,ax
+  2878                              <1> 	mov word ax, [bp+8]
+  2879                              <1> 	mov word [%6+2], ax
+  2880                              <1> 	mov word ax, [bp+0x0A]
+  2881                              <1> 	mov word [%6], ax
+  2882                              <1> 	stkclose 0x0E
+  2883                              <1> %endmacro	
+  2884                              <1> 	
+  2885                              <1> %macro cmp32 3
+  2886                              <1> 	cmp32 cs, %1, cs, %2, %3
+  2887                              <1> %endmacro	
+  2888                              <1> 	
+  2889                              <1> %macro cmp32 5
+  2890                              <1> 	stkopen 9
+  2891                              <1> 	mov ax,%1
+  2892                              <1> 	mov ds,ax
+  2893                              <1> 	mov word ax,[%2+2]
+  2894                              <1> 	mov word [bp+0], ax
+  2895                              <1> 	mov word ax,[%2]
+  2896                              <1> 	mov word [bp+2], ax	
+  2897                              <1> 	mov ax,%3
+  2898                              <1> 	mov ds,ax
+  2899                              <1> 	mov word ax,[%4+2]
+  2900                              <1> 	mov word [bp+4], ax
+  2901                              <1> 	mov word ax,[%4]
+  2902                              <1> 	mov word [bp+6], ax	
+  2903                              <1> 	call proc_cmp32
+  2904                              <1> 	mov ax,sp
+  2905                              <1> 	mov bp,ax
+  2906                              <1> 	mov al,[bp+8]
+  2907                              <1> 	mov byte %5,al
+  2908                              <1> 	stkclose 9
+  2909                              <1> %endmacro
+  2910                              <1> 	
+  2911                              <1> %macro shl32 2
+  2912                              <1> 	shl32 cs, %1, %2
+  2913                              <1> %endmacro	
+  2914                              <1> 	
+  2915                              <1> %macro shl32 3
+  2916                              <1> 	stkopen 5
+  2917                              <1> 	mov ax,%1
+  2918                              <1> 	mov ds,ax
+  2919                              <1> 	mov word ax,[%2+2]
+  2920                              <1> 	mov word [bp+0], ax
+  2921                              <1> 	mov word ax,[%2]
+  2922                              <1> 	mov word [bp+2], ax
+  2923                              <1> 	mov byte al, %3
+  2924                              <1> 	mov byte [bp+4], al 
+  2925                              <1> 	call proc_shl32
+  2926                              <1> 	mov ax,sp
+  2927                              <1> 	mov bp,ax
+  2928                              <1> 	mov ax,%1
+  2929                              <1> 	mov ds,ax
+  2930                              <1> 	mov ax,[bp+0]
+  2931                              <1> 	mov word [%2+2],ax
+  2932                              <1> 	mov ax,[bp+2]
+  2933                              <1> 	mov word [%2],ax
+  2934                              <1> 	stkclose 5
+  2935                              <1> %endmacro
+  2936                              <1> 
+  2937                              <1> 
+  2938                              <1> %macro shr32 2
+  2939                              <1> 	shr32 cs, %1, %2
+  2940                              <1> %endmacro	
+  2941                              <1> 	
+  2942                              <1> %macro shr32 3
+  2943                              <1> 	stkopen 5
+  2944                              <1> 	mov ax,%1
+  2945                              <1> 	mov ds,ax
+  2946                              <1> 	mov word ax,[%2+2]
+  2947                              <1> 	mov word [bp+0], ax
+  2948                              <1> 	mov word ax,[%2]
+  2949                              <1> 	mov word [bp+2], ax
+  2950                              <1> 	mov byte al, %3
+  2951                              <1> 	mov byte [bp+4], al 
+  2952                              <1> 	call proc_shr32
+  2953                              <1> 	mov ax,sp
+  2954                              <1> 	mov bp,ax
+  2955                              <1> 	mov ax,%1
+  2956                              <1> 	mov ds,ax
+  2957                              <1> 	mov ax,[bp+0]
+  2958                              <1> 	mov word [%2+2],ax
+  2959                              <1> 	mov ax,[bp+2]
+  2960                              <1> 	mov word [%2],ax
+  2961                              <1> 	stkclose 5
+  2962                              <1> %endmacro
+  2963                              <1> 	
+  2964                              <1> %endif
+  2965                                  		
+  2966                                  section .data
+  2967 00000A75 02000000                	n1: dd 0x2
+  2968 00000A79 06000000                	n2: dd 0x6
+  2969 00000A7D 00000000                	n3: dd 0
+  2970 00000A81 00000000                	n4: dd 0
+  2971 00000A85 00                      	err: db 0		
+  2972                                  		
+  2973                                  section .text
+  2974                                  	global _start
+  2975                                  	
+  2976                                  _start:		
+  2977                                  	prtstk
+  2978                              <1>  printf "stack ---> "
+  2979                              <2>  %rep %0
+  2980                              <2>  __printf %1
+  2981                              <2>  %rotate 1
+  2982                              <2>  %endrep
+  2983                              <3>  __printf %1
+  2984                              <4>  section .data
+  2985 00000A86 737461636B202D2D2D- <4>  %%str: db %1,0
+  2986 00000A8F 3E2000              <4>
+  2987                              <4>  section .text
+  2988                              <4>  prtstr cs, %%str
+  2989                              <5>  stkopen 4
+  2990 00000000 83EC04              <6>  sub word sp, %1
+  2991 00000003 54                  <6>  push sp
+  2992 00000004 5D                  <6>  pop bp
+  2993 00000005 8C4E00              <5>  mov word [bp], %1
+  2994 00000008 C74602[860A]        <5>  mov word [bp+2], %2
+  2995 0000000D E8(2804)            <5>  call proc_prtstr
+  2996                              <5>  stkclose 4
+  2997 00000010 83C404              <6>  add word sp, %1
+  2998                              <3>  %rotate 1
+  2999 00000013 89E0                <1>  mov ax,sp
+  3000                              <1>  prthex16 ax
+  3001                              <2>  stkopen 3
+  3002 00000015 83EC03              <3>  sub word sp, %1
+  3003 00000018 54                  <3>  push sp
+  3004 00000019 5D                  <3>  pop bp
+  3005 0000001A 894600              <2>  mov word [bp], %1
+  3006 0000001D C6460201            <2>  mov byte [bp+2], TRUE
+  3007 00000021 E8(2C03)            <2>  call proc_prthex16
+  3008                              <2>  stkclose 3
+  3009 00000024 83C403              <3>  add word sp, %1
+  3010                                  	prtln
+  3011                              <1>  __prtln
+  3012 00000027 E8(5C04)            <2>  call proc_prtln
+  3013                                  	prtln
+  3014                              <1>  __prtln
+  3015 0000002A E8(5C04)            <2>  call proc_prtln
+  3016                                  	
+  3017                                  	setsig n1
+  3018                              <1>  setsig cs, %1
+  3019                              <2>  stkopen 0x02
+  3020 0000002D 83EC02              <3>  sub word sp, %1
+  3021 00000030 54                  <3>  push sp
+  3022 00000031 5D                  <3>  pop bp
+  3023 00000032 8CC8                <2>  mov ax,%1
+  3024 00000034 8ED8                <2>  mov ds,ax
+  3025 00000036 A1[770A]            <2>  mov ax,[%2+2]
+  3026 00000039 894600              <2>  mov word [bp+0], ax
+  3027 0000003C E8(6B04)            <2>  call proc_setsig
+  3028 0000003F 89E0                <2>  mov ax,sp
+  3029 00000041 89C5                <2>  mov bp,ax
+  3030 00000043 8CC8                <2>  mov ax,%1
+  3031 00000045 8ED8                <2>  mov ds,ax
+  3032 00000047 8B4600              <2>  mov ax,[bp+0]
+  3033 0000004A A3[770A]            <2>  mov word [%2+2], ax
+  3034                              <2>  stkclose 0x02
+  3035 0000004D 83C402              <3>  add word sp, %1
+  3036                                  		
+  3037                                  	isub32 n1, n2, n3
+  3038                              <1>  isub32 cs, %1, cs, %2, cs, %3
+  3039                              <2>  iaddorsub32 %1, %2, %3, %4, %5, %6, 0x8000
+  3040                              <3>  stkopen 0x0E
+  3041 00000050 83EC0E              <4>  sub word sp, %1
+  3042 00000053 54                  <4>  push sp
+  3043 00000054 5D                  <4>  pop bp
+  3044 00000055 8CC8                <3>  mov ax,%1
+  3045 00000057 8ED8                <3>  mov ds,ax
+  3046 00000059 A1[770A]            <3>  mov ax,[%2+2]
+  3047 0000005C 894600              <3>  mov word [bp+0], ax
+  3048 0000005F A1[750A]            <3>  mov ax,[%2]
+  3049 00000062 894602              <3>  mov word [bp+2], ax
+  3050 00000065 8CC8                <3>  mov ax,%3
+  3051 00000067 8ED8                <3>  mov ds,ax
+  3052 00000069 A1[7B0A]            <3>  mov ax,[%4+2]
+  3053 0000006C 894604              <3>  mov word [bp+4], ax
+  3054 0000006F A1[790A]            <3>  mov ax,[%4]
+  3055 00000072 894606              <3>  mov word [bp+6], ax
+  3056 00000075 C7460C0080          <3>  mov word [bp+0x0C], %7
+  3057 0000007A E8(5D05)            <3>  call proc_iaddorsub32
+  3058 0000007D 89E0                <3>  mov ax,sp
+  3059 0000007F 89C5                <3>  mov bp,ax
+  3060 00000081 8CC8                <3>  mov ax,%5
+  3061 00000083 8ED8                <3>  mov ds,ax
+  3062 00000085 8B4608              <3>  mov word ax, [bp+8]
+  3063 00000088 A3[7F0A]            <3>  mov word [%6+2], ax
+  3064 0000008B 8B460A              <3>  mov word ax, [bp+0x0A]
+  3065 0000008E A3[7D0A]            <3>  mov word [%6], ax
+  3066                              <3>  stkclose 0x0E
+  3067 00000091 83C40E              <4>  add word sp, %1
+  3068                                  	
+  3069                                  	prtbin32 n1
+  3070                              <1>  prtbin32 cs, %1
+  3071 00000094 8CC8                <2>  mov ax,%1
+  3072 00000096 8ED8                <2>  mov ds,ax
+  3073 00000098 A1[770A]            <2>  mov word ax,[%2+2]
+  3074                              <2>  prtbin16 ax
+  3075                              <3>  stkopen 3
+  3076 0000009B 83EC03              <4>  sub word sp, %1
+  3077 0000009E 54                  <4>  push sp
+  3078 0000009F 5D                  <4>  pop bp
+  3079 000000A0 894600              <3>  mov word [bp], %1
+  3080 000000A3 C6460201            <3>  mov byte [bp+2], TRUE
+  3081 000000A7 E8(C901)            <3>  call proc_prtbin16
+  3082                              <3>  stkclose 3
+  3083 000000AA 83C403              <4>  add word sp, %1
+  3084                              <2>  prtch 20h
+  3085                              <3>  __prtch %1
+  3086                              <4>  stkopen 1
+  3087 000000AD 83EC01              <5>  sub word sp, %1
+  3088 000000B0 54                  <5>  push sp
+  3089 000000B1 5D                  <5>  pop bp
+  3090 000000B2 C6460020            <4>  mov byte [ bp ], %1
+  3091 000000B6 E8(4E04)            <4>  call proc_prtch
+  3092                              <4>  stkclose 1
+  3093 000000B9 83C401              <5>  add word sp, %1
+  3094 000000BC 8CC8                <2>  mov ax,%1
+  3095 000000BE 8ED8                <2>  mov ds,ax
+  3096 000000C0 A1[750A]            <2>  mov word ax,[%2]
+  3097                              <2>  prtbin16 ax
+  3098                              <3>  stkopen 3
+  3099 000000C3 83EC03              <4>  sub word sp, %1
+  3100 000000C6 54                  <4>  push sp
+  3101 000000C7 5D                  <4>  pop bp
+  3102 000000C8 894600              <3>  mov word [bp], %1
+  3103 000000CB C6460201            <3>  mov byte [bp+2], TRUE
+  3104 000000CF E8(C901)            <3>  call proc_prtbin16
+  3105                              <3>  stkclose 3
+  3106 000000D2 83C403              <4>  add word sp, %1
+  3107                                  	prtln
+  3108                              <1>  __prtln
+  3109 000000D5 E8(5C04)            <2>  call proc_prtln
+  3110                                  	prtbin32 n2
+  3111                              <1>  prtbin32 cs, %1
+  3112 000000D8 8CC8                <2>  mov ax,%1
+  3113 000000DA 8ED8                <2>  mov ds,ax
+  3114 000000DC A1[7B0A]            <2>  mov word ax,[%2+2]
+  3115                              <2>  prtbin16 ax
+  3116                              <3>  stkopen 3
+  3117 000000DF 83EC03              <4>  sub word sp, %1
+  3118 000000E2 54                  <4>  push sp
+  3119 000000E3 5D                  <4>  pop bp
+  3120 000000E4 894600              <3>  mov word [bp], %1
+  3121 000000E7 C6460201            <3>  mov byte [bp+2], TRUE
+  3122 000000EB E8(C901)            <3>  call proc_prtbin16
+  3123                              <3>  stkclose 3
+  3124 000000EE 83C403              <4>  add word sp, %1
+  3125                              <2>  prtch 20h
+  3126                              <3>  __prtch %1
+  3127                              <4>  stkopen 1
+  3128 000000F1 83EC01              <5>  sub word sp, %1
+  3129 000000F4 54                  <5>  push sp
+  3130 000000F5 5D                  <5>  pop bp
+  3131 000000F6 C6460020            <4>  mov byte [ bp ], %1
+  3132 000000FA E8(4E04)            <4>  call proc_prtch
+  3133                              <4>  stkclose 1
+  3134 000000FD 83C401              <5>  add word sp, %1
+  3135 00000100 8CC8                <2>  mov ax,%1
+  3136 00000102 8ED8                <2>  mov ds,ax
+  3137 00000104 A1[790A]            <2>  mov word ax,[%2]
+  3138                              <2>  prtbin16 ax
+  3139                              <3>  stkopen 3
+  3140 00000107 83EC03              <4>  sub word sp, %1
+  3141 0000010A 54                  <4>  push sp
+  3142 0000010B 5D                  <4>  pop bp
+  3143 0000010C 894600              <3>  mov word [bp], %1
+  3144 0000010F C6460201            <3>  mov byte [bp+2], TRUE
+  3145 00000113 E8(C901)            <3>  call proc_prtbin16
+  3146                              <3>  stkclose 3
+  3147 00000116 83C403              <4>  add word sp, %1
+  3148                                  	prtln
+  3149                              <1>  __prtln
+  3150 00000119 E8(5C04)            <2>  call proc_prtln
+  3151                                  	prtbin32 n3	
+  3152                              <1>  prtbin32 cs, %1
+  3153 0000011C 8CC8                <2>  mov ax,%1
+  3154 0000011E 8ED8                <2>  mov ds,ax
+  3155 00000120 A1[7F0A]            <2>  mov word ax,[%2+2]
+  3156                              <2>  prtbin16 ax
+  3157                              <3>  stkopen 3
+  3158 00000123 83EC03              <4>  sub word sp, %1
+  3159 00000126 54                  <4>  push sp
+  3160 00000127 5D                  <4>  pop bp
+  3161 00000128 894600              <3>  mov word [bp], %1
+  3162 0000012B C6460201            <3>  mov byte [bp+2], TRUE
+  3163 0000012F E8(C901)            <3>  call proc_prtbin16
+  3164                              <3>  stkclose 3
+  3165 00000132 83C403              <4>  add word sp, %1
+  3166                              <2>  prtch 20h
+  3167                              <3>  __prtch %1
+  3168                              <4>  stkopen 1
+  3169 00000135 83EC01              <5>  sub word sp, %1
+  3170 00000138 54                  <5>  push sp
+  3171 00000139 5D                  <5>  pop bp
+  3172 0000013A C6460020            <4>  mov byte [ bp ], %1
+  3173 0000013E E8(4E04)            <4>  call proc_prtch
+  3174                              <4>  stkclose 1
+  3175 00000141 83C401              <5>  add word sp, %1
+  3176 00000144 8CC8                <2>  mov ax,%1
+  3177 00000146 8ED8                <2>  mov ds,ax
+  3178 00000148 A1[7D0A]            <2>  mov word ax,[%2]
+  3179                              <2>  prtbin16 ax
+  3180                              <3>  stkopen 3
+  3181 0000014B 83EC03              <4>  sub word sp, %1
+  3182 0000014E 54                  <4>  push sp
+  3183 0000014F 5D                  <4>  pop bp
+  3184 00000150 894600              <3>  mov word [bp], %1
+  3185 00000153 C6460201            <3>  mov byte [bp+2], TRUE
+  3186 00000157 E8(C901)            <3>  call proc_prtbin16
+  3187                              <3>  stkclose 3
+  3188 0000015A 83C403              <4>  add word sp, %1
+  3189                                  	prtln
+  3190                              <1>  __prtln
+  3191 0000015D E8(5C04)            <2>  call proc_prtln
+  3192                                  	prtln
+  3193                              <1>  __prtln
+  3194 00000160 E8(5C04)            <2>  call proc_prtln
+  3195                                  	
+  3196                                  	iprthex32 n1
+  3197                              <1>  iprthex32 cs, %1
+  3198 00000163 8CC8                <2>  mov ax,%1
+  3199 00000165 8ED8                <2>  mov ds,ax
+  3200 00000167 A1[770A]            <2>  mov word ax,[%2+2]
+  3201 0000016A 89C3                <2>  mov word bx,ax
+  3202 0000016C 25FF7F              <2>  and ax,0x7FFF
+  3203 0000016F 50                  <2>  push ax
+  3204 00000170 81E30080            <2>  and bx,0x8000
+  3205 00000174 83FB00              <2>  cmp bx,0
+  3206 00000177 740F                <2>  jz %%prt
+  3207                              <2>  prtch '-'
+  3208                              <3>  __prtch %1
+  3209                              <4>  stkopen 1
+  3210 00000179 83EC01              <5>  sub word sp, %1
+  3211 0000017C 54                  <5>  push sp
+  3212 0000017D 5D                  <5>  pop bp
+  3213 0000017E C646002D            <4>  mov byte [ bp ], %1
+  3214 00000182 E8(4E04)            <4>  call proc_prtch
+  3215                              <4>  stkclose 1
+  3216 00000185 83C401              <5>  add word sp, %1
+  3217                              <2>  %%prt:
+  3218 00000188 58                  <2>  pop ax
+  3219                              <2>  prthex16 ax
+  3220                              <3>  stkopen 3
+  3221 00000189 83EC03              <4>  sub word sp, %1
+  3222 0000018C 54                  <4>  push sp
+  3223 0000018D 5D                  <4>  pop bp
+  3224 0000018E 894600              <3>  mov word [bp], %1
+  3225 00000191 C6460201            <3>  mov byte [bp+2], TRUE
+  3226 00000195 E8(2C03)            <3>  call proc_prthex16
+  3227                              <3>  stkclose 3
+  3228 00000198 83C403              <4>  add word sp, %1
+  3229 0000019B 8CC8                <2>  mov ax,%1
+  3230 0000019D 8ED8                <2>  mov ds,ax
+  3231 0000019F A1[750A]            <2>  mov word ax,[%2]
+  3232                              <2>  prthex16 ax
+  3233                              <3>  stkopen 3
+  3234 000001A2 83EC03              <4>  sub word sp, %1
+  3235 000001A5 54                  <4>  push sp
+  3236 000001A6 5D                  <4>  pop bp
+  3237 000001A7 894600              <3>  mov word [bp], %1
+  3238 000001AA C6460201            <3>  mov byte [bp+2], TRUE
+  3239 000001AE E8(2C03)            <3>  call proc_prthex16
+  3240                              <3>  stkclose 3
+  3241 000001B1 83C403              <4>  add word sp, %1
+  3242                                  	prtln
+  3243                              <1>  __prtln
+  3244 000001B4 E8(5C04)            <2>  call proc_prtln
+  3245                                  	iprthex32 n2
+  3246                              <1>  iprthex32 cs, %1
+  3247 000001B7 8CC8                <2>  mov ax,%1
+  3248 000001B9 8ED8                <2>  mov ds,ax
+  3249 000001BB A1[7B0A]            <2>  mov word ax,[%2+2]
+  3250 000001BE 89C3                <2>  mov word bx,ax
+  3251 000001C0 25FF7F              <2>  and ax,0x7FFF
+  3252 000001C3 50                  <2>  push ax
+  3253 000001C4 81E30080            <2>  and bx,0x8000
+  3254 000001C8 83FB00              <2>  cmp bx,0
+  3255 000001CB 740F                <2>  jz %%prt
+  3256                              <2>  prtch '-'
+  3257                              <3>  __prtch %1
+  3258                              <4>  stkopen 1
+  3259 000001CD 83EC01              <5>  sub word sp, %1
+  3260 000001D0 54                  <5>  push sp
+  3261 000001D1 5D                  <5>  pop bp
+  3262 000001D2 C646002D            <4>  mov byte [ bp ], %1
+  3263 000001D6 E8(4E04)            <4>  call proc_prtch
+  3264                              <4>  stkclose 1
+  3265 000001D9 83C401              <5>  add word sp, %1
+  3266                              <2>  %%prt:
+  3267 000001DC 58                  <2>  pop ax
+  3268                              <2>  prthex16 ax
+  3269                              <3>  stkopen 3
+  3270 000001DD 83EC03              <4>  sub word sp, %1
+  3271 000001E0 54                  <4>  push sp
+  3272 000001E1 5D                  <4>  pop bp
+  3273 000001E2 894600              <3>  mov word [bp], %1
+  3274 000001E5 C6460201            <3>  mov byte [bp+2], TRUE
+  3275 000001E9 E8(2C03)            <3>  call proc_prthex16
+  3276                              <3>  stkclose 3
+  3277 000001EC 83C403              <4>  add word sp, %1
+  3278 000001EF 8CC8                <2>  mov ax,%1
+  3279 000001F1 8ED8                <2>  mov ds,ax
+  3280 000001F3 A1[790A]            <2>  mov word ax,[%2]
+  3281                              <2>  prthex16 ax
+  3282                              <3>  stkopen 3
+  3283 000001F6 83EC03              <4>  sub word sp, %1
+  3284 000001F9 54                  <4>  push sp
+  3285 000001FA 5D                  <4>  pop bp
+  3286 000001FB 894600              <3>  mov word [bp], %1
+  3287 000001FE C6460201            <3>  mov byte [bp+2], TRUE
+  3288 00000202 E8(2C03)            <3>  call proc_prthex16
+  3289                              <3>  stkclose 3
+  3290 00000205 83C403              <4>  add word sp, %1
+  3291                                  	prtln
+  3292                              <1>  __prtln
+  3293 00000208 E8(5C04)            <2>  call proc_prtln
+  3294                                  	iprthex32 n3			
+  3295                              <1>  iprthex32 cs, %1
+  3296 0000020B 8CC8                <2>  mov ax,%1
+  3297 0000020D 8ED8                <2>  mov ds,ax
+  3298 0000020F A1[7F0A]            <2>  mov word ax,[%2+2]
+  3299 00000212 89C3                <2>  mov word bx,ax
+  3300 00000214 25FF7F              <2>  and ax,0x7FFF
+  3301 00000217 50                  <2>  push ax
+  3302 00000218 81E30080            <2>  and bx,0x8000
+  3303 0000021C 83FB00              <2>  cmp bx,0
+  3304 0000021F 740F                <2>  jz %%prt
+  3305                              <2>  prtch '-'
+  3306                              <3>  __prtch %1
+  3307                              <4>  stkopen 1
+  3308 00000221 83EC01              <5>  sub word sp, %1
+  3309 00000224 54                  <5>  push sp
+  3310 00000225 5D                  <5>  pop bp
+  3311 00000226 C646002D            <4>  mov byte [ bp ], %1
+  3312 0000022A E8(4E04)            <4>  call proc_prtch
+  3313                              <4>  stkclose 1
+  3314 0000022D 83C401              <5>  add word sp, %1
+  3315                              <2>  %%prt:
+  3316 00000230 58                  <2>  pop ax
+  3317                              <2>  prthex16 ax
+  3318                              <3>  stkopen 3
+  3319 00000231 83EC03              <4>  sub word sp, %1
+  3320 00000234 54                  <4>  push sp
+  3321 00000235 5D                  <4>  pop bp
+  3322 00000236 894600              <3>  mov word [bp], %1
+  3323 00000239 C6460201            <3>  mov byte [bp+2], TRUE
+  3324 0000023D E8(2C03)            <3>  call proc_prthex16
+  3325                              <3>  stkclose 3
+  3326 00000240 83C403              <4>  add word sp, %1
+  3327 00000243 8CC8                <2>  mov ax,%1
+  3328 00000245 8ED8                <2>  mov ds,ax
+  3329 00000247 A1[7D0A]            <2>  mov word ax,[%2]
+  3330                              <2>  prthex16 ax
+  3331                              <3>  stkopen 3
+  3332 0000024A 83EC03              <4>  sub word sp, %1
+  3333 0000024D 54                  <4>  push sp
+  3334 0000024E 5D                  <4>  pop bp
+  3335 0000024F 894600              <3>  mov word [bp], %1
+  3336 00000252 C6460201            <3>  mov byte [bp+2], TRUE
+  3337 00000256 E8(2C03)            <3>  call proc_prthex16
+  3338                              <3>  stkclose 3
+  3339 00000259 83C403              <4>  add word sp, %1
+  3340                                  		
+  3341                                  	prtln
+  3342                              <1>  __prtln
+  3343 0000025C E8(5C04)            <2>  call proc_prtln
+  3344                                  	prtln
+  3345                              <1>  __prtln
+  3346 0000025F E8(5C04)            <2>  call proc_prtln
+  3347                                  	prtstk			
+  3348                              <1>  printf "stack ---> "
+  3349                              <2>  %rep %0
+  3350                              <2>  __printf %1
+  3351                              <2>  %rotate 1
+  3352                              <2>  %endrep
+  3353                              <3>  __printf %1
+  3354                              <4>  section .data
+  3355 00000A92 737461636B202D2D2D- <4>  %%str: db %1,0
+  3356 00000A9B 3E2000              <4>
+  3357                              <4>  section .text
+  3358                              <4>  prtstr cs, %%str
+  3359                              <5>  stkopen 4
+  3360 00000262 83EC04              <6>  sub word sp, %1
+  3361 00000265 54                  <6>  push sp
+  3362 00000266 5D                  <6>  pop bp
+  3363 00000267 8C4E00              <5>  mov word [bp], %1
+  3364 0000026A C74602[920A]        <5>  mov word [bp+2], %2
+  3365 0000026F E8(2804)            <5>  call proc_prtstr
+  3366                              <5>  stkclose 4
+  3367 00000272 83C404              <6>  add word sp, %1
+  3368                              <3>  %rotate 1
+  3369 00000275 89E0                <1>  mov ax,sp
+  3370                              <1>  prthex16 ax
+  3371                              <2>  stkopen 3
+  3372 00000277 83EC03              <3>  sub word sp, %1
+  3373 0000027A 54                  <3>  push sp
+  3374 0000027B 5D                  <3>  pop bp
+  3375 0000027C 894600              <2>  mov word [bp], %1
+  3376 0000027F C6460201            <2>  mov byte [bp+2], TRUE
+  3377 00000283 E8(2C03)            <2>  call proc_prthex16
+  3378                              <2>  stkclose 3
+  3379 00000286 83C403              <3>  add word sp, %1
+  3380                                  	
+  3381 00000289 EBFE                    	jmp $		

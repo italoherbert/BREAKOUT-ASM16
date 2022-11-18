@@ -1,0 +1,142 @@
+%ifndef RACKET_MAC
+	%define RACKET_MAC
+			
+	%include "lib/system.mac"
+	%include "lib/math.mac"
+	%include "lib/float.mac"
+	%include "lib/trigon.mac"
+	%include "lib/graph.mac"
+
+	%include "src/lib/constants.asm"
+	%include "src/lib/ball.mac"
+
+section .data
+	__RACKET_X: dw 50
+	
+	__racket_x: dw 0
+	__racket_y: dw 0
+	__racket_w: dw 50
+	__racket_h: dw 10
+	__racket_pw: dw 17
+	__racket_inc: dw 30
+
+%macro racket_initialize 0
+	mov16 __racket_x, __RACKET_X	
+	
+	add16 __racket_x, __tray_x1	
+	mov16 __racket_y, __tray_y2
+	sub16 __racket_y, __racket_h	
+%endmacro
+
+%macro racket_throw_colision 0
+section .data
+	%%x: dw 0
+	%%y: dw 0
+	%%ball_r: dw 0
+	%%racket_x: dw 0
+	%%racket_x2: dw 0
+	%%racket_px2: dw 0
+section .text
+	cmp16 __lose, __ONE, cl
+	cmp cl,0
+	je %%end
+	
+	flcmp __ball_yinc, __FL_ZERO, cl	
+	cmp cl,0
+	jl %%end	 
+
+	fltoint16 __ball_radial, %%ball_r
+
+	fltoint16 __ball_y, %%y
+	add16 %%y, %%ball_r
+			
+	cmp16 %%y, __racket_y, cl
+	cmp cl,0
+	jl %%end	
+		mov16 %%racket_x, __racket_x	
+		mov16 %%racket_x2, __racket_x
+		add16 %%racket_x2, __racket_w
+		
+		fltoint16 __ball_x, %%x
+		add16 %%x, %%ball_r		
+				
+		cmp16 %%x, %%racket_x, cl
+		cmp cl,0
+		jl %%end
+
+		mov16 %%racket_px2, %%racket_x
+		add16 %%racket_px2, __racket_pw
+		cmp16 %%x, %%racket_px2, cl
+		cmp cl,0
+		jl %%left
+		
+		
+		fltoint16 __ball_x, %%x
+		sub16 %%x, %%ball_r		
+		cmp16 %%x, %%racket_x2, cl		
+		cmp cl,0		
+		jg %%end
+				
+		mov16 %%racket_px2, %%racket_x2
+		sub16 %%racket_px2, __racket_pw
+		cmp16 %%x, %%racket_px2, cl
+		cmp cl,0
+		jg %%right
+				
+		jmp %%center
+							
+		%%left:			
+			ball_leftangle
+			jmp %%end	
+		%%right:
+			ball_rightangle	
+			jmp %%end		
+		%%center:
+			ball_yinvdirection					
+	%%end:
+%endmacro
+
+%macro racket_backmove 0
+section .data
+	%%x: dw 0
+section .text
+	mov16 %%x, __racket_x
+	sub16 %%x, __racket_inc
+	racket_move %%x
+%endmacro
+
+%macro racket_frontmove 0
+section .data
+	%%x: dw 0
+section .text
+	mov16 %%x, __racket_x
+	add16 %%x, __racket_inc
+	racket_move %%x
+%endmacro
+
+%macro racket_move 1
+section .data
+	%%max_x2: dw 0
+section .text	
+	cmp16 %1, __tray_x1, cl
+	cmp cl,0
+	jl %%movesidex1
+	
+	mov16 %%max_x2, __tray_x2
+	sub16 %%max_x2, __racket_w
+	cmp16 %1, %%max_x2, cl
+	cmp cl,0
+	jg %%movesidex2
+	
+	mov16 __racket_x, %1
+	jmp %%end
+	
+	%%movesidex1:
+		mov16 __racket_x, __tray_x1
+		jmp %%end
+	%%movesidex2:	
+		mov16 __racket_x, %%max_x2
+	%%end:	
+%endmacro				
+	
+%endif

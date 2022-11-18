@@ -1,0 +1,33 @@
+
+%ifndef SPEAKER_MAC
+	%define SPEAKER_MAC
+
+	%include "lib/speaker.asm"
+
+%macro speaker_setf 1
+	speaker_setf cs, %1
+%endmacro
+
+%macro speaker_init 0
+	call proc_speaker_init
+%endmacro
+
+%macro speaker_start 0
+	call proc_speaker_start
+%endmacro
+
+%macro speaker_stop 0
+	call proc_speaker_stop
+%endmacro
+
+%macro speaker_setf 2
+	stkopen 0x04
+	mov ax,%1
+	mov ds,ax
+	mov ax,[%2]
+	mov [bp+0],ax
+	call proc_speaker_setf	
+	stkclose 0x04	
+%endmacro
+	
+%endif

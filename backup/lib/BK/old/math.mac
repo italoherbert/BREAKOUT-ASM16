@@ -1,0 +1,51 @@
+%ifndef MATH_MAC
+	%define MATH_MAC
+	
+	%include "lib/sys.mac"
+	%include "lib/stdio.mac"
+	%include "lib/trigon.csts"
+	
+%macro nibbletoascii 2
+	mov ax,%1
+	mov dl,%2
+	cmp dl,9
+	ja %%sumseven
+	jmp %%notsumseven  
+	
+	%%sumseven:
+		add dl,7
+	%%notsumseven:
+					
+	add dl,30h
+	
+	mov di,ax
+	mov byte [di],dl
+%endmacro
+
+%macro asciitonibble 2
+	mov ax,%1
+	mov dl,%2
+	
+	sub dl,30h
+	
+	cmp dl,09h
+	ja %%subseven
+	jmp %%notsubseven  
+	
+	%%subseven:
+		sub dl,7
+	%%notsubseven:
+						
+	mov di,ax
+	mov byte [di],dl
+%endmacro
+		
+section .bss
+	MATH_OF: resb 1
+	MATH_SF: resb 1
+	MATH_ZF: resb 1
+	MATH_AF: resb 1
+	MATH_PF: resb 1	
+	MATH_CF: resb 1	
+			
+%endif

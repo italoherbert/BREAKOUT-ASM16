@@ -1,0 +1,194 @@
+ 
+%ifndef SYSTEM_MAC
+ 	%define SYSTEM_MAC
+ 	
+	%ifndef TRUE
+		%define TRUE 01h
+	%endif
+	%ifndef FALSE
+		%define FALSE 00h
+	%endif
+	
+%macro vlodsb 3
+	vlodsb cs, %1, %2, %3
+%endmacro
+
+%macro vstosb 3
+	vstosb cs, %1, %2, %3
+%endmacro
+	 	
+%macro int16toreg 2
+	int16toreg cs, %1, %2
+%endmacro
+
+%macro regtoint16 2
+	regtoint16 %1, cs, %2
+%endmacro
+
+%macro vstosb 4
+	push %1
+	pop ds
+	mov si,%2
+	add si,%3
+	mov byte [si],%4	
+%endmacro
+
+%macro vlodsb 4
+	push %1
+	pop ds
+	mov si,%2
+	add si,%3
+	mov byte %4,[si]	
+%endmacro 	 
+
+%macro int16toreg 3
+	push %2
+	push %1
+	pop ds
+	pop si
+	mov word %3,[si]	
+%endmacro
+
+%macro regtoint16 3
+	push %3
+	push %2
+	pop ds
+	pop si
+	mov word [si],%1	
+%endmacro
+
+%macro mov32 2
+	mov32 cs, %1, cs, %2
+%endmacro
+
+%macro mov16 2
+	mov16 cs, %1, cs, %2
+%endmacro
+
+%macro mov32 4
+	mov ax,%3
+	mov ds,ax
+	mov cx,[%4+2]
+	mov dx,[%4]
+	mov ax,%1
+	mov ds,ax
+	mov [%2+2],cx
+	mov [%2],dx
+%endmacro
+
+%macro mov16 4
+	mov ax,%3
+	mov ds,ax
+	mov bx,[%4]
+	mov ax,%1
+	mov ds,ax
+	mov [%2],bx
+%endmacro
+ 	 	
+%macro mformat 4
+	stkopen 8
+	mov word [ bp + 0 ], %1
+	mov word [ bp + 2 ], %2
+	mov word [ bp + 4 ], %3
+	mov word [ bp + 6 ], %4
+	call kernel_segment:mformat
+	stkclose 8
+%endmacro
+
+%macro malloc 6
+	stkopen 0Bh
+	mov word [ bp + 4 ], %3
+	mov word [ bp + 6 ], %4
+	mov word [ bp + 8 ], %5	
+	call kernel_segment:malloc
+	push sp
+	pop bp
+	mov word %1, [ bp ]
+	mov word %2, [ bp + 2 ]
+	mov byte %6, [ bp + 0x0A ]
+	stkclose 0Bh
+%endmacro 	
+
+%macro laddr 2
+	laddr %1, %2, %1, %2
+%endmacro
+
+%macro faddr 2
+	faddr %1, %2, %1, %2
+%endmacro
+ 	
+%macro laddr 4
+	stkopen 8
+	mov word [ bp + 4 ], %3
+	mov word [ bp + 6 ], %4	
+	call kernel_segment:laddr
+	push sp
+	pop bp
+	mov word %1, [ bp + 0 ]
+	mov word %2, [ bp + 2 ]	
+	stkclose 8
+%endmacro
+
+%macro faddr 4
+	stkopen 8
+	mov word [ bp + 4 ], %3
+	mov word [ bp + 6 ], %4	
+	call kernel_segment:faddr
+	push sp
+	pop bp
+	mov word %1, [ bp + 0 ]
+	mov word %2, [ bp + 2 ]	
+	stkclose 8
+%endmacro	
+ 
+
+%macro stkopen 1		
+	sub word sp, %1
+	push sp
+	pop bp
+%endmacro
+
+%macro stkclose 1
+	add word sp, %1
+%endmacro
+
+%macro stkload 1-* 	
+ 	%rep %0
+ 	 	%rotate -1
+ 		pop %1
+ 	%endrep
+ 	%rep %0
+ 		push %1
+ 		%rotate 1
+ 	%endrep
+%endmacro
+
+%macro stkpush 1-* 	
+ 	%rep %0
+ 		push %1
+ 		%rotate 1
+ 	%endrep 	
+%endmacro
+ 
+%macro stkpop 1-*
+ 	%rep %0
+ 	 	%rotate -1
+ 		pop %1
+ 	%endrep 	 	
+%endmacro
+
+%macro delay 1
+	delay cs, %1
+%endmacro
+
+%macro delay 2
+	mov ax,%1
+	mov ds,ax
+	
+	mov ah,86h
+	mov cx,[%2+2]
+	mov dx,[%2]
+	int 15h	
+%endmacro
+
+%endif 

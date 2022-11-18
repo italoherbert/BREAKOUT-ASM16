@@ -1,0 +1,278 @@
+%ifndef MATH16_MAC
+	%define MATH16_MAC
+	
+	%include "lib/sys.mac"
+	%include "lib/math.mac"
+	
+%macro hex16tohexint 2			; toint( E0FC ) = 								
+	section .bss				; p1 = toint( E0FC / A^3 )	= toint(39) = 57
+		%%q: resw 1				; p2 = toint( E0FC % A^3 ) 	= toint(254) = 596
+		%%r: resw 1				; p1 e p2 = 57596
+	section .text				
+		mov word bx,%2
+		push bx		
+		call %%toint
+		pop bx
+		
+		mov bx,%1
+		mov word ax,[%%q]
+		mov word [bx], ax
+				
+		jmp %%end
+							
+		%%toint:			
+			mov ax,sp
+			mov bp,ax
+											
+			mov word bx, [bp+2]
+			__hex16tohexint %%q, %%r, bx
+																											
+			cmp word [%%q],9
+			ja %%parseq
+			jmp %%endparseq			
+			%%parseq:
+				mov ax,[%%r]
+				mov bx,[%%q]
+				push ax									
+				push bx
+				call %%toint
+				pop bx
+				pop ax
+				mov word [%%r],ax																
+			%%endparseq:
+			
+			cmp word [%%r],9
+			ja %%parser
+			jmp %%endparser			
+			%%parser:
+				mov word ax,[%%q]
+				mov word bx,[%%r]
+				push ax
+				push bx
+				call %%toint
+				pop bx
+				pop ax
+				mov word [%%r],ax				
+			%%endparser:
+																	
+			concathex16 %%q, [%%r]			
+			ret	
+		
+		%%end:									
+%endmacro
+
+%macro concathex16 2
+	section .bss
+		%%s1: resw 1
+		%%s2: resw 1
+		%%n: resw 1
+	section .text
+		hex16size %%s1, [%1]
+		hex16size %%s2, %2
+		
+		mov ax,[%%s1]
+		add ax,[%%s2]
+		cmp ax,4		
+		ja %%overflow
+				
+		mov ax,[%1]		
+		mov word [%%n], ax
+		mov cx,[%%s2]
+		%%desloc:
+			cmp cx,0
+			jz %%enddesloc
+							
+			shl word [%%n],4		
+			dec cx
+			jmp %%desloc
+		%%enddesloc: 				
+		
+		mov ax, [%%n]
+		mov dx,%2				
+		add ax,dx
+		mov word [%1], ax
+		
+		jmp %%notoverflow
+		%%overflow:
+			mov byte [MATH_OF], TRUE
+			jmp %%end_overflow
+		%%notoverflow:
+			mov byte [MATH_OF], FALSE
+		%%end_overflow:	
+%endmacro
+
+%macro hex16size 2
+	mov word bx, %2
+
+	mov cx,4
+	%%exp_count:
+		cmp cx,0		
+		jz %%endexp_count
+		
+		mov dx,bx
+		shr dx,12
+		cmp dx,0
+		jnz %%endexp_count
+				
+		shl bx,4		
+		dec cx		
+		jmp %%exp_count
+	%%endexp_count:
+	mov word di, %1
+	mov word [di], cx 	
+%endmacro
+
+%macro __hex16tohexint 3
+	mov bx,%3
+
+	mov cx,3
+	mov ax,bx
+	%%count_exp:
+		cmp cx,1
+		jz %%endcount_exp
+	
+		mov dx,ax
+		shr dx,12
+		cmp dx,0
+		jnz %%endcount_exp
+		
+		shl ax,4
+		dec cx
+		jmp %%count_exp
+	%%endcount_exp:
+	
+	push bx	
+	mov ax,0001h
+	%%exp:
+		cmp cx,0
+		jz %%endexp
+		
+		mov bx,000Ah
+		mul bx
+		
+		dec cx
+		jmp %%exp				
+	%%endexp:
+	pop bx				
+	
+	mov dx,ax
+	mov ax,bx
+	mov bx,dx
+	
+	xor dx,dx
+	div bx
+	
+	mov bx,%1
+	mov word [bx],ax	; quociente
+	mov bx,%2
+	mov word [bx],dx	; resto
+%endmacro
+
+%macro hex16toascii 2
+	section .bss
+		%%code: resb 1
+	section .text
+		mov ax,ds
+		mov es,ax
+		mov di,%1
+		
+		mov bx,%2
+		mov cx,4
+		%%desloc:
+			cmp cx,0
+			jz %%enddesloc
+			
+			mov ax,bx
+			shr ax,12
+			mov byte [%%code],al
+						
+			push es
+			push di
+			push bx
+			push cx						
+			nibbletoascii %%code, [%%code]			
+			pop cx
+			pop bx
+			pop di
+			pop es
+			
+			xor ax,ax
+			mov byte al, [%%code]						
+			stosb
+				
+			shl bx,4
+			 
+			dec cx
+			jmp %%desloc
+		%%enddesloc:
+		mov al,0
+		stosb 
+%endmacro
+	
+%macro asciitointhex16 2
+	section .bss
+		%%n: resb 1
+		%%size: resw 1
+	section .text			
+		strlen %%size, %2
+		cmp byte [%%size],0
+		jz %%overflow
+				
+		mov word si,%2	
+		mov word bx,%1
+		mov word [bx],0000h			
+			
+		mov cx,0				
+		%%loop1:
+			lodsb			
+			cmp al,0
+			jz %%endloop1
+			
+			mov byte [%%n], al		
+			
+			push cx
+			push si	
+			asciitonibble %%n, [%%n]
+			pop si 
+			pop cx	
+			
+			push cx
+			push bx
+						
+			mov bx,cx
+			mov cx,0
+			add byte cl, [%%size]
+			sub cl,1
+			sub cx,bx			
+			xor ah,ah
+			mov al,[%%n]						
+			%%loop11:
+				cmp cx,0
+				jz %%endloop11
+				
+				shl ax, 4				
+				dec cx
+				jmp %%loop11
+			%%endloop11:	
+			pop bx	
+			pop cx						
+			
+			add word [bx], ax 
+								
+			inc cx
+			jmp %%loop1		
+		%%endloop1:
+		
+		jmp %%notoverflow
+		%%overflow:
+			mov byte [MATH_OF], TRUE
+			jmp %%end_overflow
+		%%notoverflow:
+			mov byte [MATH_OF], FALSE
+		%%end_overflow:	
+%endmacro			
+
+%macro hex16tointhex 2				; 512 = ( 5 * A^2 ) + ( 1 * A^1 ) + ( 2 * A^0 )
+%endmacro		
+					
+%endif

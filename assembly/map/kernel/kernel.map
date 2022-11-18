@@ -1,0 +1,63 @@
+
+- NASM Map file ---------------------------------------------------------------
+
+Source file:  src/kernel.asm
+Output file:  bin/kernel.bin
+
+-- Program origin -------------------------------------------------------------
+
+00000000
+
+-- Sections (summary) ---------------------------------------------------------
+
+Vstart            Start             Stop              Length    Class     Name
+               0                 0                7B  0000007B  progbits  .text
+              7C                7C               13B  000000BF  progbits  .data
+
+-- Sections (detailed) --------------------------------------------------------
+
+---- Section .text ------------------------------------------------------------
+
+class:     progbits
+length:                  7B
+start:                    0
+align:     not defined
+follows:   not defined
+vstart:                   0
+valign:    not defined
+vfollows:  not defined
+
+---- Section .data ------------------------------------------------------------
+
+class:     progbits
+length:                  BF
+start:                   7C
+align:                    4
+follows:   not defined
+vstart:                  7C
+valign:    not defined
+vfollows:  not defined
+
+-- Symbols --------------------------------------------------------------------
+
+---- Section .text ------------------------------------------------------------
+
+Real              Virtual           Name
+               0                 0  _start
+              56                56  error
+
+---- Section .data ------------------------------------------------------------
+
+Real              Virtual           Name
+              7C                7C  proc_prtstr
+              88                88  proc_prtstr.l1
+              95                95  proc_prtstr.l2
+              96                96  proc_prthex16
+              AF                AF  proc_prthex8
+              BF                BF  proc_prthex8.nsum1
+              D6                D6  proc_prthex8.nsum2
+              DF                DF  proc_prtln
+              F1                F1  ..@3.str
+             113               113  ..@8.str
+             127               127  ..@14.str
+

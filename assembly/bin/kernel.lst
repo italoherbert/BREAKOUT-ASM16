@@ -1,0 +1,235 @@
+     1                                  [map all map/kernel/kernel.map]
+     2                                  
+     3                                  %include "lib/basic.mac"
+     4                              <1> 
+     5                              <1> %ifndef BASIC_MAC
+     6                              <1> 	%define BASIC_MAC
+     7                              <1> 	
+     8                              <1> 	%include "lib/basic.asm"		
+     9                              <2> 
+    10                              <2> %ifndef BASIC_ASM
+    11                              <2> 	%define BASIC_ASM
+    12                              <2> 		
+    13                              <2> section .data
+    14                              <2> 
+    15                              <2> proc_prtstr:
+    16 00000000 89E0                <2> 	mov ax,sp
+    17 00000002 89C5                <2> 	mov bp,ax
+    18                              <2> 	
+    19 00000004 8B4602              <2> 	mov word ax,[bp+2]
+    20 00000007 8ED8                <2> 	mov ds,ax
+    21 00000009 8B7604              <2> 	mov word si,[bp+4]
+    22                              <2> 	
+    23                              <2> 	.l1:
+    24 0000000C AC                  <2> 		lodsb
+    25 0000000D 3C00                <2> 		cmp al,0
+    26 0000000F 7408                <2> 		jz .l2
+    27                              <2> 		
+    28 00000011 B40E                <2> 		mov ah,0Eh
+    29 00000013 B700                <2> 		mov bh,0
+    30 00000015 CD10                <2> 		int 10h
+    31                              <2> 			
+    32 00000017 EBF3                <2> 		jmp .l1
+    33                              <2> 	.l2:
+    34                              <2> 	
+    35 00000019 C3                  <2> 	ret
+    36                              <2> 	
+    37                              <2> proc_prthex16:
+    38 0000001A 89E0                <2> 	mov ax,sp
+    39 0000001C 89C5                <2> 	mov bp,ax	
+    40 0000001E 8A4603              <2> 	mov al,[bp+3]
+    41 00000021 50                  <2> 	push ax
+    42 00000022 E80E00              <2> 	call proc_prthex8
+    43 00000025 58                  <2> 	pop ax
+    44                              <2> 		
+    45 00000026 89E0                <2> 	mov ax,sp
+    46 00000028 89C5                <2> 	mov bp,ax
+    47 0000002A 8A4602              <2> 	mov al,[bp+2]
+    48 0000002D 50                  <2> 	push ax
+    49 0000002E E80200              <2> 	call proc_prthex8
+    50 00000031 58                  <2> 	pop ax
+    51 00000032 C3                  <2> 	ret
+    52                              <2> 	
+    53                              <2> proc_prthex8:
+    54 00000033 89E0                <2> 	mov ax,sp
+    55 00000035 89C5                <2> 	mov bp,ax
+    56                              <2> 				
+    57 00000037 8A4602              <2> 	mov al,[bp+2]
+    58 0000003A C0E804              <2> 	shr al,4
+    59 0000003D 3C0A                <2> 	cmp al,0Ah		
+    60 0000003F 7202                <2> 	jb .nsum1
+    61 00000041 0407                <2> 		add al,07h
+    62                              <2> 	.nsum1:
+    63 00000043 0430                <2> 	add al,30h
+    64 00000045 B40E                <2> 	mov ah,0Eh
+    65 00000047 B700                <2> 	mov bh,0
+    66 00000049 CD10                <2> 	int 10h
+    67                              <2> 	
+    68                              <2> 	
+    69 0000004B 8A4602              <2> 	mov al,[bp+2]
+    70 0000004E C0E004              <2> 	shl al,4
+    71 00000051 C0E804              <2> 	shr al,4
+    72 00000054 3C0A                <2> 	cmp al,0Ah
+    73 00000056 7202                <2> 	jb .nsum2
+    74 00000058 0407                <2> 		add al,07h
+    75                              <2> 	.nsum2:
+    76 0000005A 0430                <2> 	add al,30h
+    77 0000005C B40E                <2> 	mov ah,0Eh
+    78 0000005E B700                <2> 	mov bh,0
+    79 00000060 CD10                <2> 	int 10h	
+    80                              <2> 	
+    81 00000062 C3                  <2> 	ret
+    82                              <2> 			
+    83                              <2> proc_prtln:
+    84 00000063 B403                <2> 	mov ah,03h
+    85 00000065 B700                <2> 	mov bh,0
+    86 00000067 CD10                <2> 	int 10h
+    87                              <2> 	
+    88 00000069 B402                <2> 	mov ah,02h
+    89 0000006B B700                <2> 	mov bh,0
+    90 0000006D 80C601              <2> 	add dh,1
+    91 00000070 B200                <2> 	mov dl,0
+    92 00000072 CD10                <2> 	int 10h
+    93                              <2> 	
+    94 00000074 C3                  <2> 	ret
+    95                              <2> 	
+    96                              <2> %endif
+    97                              <1> 
+    98                              <1> %macro prtstrln 1
+    99                              <1> 	prtstr %1
+   100                              <1> 	prtln
+   101                              <1> %endmacro
+   102                              <1> 
+   103                              <1> %macro prtstr 1
+   104                              <1> 	section .data
+   105                              <1> 		%%str: db %1,0
+   106                              <1> 	section .text
+   107                              <1> 		prtstr cs, %%str
+   108                              <1> %endmacro
+   109                              <1> 
+   110                              <1> %macro prtstr 2
+   111                              <1> 	sub sp,4
+   112                              <1> 	push sp
+   113                              <1> 	pop bp
+   114                              <1> 	mov word [bp+0], %1
+   115                              <1> 	mov word [bp+2], %2
+   116                              <1> 	call proc_prtstr
+   117                              <1> 	add sp,4
+   118                              <1> %endmacro
+   119                              <1> 
+   120                              <1> %macro prthex16 1
+   121                              <1> 	sub sp,2
+   122                              <1> 	push sp
+   123                              <1> 	pop bp
+   124                              <1> 	mov word [bp], %1
+   125                              <1> 	call proc_prthex16
+   126                              <1> 	add sp,2
+   127                              <1> %endmacro
+   128                              <1> 
+   129                              <1> %macro prthex8 1
+   130                              <1> 	sub sp,1
+   131                              <1> 	push sp
+   132                              <1> 	pop bp
+   133                              <1> 	mov byte [bp], %1
+   134                              <1> 	call proc_prthex8
+   135                              <1> 	add sp,1
+   136                              <1> %endmacro
+   137                              <1> 
+   138                              <1> %macro prtln 0
+   139                              <1> 	call proc_prtln	
+   140                              <1> %endmacro
+   141                              <1> 	
+   142                              <1> %endif
+   143                                  
+   144                                  section .text
+   145                                  	global _start
+   146                                  	
+   147                                  _start:			
+   148                                  	;showdiskparams		
+   149                                  	;prtln
+   150                                  	;prtln	
+   151                                  	prtstr "Carregando programa em memoria..."
+   152                              <1>  section .data
+   153 00000075 436172726567616E64- <1>  %%str: db %1,0
+   154 0000007E 6F2070726F6772616D- <1>
+   155 00000087 6120656D206D656D6F- <1>
+   156 00000090 7269612E2E2E00      <1>
+   157                              <1>  section .text
+   158                              <1>  prtstr cs, %%str
+   159 00000000 83EC04              <2>  sub sp,4
+   160 00000003 54                  <2>  push sp
+   161 00000004 5D                  <2>  pop bp
+   162 00000005 8C4E00              <2>  mov word [bp+0], %1
+   163 00000008 C74602[7500]        <2>  mov word [bp+2], %2
+   164 0000000D E8(0000)            <2>  call proc_prtstr
+   165 00000010 83C404              <2>  add sp,4
+   166                                  	prtln	
+   167 00000013 E8(6300)            <1>  call proc_prtln
+   168                                  				
+   169                                  	; Carrega programa na memória
+   170 00000016 B402                    	mov ah,02h						; Função de leitura do disco
+   171 00000018 B280                    	mov dl,80h						; Numero do driver do dispositivo
+   172                                  
+   173 0000001A B500                    	mov ch,0						; Cilindro
+   174 0000001C B601                    	mov dh,1						; Cabeça
+   175 0000001E B101                    	mov cl,1						; Setor	
+   176 00000020 B01F                    	mov al,31						; Quantidade de setores
+   177                                  
+   178 00000022 BB0010                  	mov bx,0x1000					; Segmento de memoria onde o programa sera carregado 
+   179 00000025 8EC3                    	mov es,bx
+   180 00000027 BB0000                  	mov bx,0x0000					; Offset no segmento onde o programa sera carregado
+   181 0000002A CD13                    	int 13h
+   182                                  		
+   183 0000002C 7228                    	jc error			
+   184 0000002E B80010                  		mov ax,1000h
+   185 00000031 8ED8                    		mov ds,ax
+   186                                  		
+   187 00000033 8ED0                    		mov ss,ax
+   188 00000035 BCFEFF                  		mov sp,0xFFFE	
+   189                                  		prtstr "Programa carregado."
+   190                              <1>  section .data
+   191 00000097 50726F6772616D6120- <1>  %%str: db %1,0
+   192 000000A0 63617272656761646F- <1>
+   193 000000A9 2E00                <1>
+   194                              <1>  section .text
+   195                              <1>  prtstr cs, %%str
+   196 00000038 83EC04              <2>  sub sp,4
+   197 0000003B 54                  <2>  push sp
+   198 0000003C 5D                  <2>  pop bp
+   199 0000003D 8C4E00              <2>  mov word [bp+0], %1
+   200 00000040 C74602[9700]        <2>  mov word [bp+2], %2
+   201 00000045 E8(0000)            <2>  call proc_prtstr
+   202 00000048 83C404              <2>  add sp,4
+   203                                  		prtln
+   204 0000004B E8(6300)            <1>  call proc_prtln
+   205                                  		prtln
+   206 0000004E E8(6300)            <1>  call proc_prtln
+   207 00000051 EA00000010              		jmp 0x1000:0x0000	
+   208                                  	error:
+   209                                  		
+   210 00000056 50                      	push ax	
+   211                                  	prtstr "Houve um erro. COD="
+   212                              <1>  section .data
+   213 000000AB 486F75766520756D20- <1>  %%str: db %1,0
+   214 000000B4 6572726F2E20434F44- <1>
+   215 000000BD 3D00                <1>
+   216                              <1>  section .text
+   217                              <1>  prtstr cs, %%str
+   218 00000057 83EC04              <2>  sub sp,4
+   219 0000005A 54                  <2>  push sp
+   220 0000005B 5D                  <2>  pop bp
+   221 0000005C 8C4E00              <2>  mov word [bp+0], %1
+   222 0000005F C74602[AB00]        <2>  mov word [bp+2], %2
+   223 00000064 E8(0000)            <2>  call proc_prtstr
+   224 00000067 83C404              <2>  add sp,4
+   225                                  	
+   226 0000006A 58                      	pop ax
+   227                                  	prthex8 ah	
+   228 0000006B 83EC01              <1>  sub sp,1
+   229 0000006E 54                  <1>  push sp
+   230 0000006F 5D                  <1>  pop bp
+   231 00000070 886600              <1>  mov byte [bp], %1
+   232 00000073 E8(3300)            <1>  call proc_prthex8
+   233 00000076 83C401              <1>  add sp,1
+   234                                  		 
+   235 00000079 EBFE                    	jmp $			

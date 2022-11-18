@@ -1,0 +1,10 @@
+     1                                  section .text
+     2                                  	global _start
+     3                                  	
+     4                                  _start:
+     5 00000000 B40E                    	mov ah,0Eh
+     6 00000002 B041                    	mov al,41h
+     7 00000004 B700                    	mov bh,0
+     8 00000006 CD10                    	int 10h
+     9                                  	
+    10 00000008 EBFE                    	jmp $

@@ -1,0 +1,164 @@
+
+%ifndef TRIGON_MAC
+	%define TRIGON_MAC
+
+	%include "lib/trigon.asm"
+	
+%macro to0x360 1
+	to0x360 %1, %1
+%endmacro
+
+%macro to0x360 2
+	to0x360 cs, %1, cs, %2
+%endmacro
+
+%macro toradians 1
+	toradians %1, %1
+%endmacro
+
+%macro todegrees 1
+	todegrees %1, %1
+%endmacro
+
+%macro toradians 2
+	toradians cs, %1, cs, %2
+%endmacro
+	
+%macro todegrees 2
+	todegrees cs, %1, cs, %2
+%endmacro	
+	
+%macro atan 1
+	atan %1, %1
+%endmacro	
+	
+%macro atan 2
+	atan cs, %1, cs, %2
+%endmacro	
+	
+%macro sin 1
+	sin %1, %1
+%endmacro	
+	
+%macro sin 2
+	sin cs, %1, cs, %2
+%endmacro
+
+%macro cos 1
+	cos %1, %1
+%endmacro	
+	
+%macro cos 2
+	cos cs, %1, cs, %2
+%endmacro		
+	
+%macro sin 4
+	sinorcos %1, %2, %3, %4, 1
+%endmacro
+
+%macro cos 4
+	sinorcos %1, %2, %3, %4, 0
+%endmacro
+
+%macro to0x360 4
+	stkopen 0x08
+	mov ax,%1
+	mov ds,ax
+	mov ax,[%2+2]
+	mov [bp+0],ax
+	mov ax,[%2]
+	mov [bp+2],ax
+	call proc_to0x360
+	mov ax,sp
+	mov bp,ax
+	mov ax,%3
+	mov ds,ax
+	mov ax,[bp+4]
+	mov [%4+2],ax
+	mov ax,[bp+6]
+	mov [%4],ax
+	stkclose 0x08
+%endmacro	
+
+%macro toradians 4
+	stkopen 0x08
+	mov ax,%1
+	mov ds,ax
+	mov ax,[%2+2]
+	mov [bp+0],ax
+	mov ax,[%2]
+	mov [bp+2],ax
+	call proc_toradians
+	mov ax,sp
+	mov bp,ax
+	mov ax,%3
+	mov ds,ax
+	mov ax,[bp+4]
+	mov [%4+2],ax
+	mov ax,[bp+6]
+	mov [%4],ax
+	stkclose 0x08
+%endmacro	
+
+%macro todegrees 4
+	stkopen 0x08
+	mov ax,%1
+	mov ds,ax
+	mov ax,[%2+2]
+	mov [bp+0],ax
+	mov ax,[%2]
+	mov [bp+2],ax
+	call proc_todegrees
+	mov ax,sp
+	mov bp,ax
+	mov ax,%3
+	mov ds,ax
+	mov ax,[bp+4]
+	mov [%4+2],ax
+	mov ax,[bp+6]
+	mov [%4],ax
+	stkclose 0x08
+%endmacro	
+
+%macro atan 4
+	stkopen 0x08
+	mov ax,%1
+	mov ds,ax
+	mov ax,[%2+2]
+	mov [bp+0],ax
+	mov ax,[%2]
+	mov [bp+2],ax
+	call proc_atan
+	mov ax,sp
+	mov bp,ax
+	mov ax,%3
+	mov ds,ax
+	mov ax,[bp+4]
+	mov [%4+2],ax
+	mov ax,[bp+6]
+	mov [%4],ax
+	stkclose 0x08
+%endmacro
+	
+%macro sinorcos 5
+	stkopen 0x09
+	mov ax,%1
+	mov ds,ax
+	mov ax,[%2+2]
+	mov [bp+0],ax
+	mov ax,[%2]
+	mov [bp+2],ax
+	mov byte [bp+8],%5	
+	call proc_sinorcos
+	mov ax,sp
+	mov bp,ax
+	mov ax,%3
+	mov ds,ax
+	mov ax,[bp+4]
+	mov [%4+2],ax
+	mov ax,[bp+6]
+	mov [%4],ax
+	stkclose 0x09
+%endmacro
+	
+%endif

@@ -1,0 +1,17 @@
+
+PROG_DIR=../ASMUtilities/bin
+PROG_NAME=ASMHeaderGenerator
+
+SEGMENT=0x0050
+OFFSET=0x0000
+
+FILENAME=kernel
+INPUT_DIR=map/kernel
+OUTPUT_DIR=lib
+
+rm $PROG_NAME.class
+cp $PROG_DIR/$PROG_NAME.class .
+
+java $PROG_NAME $SEGMENT $OFFSET $FILENAME $INPUT_DIR $OUTPUT_DIR
+
+echo ""
