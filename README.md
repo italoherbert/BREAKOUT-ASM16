@@ -6,6 +6,7 @@ Biblioteca assembly arquitetura 8086 com jogo de breakout
 As imagens de diskette e pendrive/hd foram disponibilizadas como release ou podem ser encontradas na raiz deste repositório com os nomes:
 
   pendrive.img
+  
   floppy.img
 
 # Instalar e rodar no pendrive
