@@ -16,6 +16,8 @@ Então, basta dar o boot pelo pendrive e o jogo é iniciado.
 
 # Instalar e rodar no diskette
 
-A versão diskette é semelhante a do pendrive, basta gravar a imagem "floppy.img" no diskete que, após isto, o diskette também tem o MBR reescrito e, então, dar o boot pelo diskete para o jogo ser iniciado.
+A versão diskette é semelhante a do pendrive, basta gravar a imagem "floppy.img" no diskete que, após isto, o diskette também tem o MBR reescrito e, então, 
+dar o boot pelo diskete para o jogo ser iniciado.
 
-
+Atenção: para rodar o jogo de breakout, não é necessário sistema operacional, dado que, o jogo foi feito em assembly 8086 e dá instruções diretamente ao BIOS.
+Para funcionar, o computador utilizado para testar, deve ser compatível com a família de processadores x86.
