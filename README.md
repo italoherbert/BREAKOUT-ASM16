@@ -68,13 +68,13 @@ qemu-system-x86_64 -m 4096 breakout-asm16-pendrive.img
 </ul>
 
 <br />
-<h3><b>Como o jogo foi implementado?</b></h3>
+<h2><b>Como o jogo foi implementado?</b></h2>
 
 <p>
     O <b>nasm</b> foi utilizado como assembler para montar o código objeto do software.
 </p>
 
-<h4>Suporte à instruções de 32 bits</h3>
+<h4>Suporte à instruções de 32 bits</h4>
 
 <p>
     Para ser possível utilizar números de <b>32 bits</b> de tipo inteiro e até de 
@@ -87,7 +87,7 @@ qemu-system-x86_64 -m 4096 breakout-asm16-pendrive.img
     em dois registradores de 16 bits.
 </p>
 
-<h4>Sem unidade de ponto flutuante</h3>
+<h4>Sem unidade de ponto flutuante</h4>
 
 <p>
     O <b>processador 8086</b> não dispõe de <b>unidade de ponto flutuante</b>. Logo, tem suporte 
@@ -104,7 +104,7 @@ qemu-system-x86_64 -m 4096 breakout-asm16-pendrive.img
     e divisão.
 </p>
 
-<h4>As funções matemáticas de 32 bits</h3>
+<h4>As funções matemáticas de 32 bits</h4>
 
 <p>
     Foram implementadas as <b>funções básicas de operação</b> com números de <b>32 bits</b>,  
@@ -125,7 +125,7 @@ qemu-system-x86_64 -m 4096 breakout-asm16-pendrive.img
     truncamento, convertem um número de ponto flutuante em número inteiro de 32 bits.
 </p>
 
-<h4>Funções gráficas</h3>
+<h4>Funções gráficas</h4>
 
 <p>
     Foram implementadas também <b>funções gráficas</b> para <b>desenhar e/ou preencher</b>: 
@@ -143,7 +143,7 @@ qemu-system-x86_64 -m 4096 breakout-asm16-pendrive.img
     de memória é lida e as <b>cores dos píxels</b> são pintadas na tela de uma vez só.
 </p>
 
-<h4>Séries de tailor</h3>
+<h4>Séries de tailor</h4>
 
 <p>
     As <b>séries de tailor</b> são uma tentativa de se aproximar uma soma de termos de um polinômio 
