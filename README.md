@@ -1,6 +1,8 @@
 # ASMLIB16
 Biblioteca assembly arquitetura 8086 com jogo de breakout
 
+!['Tela do jogo'](breakout.png)
+
 # Atenção:
 
 Para rodar o jogo de breakout, não é necessário sistema operacional, dado que, o jogo foi feito em assembly 8086 e dá instruções diretamente ao BIOS.
