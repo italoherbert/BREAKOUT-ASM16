@@ -94,7 +94,7 @@ qemu-system-x86_64 -m 4096 breakout-asm16-pendrive.img
 </p>
 
 <p>
-    Foi necessário desenvolver a represtentação de <b>sinal, expoente e mantissa</b> em dois registradores 
+    Foi necessário desenvolver a representação de <b>sinal, expoente e mantissa</b> em dois registradores 
     de 16 bits cada, para compor um número de 32 bits. 1 bit para o sinal, 8 bits para o expoente e os demais 
     23 bits para a mantissa. Os <b>operadores matemáticos básicos</b> para números de ponto flutuante 
     representados nesse formato também foram implementados. Isto é, soma, subtração, multiplicação 
@@ -134,10 +134,10 @@ qemu-system-x86_64 -m 4096 breakout-asm16-pendrive.img
 <p>
     Foi implementada também a técnica de <b>double buffering</b> para que o desenho dos gráficos não 
     tivesse o <b>efeito de piscar</b>. Logo, ao invés de chamar a devida interrupção da bios para 
-    pintar todos os píxels a serem mostrados em um determinado instante, se armazena todos os pixels 
+    pintar todos os pixels a serem mostrados em um determinado instante, se armazena todos os pixels 
     primeiro em uma <b>região da memória principal</b> e, depois, transfere-se esses dados para uma 
     <b>região especial da memória</b> que, dependendo do <b>modo de vídeo</b> escolhido, essa região 
-    de memória é lida e as <b>cores dos píxels</b> são pintadas na tela de uma vez só.
+    de memória é lida e as <b>cores dos pixels</b> são pintadas na tela de uma vez só.
 </p>
 
 <h3>Séries de tailor</h3>
