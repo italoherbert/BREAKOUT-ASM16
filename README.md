@@ -30,6 +30,11 @@
     gravar em um diskette e dar o boot por ele.
 </p>
 
+|  :zap:  Se gravar a imagem de pendrive num pendrive ou HD,              |
+| esteja ciente de que o setor MBR e mais alguns setores do dispositivo   |
+| serão regravados. O mesmo vale para o diskette.                         |
+|-------------------------------------------------------------------------|
+
 <h3>Rodando com emulador de computador</h3>
 
 <p>
