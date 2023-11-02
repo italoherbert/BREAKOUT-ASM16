@@ -17,7 +17,7 @@
 
 !['Tela do jogo'](breakout.png)
 
-<h3>Como Rodar?</h3>
+<h2>Como Rodar?</h2>
 
 <p>
     Para jogar, basta baixar e gravar a imagem <b>"breakout-asm16-pendrive.img"</b> em um pendrive 
@@ -27,7 +27,7 @@
 </p>
 
 <br />
-<h4>Rodando com emulador de computador</h4>
+<h3>Rodando com emulador de computador</h3>
 
 <p>
     Para executar, por exemplo, a imagem de pendrive pelo <b>qemu</b>, basta executar o seguinte comando:
@@ -39,7 +39,7 @@ qemu-system-x86_64 -m 4096 breakout-asm16-pendrive.img
 
 <br />
 
-<h3>Como Jogar?</h3>
+<h2>Como Jogar?</h2>
 
 <ul>
     <li>
@@ -74,7 +74,7 @@ qemu-system-x86_64 -m 4096 breakout-asm16-pendrive.img
     O <b>nasm</b> foi utilizado como assembler para montar o código objeto do software.
 </p>
 
-<h4>Suporte à instruções de 32 bits</h4>
+<h3>Suporte à instruções de 32 bits</h3>
 
 <p>
     Para ser possível utilizar números de <b>32 bits</b> de tipo inteiro e até de 
@@ -87,7 +87,7 @@ qemu-system-x86_64 -m 4096 breakout-asm16-pendrive.img
     em dois registradores de 16 bits.
 </p>
 
-<h4>Sem unidade de ponto flutuante</h4>
+<h3>Sem unidade de ponto flutuante</h3>
 
 <p>
     O <b>processador 8086</b> não dispõe de <b>unidade de ponto flutuante</b>. Logo, tem suporte 
@@ -104,7 +104,7 @@ qemu-system-x86_64 -m 4096 breakout-asm16-pendrive.img
     e divisão.
 </p>
 
-<h4>As funções matemáticas de 32 bits</h4>
+<h3>As funções matemáticas de 32 bits</h3>
 
 <p>
     Foram implementadas as <b>funções básicas de operação</b> com números de <b>32 bits</b>,  
@@ -125,7 +125,7 @@ qemu-system-x86_64 -m 4096 breakout-asm16-pendrive.img
     truncamento, convertem um número de ponto flutuante em número inteiro de 32 bits.
 </p>
 
-<h4>Funções gráficas</h4>
+<h3>Funções gráficas</h3>
 
 <p>
     Foram implementadas também <b>funções gráficas</b> para <b>desenhar e/ou preencher</b>: 
@@ -143,7 +143,7 @@ qemu-system-x86_64 -m 4096 breakout-asm16-pendrive.img
     de memória é lida e as <b>cores dos píxels</b> são pintadas na tela de uma vez só.
 </p>
 
-<h4>Séries de tailor</h4>
+<h3>Séries de tailor</h3>
 
 <p>
     As <b>séries de tailor</b> são uma tentativa de se aproximar uma soma de termos de um polinômio 
@@ -161,7 +161,7 @@ qemu-system-x86_64 -m 4096 breakout-asm16-pendrive.img
 </p>
 
 <br />
-<h4>O jogo de breakout</h4>
+<h3>O jogo de breakout</h3>
 
 <p>
     O <b>jogo de breakout</b> utiliza as funções descritas anteriormente. Isto é, as 
