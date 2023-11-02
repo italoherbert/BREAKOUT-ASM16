@@ -33,7 +33,7 @@
     Para executar, por exemplo, a imagem de pendrive pelo <b>qemu</b>, basta executar o seguinte comando:
 </p>
 
-´´´
+```
 qemu-system-x86_64 -m 4096 breakout-asm16-pendrive.img
 ```
 
