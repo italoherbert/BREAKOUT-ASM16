@@ -31,10 +31,9 @@
 </p>
 
 <p>
-    <b>Atenção: </b> Se gravar a imagem de pendrive num pendrive ou HD, <b>esteja ciente</b> de que o 
-    setor <b>MBR</b> e mais alguns <b>setores do dispositivo</b> serão <b>regravados</b>. Logo, não 
-    grave num pendrive ou diskette formatado. A menos que não se importe se os dados do dispositivo 
-    forem perdidos. O mesmo vale para o diskette.
+    <b><u>ATENÇÃO:</u> </b> Se gravar a imagem de pendrive num pendrive ou HD, <b>esteja ciente</b> de que o 
+    setor <b>MBR</b> e mais alguns <b>setores do dispositivo</b> serão <b>regravados</b> com o conjunto 
+    de zeros e uns que compõem o software. O mesmo vale para o diskette.
 </p>
 
 <h3>Rodando com emulador de computador</h3>
