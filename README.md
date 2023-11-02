@@ -43,7 +43,8 @@
 <h3>Rodando com emulador de computador</h3>
 
 <p>
-    Para executar, por exemplo, a imagem de pendrive pelo <b>qemu</b>, basta executar o seguinte comando:
+    Para executar, por exemplo, a imagem de pendrive pelo <b>qemu</b>, basta executar, sem 
+    risco de perda de dados, o seguinte comando:
 </p>
 
 ```
