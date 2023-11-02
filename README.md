@@ -1,5 +1,6 @@
 # Breakout - ASM16
-Jogo de breakout produzido em puro assembly com arquitetura 8086 de 16 bits
+Jogo de breakout produzido em puro assembly com arquitetura 8086 de 16 bits. O código fonte em assembly está na pasta "assembly" na raiz do projeto.
+A pasta "src" tem apenas alguns utilitários feitos em Java que não fazem parte do sistema produzido em assembly.
 
 !['Tela do jogo'](breakout.png)
 
