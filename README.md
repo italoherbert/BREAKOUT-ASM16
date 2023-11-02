@@ -4,7 +4,7 @@
 </p>
 
 <p>
-    Esta página trata de um jogo de breakout <b>produzido em puro assembly</b> com uso, apanes da 
+    Esta página trata de um jogo de breakout <b>produzido em puro assembly</b> com uso, apenas da 
     arquitetura de 16 bits. O que significa utilizar apenas os registradores e instruções 
     de 16 bits do <b>processador 8086</b>. Esse jogo funciona independente de sistema 
     operacional. Dado que, dá instruções diretamente ao BIOS do computador. Veja abaixo uma 
