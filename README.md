@@ -3,6 +3,8 @@
     O <b>código fonte</b> em assembly está na pasta "assembly" na raiz do projeto. A <b>pasta "src"</b> tem apenas alguns <b>utilitários</b> feitos em Java para o processo de montagem     e geração das imagens. Foram utilizados o <b>nasm</b> como <b>assembler</b> e o sistema operacional <b>linux ubuntu</b> para o desenvolvimento.
 </p>
 
+<a href="https://www.italoinfo.com.br/projetos/breakout-assembly-16bits">Versão no italoinfo!</a>
+
 <p>
     Esta página trata de um jogo de breakout <b>produzido em puro assembly</b> com uso, apenas da 
     arquitetura de 16 bits. O que significa utilizar apenas os registradores e instruções 
