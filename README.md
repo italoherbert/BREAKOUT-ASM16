@@ -1,5 +1,5 @@
-# ASMLIB16
-Biblioteca assembly arquitetura 8086 com jogo de breakout
+# Breakout - ASM16
+Jogo de breakout produzido em puro assembly com arquitetura 8086 de 16 bits
 
 !['Tela do jogo'](breakout.png)
 
