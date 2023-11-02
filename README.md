@@ -1,10 +1,6 @@
 # Breakout - ASM16
 <p>
-    Jogo de breakout produzido em puro assembly com arquitetura 8086 de 16 bits. O código fonte em assembly está na pasta "assembly" na raiz do projeto. A pasta "src" tem apenas alguns     utilitários feitos em Java para o processo de montagem e geração das imagens.
-</p>
-
-<p>
-    Foram utilizados o nasm como assembler e o sistema operacional linux ubuntu para o desenvolvimento.
+    O <b>código fonte</b> em assembly está na pasta "assembly" na raiz do projeto. A <b>pasta "src"</b> tem apenas alguns <b>utilitários</b> feitos em Java para o processo de montagem     e geração das imagens. Foram utilizados o <b>nasm</b> como <b>assembler</b> e o sistema operacional <b>linux ubuntu</b> para o desenvolvimento.
 </p>
 
 <p>
