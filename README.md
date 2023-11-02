@@ -5,6 +5,8 @@
 
 <a href="https://www.italoinfo.com.br/projetos/breakout-assembly-16bits">Versão no italoinfo!</a>
 
+<h2>Breve introdução</h2>
+
 <p>
     Esta página trata de um jogo de breakout <b>produzido em puro assembly</b> com uso, apenas da 
     arquitetura de 16 bits. O que significa utilizar apenas os registradores e instruções 
