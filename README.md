@@ -31,10 +31,14 @@
 </p>
 
 <p>
-    <b><u>ATENÇÃO:</u> </b> Se gravar a imagem de pendrive num pendrive ou HD, <b>esteja ciente</b> de que o 
-    setor <b>MBR</b> e mais alguns <b>setores do dispositivo</b> serão <b>regravados</b> com o conjunto 
-    de zeros e uns que compõem o software. O mesmo vale para o diskette.
+    Entenda que a imagem de pendrive e a de diskette, são conjuntos de zeros e uns que serão 
+    gravados, ocupando o setor de boot mestre (O MBR), e mais alguns setores do dispositivo. Logo, 
+    para gravar, utilize um utilitário como, por exemplo, o "dd" do linux ou semelhante para windows.
 </p>
+
+
+|   :zap: Não grave em um dispositivo onde estiverem armazenados arquivos seus.   |
+|---------------------------------------------------------------------------------|
 
 <h3>Rodando com emulador de computador</h3>
 
