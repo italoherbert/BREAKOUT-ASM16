@@ -16,12 +16,12 @@ As imagens de diskette e pendrive/hd foram disponibilizadas como release ou pode
   
 >> floppy.img
 
-# Instalar e rodar no pendrive ou hd
+# Como instalar e rodar no pendrive ou hd
 
 Você pode gravar a imagem "pendrive.img" em um pendrive ou hd. Neste caso, esteja ciente de que o dispositivo terá o MBR (setor de boot mestre) apagado e reescrito.
 Após gravar a imagem num pendrive ou hd, basta dar o boot pelo dispositivo e o jogo é iniciado.
 
-# Instalar e rodar no diskette
+# Como instalar e rodar no diskette
 
 A versão diskette é semelhante a do pendrive, basta gravar a imagem "floppy.img" no diskete que, após isto, o diskette também tem o MBR reescrito e, então, 
 basta dar o boot pelo diskete para o jogo ser iniciado.
