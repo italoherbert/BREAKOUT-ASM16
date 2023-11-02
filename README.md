@@ -12,11 +12,11 @@
 <h2>Breve introdução</h2>
 
 <p>
-    Esta página trata de um jogo de breakout <b>produzido em puro assembly</b> com uso, apenas da 
-    arquitetura de 16 bits. O que significa utilizar apenas os registradores e instruções 
+    Esta página trata de um jogo de breakout <b>produzido em puro assembly</b> com uso, apenas, da 
+    arquitetura de <b>16 bits</b>. O que significa utilizar apenas os registradores e instruções 
     de 16 bits do <b>processador 8086</b>. Esse jogo funciona independente de sistema 
-    operacional. Dado que, dá instruções diretamente ao BIOS do computador. Veja abaixo uma 
-    captura de tela do jogo em funcionamento:
+    operacional. Dado que, dá instruções diretamente ao <b>BIOS</b> do computador. Veja abaixo uma 
+    captura de tela do jogo em funcionamento com uso de um emulador de computador, o <b>QEMU</b>:
 </p>
 
 !['Tela do jogo'](breakout.png)
