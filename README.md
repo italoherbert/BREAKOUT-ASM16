@@ -31,9 +31,8 @@
 </p>
 
 <p>
-    <b>Atenção: </b>Se gravar a imagem de pendrive num pendrive ou HD, 
-    esteja ciente de que o setor MBR e mais alguns setores do dispositivo 
-    serão regravados. O mesmo vale para o diskette.
+    <b>Atenção: </b> Se gravar a imagem de pendrive num pendrive ou HD, <b>esteja ciente</b> de que o 
+    setor <b>MBR</b> e mais alguns <b>setores do dispositivo</b> serão <b>regravados</b>. O mesmo vale para o diskette.
 </p>
 
 <h3>Rodando com emulador de computador</h3>
