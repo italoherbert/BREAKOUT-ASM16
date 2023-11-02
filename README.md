@@ -3,9 +3,9 @@
     O <b>código fonte</b> em assembly está na pasta "assembly" na raiz do projeto. A <b>pasta "src"</b> tem apenas alguns <b>utilitários</b> feitos em Java para o processo de montagem     e geração das imagens. Foram utilizados o <b>nasm</b> como <b>assembler</b> e o sistema operacional <b>linux ubuntu</b> para o desenvolvimento.
 </p>
 
-<p>
-    Este software foi desenvolvido há mais de 10 anos atrás!
-</p>
+
+|  :zap:  Este software foi desenvolvido em 2012!    |
+|----------------------------------------------------|
 
 <a href="https://www.italoinfo.com.br/projetos/breakout-assembly-16bits">Versão no italoinfo!</a>
 
