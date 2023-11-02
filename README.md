@@ -3,7 +3,21 @@ Jogo de breakout produzido em puro assembly com arquitetura 8086 de 16 bits. O c
 
 Foram utilizados o nasm como assembler e o sistema operacional linux ubuntu para o desenvolvimento.
 
+Esta página trata de um jogo de breakout <b>produzido em puro assembly</b> com uso, apanes da arquitetura de 16 bits. O que significa utilizar apenas os registradores e instruções de 16 bits do <b>processador 8086</b>. Esse jogo funciona independente de sistema operacional. Dado que, dá instruções diretamente ao BIOS do computador. Veja abaixo uma captura de tela do jogo em funcionamento:
+
 !['Tela do jogo'](breakout.png)
+
+# Como Rodar?
+
+Para jogar, basta baixar e gravar a imagem <b>"breakout-asm16-pendrive.img"</b> em um pendrive 
+ou HD, e <b>dar o boot</b> no computador pelo dispositivo onde a imagem foi gravada. A 
+versão <b>"breakout-asm16-pendrive.img"</b> é análoga a versão pendrive. Dado que, basta 
+gravar em um diskette e dar o boot por ele.
+
+
+
+
+
 
 # Atenção:
 
