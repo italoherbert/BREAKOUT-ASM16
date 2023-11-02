@@ -36,7 +36,7 @@ Para rodar a imagem de pendrive, com o qemu instalado, basta rodar o seguinte co
 qemu-system-x86_64 -m 4096 "caminho da imagem do pendrive"/pendrive.img
 ```
 
-Exemplo, caso o arquivo de pendrive esteja na pasta "C:\", basta executar como segue:
+Exemplo, caso o arquivo de pendrive esteja na pasta "C:/", basta executar como segue:
 
 ```
 qemu-system-x86_64 -m 4096 C:\pendrive.img
