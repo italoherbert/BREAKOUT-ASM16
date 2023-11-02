@@ -26,7 +26,6 @@
     gravar em um diskette e dar o boot por ele.
 </p>
 
-<br />
 <h3>Rodando com emulador de computador</h3>
 
 <p>
@@ -36,8 +35,6 @@
 ```
 qemu-system-x86_64 -m 4096 breakout-asm16-pendrive.img
 ```
-
-<br />
 
 <h2>Como Jogar?</h2>
 
@@ -160,7 +157,6 @@ qemu-system-x86_64 -m 4096 breakout-asm16-pendrive.img
     demais quadrantes.
 </p>
 
-<br />
 <h3>O jogo de breakout</h3>
 
 <p>
