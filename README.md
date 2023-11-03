@@ -172,6 +172,13 @@ qemu-system-x86_64 -m 4096 breakout-asm16-pendrive.img
     demais quadrantes.
 </p>
 
+<h3>O gerenciador de boot</h3>
+
+<p>
+    Foi necessário criar um pequeno gerenciador de boot gravado no setor MBR da imagem que carrega 
+    o restante do jogo na memória principal.
+</p>
+
 <h3>O jogo de breakout</h3>
 
 <p>
