@@ -44,7 +44,7 @@
 
 <p>
     Para executar, por exemplo, a imagem de pendrive pelo <b>qemu</b>, basta executar, sem 
-    risco de perda de dados, o seguinte comando:
+    risco de perda de dados do pendrive, o seguinte comando:
 </p>
 
 ```
